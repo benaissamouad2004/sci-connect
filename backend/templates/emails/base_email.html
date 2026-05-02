@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}SciConnect{% endblock %}</title>
+  <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+</head>
+<body style="margin:0;padding:0;background-color:#F7F6F2;font-family:'DM Sans',Arial,sans-serif;">
+
+<!-- Wrapper principal -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F7F6F2;">
+  <tr>
+    <td align="center" style="padding:32px 16px;">
+
+      <!-- Carte email max 600px -->
+      <table width="600" cellpadding="0" cellspacing="0" border="0"
+             style="max-width:600px;width:100%;background-color:#FFFFFF;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.09);">
+
+        <!-- ══ EN-TÊTE TEAL ══ -->
+        <!-- EDITABLE: couleur de l'en-tête = #005F54 (couleur primaire SciConnect) -->
+        <tr>
+          <td style="background-color:#005F54;padding:28px 36px;text-align:center;">
+            <div style="font-family:Georgia,serif;font-size:26px;font-weight:700;color:#FFFFFF;letter-spacing:-0.02em;margin-bottom:4px;">
+              SciConnect
+            </div>
+            <div style="font-family:Georgia,serif;font-size:13px;font-style:italic;color:#C9A84C;letter-spacing:0.01em;">
+              Par les étudiants, pour les étudiants
+            </div>
+          </td>
+        </tr>
+
+        <!-- ══ CORPS ══ -->
+        <tr>
+          <td style="padding:36px 36px 28px;background-color:#FFFFFF;">
+            {% block content %}{% endblock %}
+          </td>
+        </tr>
+
+        <!-- ══ PIED DE PAGE ══ -->
+        <!-- EDITABLE: texte pied de page -->
+        <tr>
+          <td style="background-color:#F7F6F2;border-top:1px solid #E2DED6;padding:20px 36px;text-align:center;">
+            <p style="margin:0 0 6px;font-size:11px;color:#9A9890;line-height:1.5;">
+              Tu reçois cet email car tu es inscrit sur SciConnect.<br>
+              <a href="http://localhost:5000" style="color:#005F54;text-decoration:none;">Se déconnecter</a>
+              &nbsp;·&nbsp;
+              <a href="http://localhost:5000" style="color:#005F54;text-decoration:none;">Gérer mes préférences</a>
+            </p>
+            <p style="margin:0;font-size:11px;color:#9A9890;">
+              © 2025 SciConnect · Marrakech, Maroc · Projet académique ENCGM
+            </p>
+          </td>
+        </tr>
+
+      </table>
+      <!-- /Carte email -->
+
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>

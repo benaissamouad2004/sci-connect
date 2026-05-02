@@ -1,0 +1,32 @@
+{
+  "landing": {
+    "hero_title_line1": "La recherche étudiante,",
+    "hero_title_line2": "rendue collaborative.",
+    "hero_subtitle": "Dépose ton questionnaire Google Forms, touche les bons répondants, suis les réponses en temps réel et valide chaque contribution. Une seule règle : réponds à 2 questionnaires avant de déposer.",
+    "slogan": "Par les étudiants, pour les étudiants",
+    "cta_primary": "Continuer avec Google — c'est gratuit",
+    "cta_secondary": "Explorer les questionnaires",
+    "stats_students": "1 200+",
+    "stats_students_label": "étudiants inscrits",
+    "stats_questionnaires": "340",
+    "stats_questionnaires_label": "questionnaires actifs",
+    "stats_completion": "92%",
+    "stats_completion_label": "taux de complétion moyen",
+    "stats_rule": "2 réponses",
+    "stats_rule_label": "pour déposer le vôtre"
+  },
+  "dashboard": {
+    "welcome_message": "Bonjour",
+    "feed_title": "Pour toi",
+    "feed_subtitle": "Selon tes intérêts",
+    "deposit_locked_message": "Réponds à 2 questionnaires pour débloquer le dépôt.",
+    "deposit_half_message": "Encore 1 réponse avant de déposer !",
+    "deposit_unlocked_message": "Dépôt autorisé ce mois ✓"
+  },
+  "rules": {
+    "responses_required": 2,
+    "points_per_response": 10,
+    "founder_free_deposits": 1,
+    "max_founders": 50
+  }
+}

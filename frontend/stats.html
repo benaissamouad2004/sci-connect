@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Statistiques — SciConnect</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ═══ STATS PAGE ═══ */
+
+    .st-shell {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 100vh;
+    }
+
+    .st-main {
+      overflow-y: auto;
+      background-color: var(--color-bg);
+    }
+
+    .st-inner {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 28px 28px 64px;
+    }
+
+    /* ── Breadcrumb ── */
+    .st-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: var(--color-text-muted);
+      margin-bottom: 18px;
+    }
+
+    .st-breadcrumb a {
+      color: var(--color-text-secondary);
+      text-decoration: none;
+    }
+
+    .st-breadcrumb a:hover { color: var(--color-primary); }
+    .st-breadcrumb-sep { font-size: 0.9rem; }
+    .st-breadcrumb-current { color: var(--color-text); font-weight: 500; }
+
+    /* ── Header ── */
+    .st-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .st-header-left { flex: 1; min-width: 0; }
+
+    .st-header-title {
+      font-family: var(--font-display);
+      font-size: 1.65rem;
+      font-weight: 700;
+      color: var(--color-text);
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+
+    .st-header-meta {
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+    }
+
+    .st-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .st-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      font-family: var(--font-ui);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+    }
+
+    .st-btn--outline {
+      background-color: var(--color-surface);
+      border: 1.5px solid var(--color-border);
+      color: var(--color-text-secondary);
+    }
+
+    .st-btn--outline:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+
+    .st-btn--teal {
+      background-color: var(--color-primary);
+      border: 1.5px solid var(--color-primary);
+      color: var(--color-surface);
+    }
+
+    .st-btn--teal:hover { background-color: var(--color-primary-hover); border-color: var(--color-primary-hover); }
+
+    .st-export-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--color-success);
+      animation: stPulse 1.8s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes stPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.75); }
+    }
+
+    /* ── 4 Metric Cards ── */
+    .st-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .st-metric-card {
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+    }
+
+    .st-metric-card:nth-child(1) { background-color: var(--color-primary-light); }
+    .st-metric-card:nth-child(2) { background-color: var(--color-surface-2); }
+    .st-metric-card:nth-child(3) { background-color: var(--color-accent-light); }
+    .st-metric-card:nth-child(4) { background-color: var(--color-surface-2); }
+
+    .st-metric-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--color-text-muted);
+      margin-bottom: 10px;
+    }
+
+    .st-metric-value {
+      font-family: var(--font-display);
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: var(--color-text);
+      line-height: 1;
+      margin-bottom: 5px;
+    }
+
+    .st-metric-value.primary { color: var(--color-primary); }
+    .st-metric-value.gold    { color: var(--color-accent); }
+    .st-metric-value.success { color: var(--color-success); }
+
+    .st-metric-sub {
+      font-size: 0.76rem;
+      color: var(--color-text-muted);
+    }
+
+    .st-metric-bar {
+      height: 3px;
+      background-color: var(--color-border);
+      border-radius: 100px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .st-metric-bar-fill {
+      height: 100%;
+      background-color: var(--color-primary);
+      border-radius: 100px;
+      transition: width 0.9s cubic-bezier(0.22,1,0.36,1);
+    }
+
+    .st-metric-dots {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-top: 6px;
+    }
+
+    .st-metric-dot-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.74rem;
+      color: var(--color-text-secondary);
+    }
+
+    .st-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── 2-Column Layout ── */
+    .st-body {
+      display: grid;
+      grid-template-columns: 55% 45%;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .st-col-left  { display: flex; flex-direction: column; gap: 16px; }
+    .st-col-right { display: flex; flex-direction: column; gap: 16px; }
+
+    /* ── Cards ── */
+    .st-card {
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      padding: 20px;
+    }
+
+    .st-card-title {
+      font-size: 0.74rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--color-text-muted);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .st-chart-container { height: 240px; position: relative; }
+
+    /* ── Conseil prescriptif ── */
+    .st-conseil {
+      background-color: var(--color-half-bg);
+      border: 1px solid var(--color-half-border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      font-size: 0.83rem;
+      color: var(--color-half-text);
+      display: none;
+    }
+
+    .st-conseil-title {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    /* ── SVG Maroc ── */
+    .st-map-svg-wrap {
+      display: flex;
+      justify-content: center;
+    }
+
+    .st-map-svg { width: 100%; max-width: 280px; }
+
+    .st-map-legend {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 12px;
+      font-size: 0.74rem;
+      color: var(--color-text-muted);
+      justify-content: center;
+    }
+
+    .st-map-legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 5px;
+    }
+
+    /* ── Benchmark ── */
+    .st-bench-row {
+      margin-bottom: 16px;
+    }
+
+    .st-bench-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: var(--color-text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .st-bench-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .st-bench-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .st-bench-bar-track {
+      flex: 1;
+      height: 8px;
+      background-color: var(--color-surface-2);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+
+    .st-bench-bar-fill {
+      height: 100%;
+      border-radius: 100px;
+      transition: width 0.8s ease;
+    }
+
+    .st-bench-bar-fill--mine { background-color: var(--color-primary); }
+    .st-bench-bar-fill--comm { background-color: var(--color-border); }
+
+    .st-bench-bar-val {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      min-width: 36px;
+      text-align: right;
+    }
+
+    .st-bench-verdict {
+      font-size: 0.78rem;
+      font-weight: 600;
+      margin-top: 4px;
+      padding: 2px 8px;
+      border-radius: 100px;
+      display: inline-block;
+    }
+
+    .st-bench-verdict--good { background-color: var(--color-unlocked-bg); color: var(--color-unlocked-text); }
+    .st-bench-verdict--low  { background-color: var(--color-half-bg);    color: var(--color-half-text);    }
+
+    /* ── Responses Table ── */
+    .st-table-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .st-table-wrap { overflow-x: auto; }
+
+    .st-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+    }
+
+    .st-table th {
+      padding: 9px 12px;
+      text-align: left;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--color-text-muted);
+      background-color: var(--color-primary-light);
+      border-bottom: 1px solid var(--color-border);
+      white-space: nowrap;
+    }
+
+    .st-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--color-border);
+      vertical-align: middle;
+    }
+
+    .st-table tr:last-child td { border-bottom: none; }
+    .st-table tr:hover td { background-color: var(--color-primary-light); }
+
+    .st-action-btn {
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-ui);
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1.5px solid;
+      transition: all var(--transition);
+    }
+
+    .st-action-btn--validate {
+      background-color: var(--color-unlocked-bg);
+      border-color: var(--color-unlocked-border);
+      color: var(--color-unlocked-text);
+    }
+
+    .st-action-btn--validate:hover {
+      background-color: var(--color-unlocked-border);
+      color: var(--color-surface);
+    }
+
+    .st-action-btn--ignore {
+      background-color: var(--color-surface-2);
+      border-color: var(--color-border);
+      color: var(--color-text-secondary);
+    }
+
+    .st-action-btn--ignore:hover { border-color: var(--color-text-muted); color: var(--color-text); }
+
+    /* ── Pagination ── */
+    .st-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 14px;
+      font-size: 0.78rem;
+      color: var(--color-text-muted);
+    }
+
+    .st-pagination-btns {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .st-page-btn {
+      padding: 5px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 0.78rem;
+      font-weight: 600;
+      font-family: var(--font-ui);
+      cursor: pointer;
+      border: 1.5px solid var(--color-border);
+      background-color: var(--color-surface);
+      color: var(--color-text-secondary);
+      transition: all var(--transition);
+    }
+
+    .st-page-btn:hover:not(:disabled) { border-color: var(--color-primary); color: var(--color-primary); }
+    .st-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Export Panel ── */
+    .st-export-card {
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-left: 4px solid var(--color-accent);
+      border-radius: var(--radius-xl);
+      padding: 20px;
+    }
+
+    .st-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .st-tab-btn {
+      padding: 7px 14px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-ui);
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1.5px solid var(--color-border);
+      background-color: var(--color-surface);
+      color: var(--color-text-secondary);
+      transition: all var(--transition);
+    }
+
+    .st-tab-btn.active {
+      background-color: var(--color-primary);
+      border-color: var(--color-primary);
+      color: var(--color-surface);
+    }
+
+    .st-tab-btn:not(.active):hover { border-color: var(--color-primary); color: var(--color-primary); }
+
+    .st-tab-panel { display: none; }
+    .st-tab-panel.active { display: block; }
+
+    .st-tab-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+    }
+
+    .st-tab-col-item::before { content: "· "; color: var(--color-primary); font-weight: 700; }
+
+    .st-export-options {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .st-export-selects {
+      display: flex;
+      gap: 8px;
+    }
+
+    .st-select {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-ui);
+      font-size: 0.8rem;
+      color: var(--color-text);
+      background-color: var(--color-surface);
+      cursor: pointer;
+    }
+
+    .st-download-btn {
+      width: 100%;
+      padding: 11px;
+      background-color: var(--color-primary);
+      color: var(--color-surface);
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: var(--font-ui);
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .st-download-btn:hover { background-color: var(--color-primary-hover); }
+
+    .st-export-note {
+      font-size: 0.72rem;
+      color: var(--color-text-muted);
+      text-align: center;
+    }
+
+    .st-pdf-link {
+      font-size: 0.78rem;
+      color: var(--color-primary);
+      text-decoration: none;
+      text-align: center;
+      display: block;
+    }
+
+    .st-pdf-link:hover { text-decoration: underline; }
+
+    /* ── Methodological Paragraph ── */
+    .st-methodo {
+      background-color: var(--color-surface-2);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      margin-top: 12px;
+    }
+
+    .st-methodo-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--color-text-muted);
+      margin-bottom: 8px;
+    }
+
+    .st-methodo-text {
+      font-size: 0.78rem;
+      color: var(--color-text-secondary);
+      line-height: 1.65;
+      margin-bottom: 10px;
+    }
+
+    .st-copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background-color: var(--color-primary);
+      color: var(--color-surface);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-ui);
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .st-copy-btn:hover { background-color: var(--color-primary-hover); }
+
+    /* ── Empty / Error States ── */
+    .st-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--color-text-muted);
+    }
+
+    .st-empty-icon { font-size: 2.2rem; margin-bottom: 12px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 1100px) {
+      .st-body { grid-template-columns: 1fr; }
+      .st-metrics-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 900px) {
+      .st-shell { grid-template-columns: 1fr; }
+      .sidebar  { display: none; }
+    }
+
+    @media (max-width: 600px) {
+      .st-inner { padding: 16px 14px 48px; }
+      .st-header { flex-direction: column; gap: 12px; }
+      .st-header-actions { width: 100%; flex-wrap: wrap; }
+      .st-metrics-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="st-shell">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar" role="navigation" aria-label="Navigation principale">
+
+    <div class="sidebar-logo">
+      <a href="index.html" class="sidebar-logo-link">SciConnect</a>
+    </div>
+
+    <div class="sidebar-identity-card" id="sidebar-identity-card">
+      <div class="identity-top-row">
+        <div class="identity-avatar-wrap">
+          <div class="identity-avatar" id="identity-avatar">?</div>
+          <div class="identity-verified-badge">✓ Étudiant vérifié</div>
+        </div>
+        <div class="identity-ring-wrap">
+          <svg class="identity-ring" width="56" height="56" viewBox="0 0 56 56" aria-hidden="true">
+            <circle class="ring-track" cx="28" cy="28" r="22" fill="none" stroke-width="3"/>
+            <circle class="ring-fill" id="ring-fill" cx="28" cy="28" r="22" fill="none" stroke-width="3"
+              stroke-dasharray="138.2" stroke-dashoffset="138.2"
+              stroke-linecap="round" transform="rotate(-90 28 28)"/>
+            <text class="ring-label" x="28" y="32" text-anchor="middle" id="ring-badge-text">⭐</text>
+          </svg>
+          <div class="identity-pts-pill" id="identity-pts">★ 0 pts</div>
+        </div>
+      </div>
+      <div class="identity-name" id="identity-name">Chargement...</div>
+      <div class="identity-meta" id="identity-meta"></div>
+    </div>
+
+    <div class="sidebar-reciprocity" id="sidebar-reciprocity">
+      <div class="sidebar-recip-label">STATUT DE DÉPÔT</div>
+      <div id="sidebar-recip-content"></div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">PRINCIPAL</div>
+      <a href="dashboard.html" class="sidebar-nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Mon feed
+      </a>
+      <a href="#" class="sidebar-nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        Explorer
+      </a>
+
+      <div class="nav-section-title" style="margin-top:10px">MES QUESTIONNAIRES</div>
+      <a href="deposit.html" class="sidebar-nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Déposer un formulaire
+      </a>
+      <a href="stats.html" class="sidebar-nav-item active" aria-current="page">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Mes questionnaires
+        <div class="nav-active-bar"></div>
+      </a>
+      <a href="profile.html" class="sidebar-nav-item" id="nav-profile">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Mon profil public
+      </a>
+
+      <div class="nav-section-title" style="margin-top:10px">PROGRESSION</div>
+      <a href="leaderboard.html" class="sidebar-nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6l4-4 4 4m-4-4v14"/><path d="M4 18h16"/></svg>
+        Classement
+      </a>
+
+      <div class="nav-section-title" style="margin-top:10px">COMPTE</div>
+      <a href="#" class="sidebar-nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Paramètres
+      </a>
+      <button class="sidebar-nav-item sidebar-nav-btn" onclick="logout()">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        Déconnexion
+      </button>
+    </nav>
+  </aside>
+
+  <!-- ═══ CONTENU PRINCIPAL ═══ -->
+  <main class="st-main" role="main">
+    <div class="st-inner" id="st-main-content">
+
+      <!-- BREADCRUMB -->
+      <nav class="st-breadcrumb" aria-label="Fil d'ariane">
+        <a href="dashboard.html">Tableau de bord</a>
+        <span class="st-breadcrumb-sep" aria-hidden="true">›</span>
+        <a href="deposit.html">Mes questionnaires</a>
+        <span class="st-breadcrumb-sep" aria-hidden="true">›</span>
+        <span class="st-breadcrumb-current">Statistiques</span>
+      </nav>
+
+      <!-- HEADER -->
+      <div class="st-header">
+        <div class="st-header-left">
+          <!-- EDITABLE: titre depuis GET /api/forms/:id → title -->
+          <h1 class="st-header-title" id="st-title">Chargement...</h1>
+          <div class="st-header-meta" id="st-meta"></div>
+        </div>
+        <div class="st-header-actions">
+          <button class="st-btn st-btn--outline" onclick="shareLink()" aria-label="Partager le lien">
+            ↗ Partager le lien
+          </button>
+          <button class="st-btn st-btn--outline" onclick="generatePdf()" aria-label="Rapport PDF">
+            📄 Rapport PDF
+          </button>
+          <!-- EDITABLE: label depuis admin/settings.json → buttons.export_button_label -->
+          <button class="st-btn st-btn--teal" id="export-btn" onclick="exportExcel()" aria-label="Exporter en Excel">
+            <span class="st-export-dot" aria-hidden="true"></span>
+            <span data-setting="buttons.export_button_label">⬇ Exporter Excel</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 4 METRIC CARDS -->
+      <div class="st-metrics-grid" aria-label="Métriques du questionnaire">
+
+        <div class="st-metric-card">
+          <div class="st-metric-label">Total réponses</div>
+          <!-- EDITABLE: valeur depuis GET /api/forms/:id/stats → total_responses -->
+          <div class="st-metric-value primary" id="metric-total">—</div>
+          <div class="st-metric-sub" id="metric-goal-sub">sur — visées</div>
+          <div class="st-metric-bar">
+            <div class="st-metric-bar-fill" id="metric-goal-bar" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div class="st-metric-card">
+          <div class="st-metric-label">Taux de complétion</div>
+          <!-- EDITABLE: valeur depuis GET /api/forms/:id/stats → avg_completion -->
+          <div class="st-metric-value gold" id="metric-completion">—</div>
+          <div class="st-metric-sub" id="metric-complete-sub">— complètes · — abandonnées</div>
+        </div>
+
+        <div class="st-metric-card">
+          <div class="st-metric-label">Types de répondants</div>
+          <!-- EDITABLE: valeurs depuis GET /api/forms/:id/stats → verified, public -->
+          <div class="st-metric-value success" id="metric-verified">—</div>
+          <div class="st-metric-dots" id="metric-type-dots">
+            <div class="st-metric-dot-row">
+              <span class="st-dot" style="background:var(--color-primary)"></span>
+              <span id="dot-verified">— vérifiés</span>
+            </div>
+            <div class="st-metric-dot-row">
+              <span class="st-dot" style="background:var(--color-accent)"></span>
+              <span id="dot-public">— public général</span>
+            </div>
+            <div class="st-metric-dot-row">
+              <span class="st-dot" style="background:var(--color-border)"></span>
+              <span id="dot-anon">— anonymes</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="st-metric-card">
+          <div class="st-metric-label">Objectif atteint</div>
+          <!-- EDITABLE: valeur depuis GET /api/forms/:id/stats → pct_of_goal -->
+          <div class="st-metric-value" id="metric-goal">—</div>
+          <div class="st-metric-sub" id="metric-validated-sub">— validées par émetteur</div>
+        </div>
+
+      </div>
+
+      <!-- 2-COLUMN LAYOUT -->
+      <div class="st-body">
+
+        <!-- ══ COLONNE GAUCHE 55% ══ -->
+        <div class="st-col-left">
+
+          <!-- Graphique complétion par question -->
+          <div class="st-card">
+            <div class="st-card-title">
+              Avancement par question
+              <!-- EDITABLE: pill orange si chute détectée -->
+              <span class="pill pill-gold" id="dropoff-pill" style="display:none;font-size:0.7rem">⚠ Point de chute identifié</span>
+            </div>
+            <div class="st-chart-container">
+              <canvas id="completion-chart" aria-label="Graphique d'avancement par question"></canvas>
+            </div>
+          </div>
+
+          <!-- Conseil prescriptif (affiché si chute détectée) -->
+          <!-- EDITABLE: affiché si taux de chute > 20% entre deux questions -->
+          <div class="st-conseil" id="st-conseil" role="alert" aria-live="polite">
+            <div class="st-conseil-title" id="conseil-title">⚠ Point de chute détecté</div>
+            <div id="conseil-body"></div>
+            <div style="margin-top:6px;font-size:0.8rem">💡 Essaie de la rendre facultative ou reformule-la.</div>
+          </div>
+
+          <!-- Carte SVG Maroc -->
+          <div class="st-card">
+            <div class="st-card-title">Répartition géographique</div>
+            <div class="st-map-svg-wrap">
+              <!-- SVG Maroc simplifié — viewBox calibré pour la géographie marocaine -->
+              <svg class="st-map-svg" viewBox="0 0 320 380" fill="none"
+                   xmlns="http://www.w3.org/2000/svg" aria-label="Carte du Maroc">
+                <!-- Contour Maroc simplifié -->
+                <path d="
+                  M 198,22
+                  L 240,16
+                  L 268,26
+                  L 295,44
+                  L 306,82
+                  L 300,128
+                  L 290,175
+                  L 265,238
+                  L 238,315
+                  L 178,358
+                  L 92,352
+                  L 54,315
+                  L 36,262
+                  L 32,208
+                  L 40,162
+                  L 48,130
+                  L 50,100
+                  L 62,72
+                  L 88,48
+                  L 140,30
+                  Z
+                " stroke="var(--color-border)" stroke-width="1.5"
+                  fill="var(--color-surface-2)" stroke-linejoin="round"/>
+
+                <!-- ─ Villes : cercles proportionnels mis à jour par JS ─ -->
+                <!-- Rabat (~48, 130) -->
+                <circle id="city-rabat" cx="60" cy="128" r="0"
+                  fill="var(--color-primary)" opacity="0.75" class="city-circle"/>
+                <text id="city-rabat-label" x="65" y="128"
+                  font-family="DM Sans, sans-serif" font-size="10" fill="var(--color-text-secondary)"
+                  dominant-baseline="middle" style="display:none">Rabat · 0 rép.</text>
+
+                <!-- Casablanca (~50, 150) -->
+                <circle id="city-casablanca" cx="52" cy="155" r="0"
+                  fill="var(--color-primary)" opacity="0.75" class="city-circle"/>
+                <text id="city-casablanca-label" x="57" y="155"
+                  font-family="DM Sans, sans-serif" font-size="10" fill="var(--color-text-secondary)"
+                  dominant-baseline="middle" style="display:none">Casablanca · 0 rép.</text>
+
+                <!-- Fès (~190, 80) -->
+                <circle id="city-fes" cx="192" cy="82" r="0"
+                  fill="var(--color-primary)" opacity="0.75" class="city-circle"/>
+                <text id="city-fes-label" x="197" y="82"
+                  font-family="DM Sans, sans-serif" font-size="10" fill="var(--color-text-secondary)"
+                  dominant-baseline="middle" style="display:none">Fès · 0 rép.</text>
+
+                <!-- Marrakech (~128, 225) -->
+                <circle id="city-marrakech" cx="130" cy="228" r="0"
+                  fill="var(--color-primary)" opacity="0.75" class="city-circle"/>
+                <text id="city-marrakech-label" x="135" y="228"
+                  font-family="DM Sans, sans-serif" font-size="10" fill="var(--color-text-secondary)"
+                  dominant-baseline="middle" style="display:none">Marrakech · 0 rép.</text>
+
+                <!-- Agadir (~60, 300) -->
+                <circle id="city-agadir" cx="62" cy="302" r="0"
+                  fill="var(--color-primary)" opacity="0.75" class="city-circle"/>
+                <text id="city-agadir-label" x="67" y="302"
+                  font-family="DM Sans, sans-serif" font-size="10" fill="var(--color-text-secondary)"
+                  dominant-baseline="middle" style="display:none">Agadir · 0 rép.</text>
+              </svg>
+            </div>
+            <div class="st-map-legend">
+              <span><span class="st-map-legend-dot" style="background:var(--color-primary)"></span>Étudiant vérifié</span>
+              <span><span class="st-map-legend-dot" style="background:var(--color-accent)"></span>Public général</span>
+            </div>
+            <div id="map-empty" style="text-align:center;font-size:0.78rem;color:var(--color-text-muted);margin-top:8px;display:none">
+              Données géographiques indisponibles — répondants sans ville renseignée
+            </div>
+          </div>
+
+          <!-- Benchmark communauté -->
+          <div class="st-card" id="benchmark-card">
+            <div class="st-card-title">Comparaison avec la communauté</div>
+            <div id="benchmark-body">
+              <div style="text-align:center;padding:24px;color:var(--color-text-muted);font-size:0.82rem">
+                Chargement du benchmark...
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ══ COLONNE DROITE 45% ══ -->
+        <div class="st-col-right">
+
+          <!-- Tableau répondants -->
+          <div class="st-card">
+            <div class="st-table-header">
+              <div class="st-card-title" style="margin-bottom:0">Répondants</div>
+            </div>
+            <div class="st-table-wrap">
+              <table class="st-table" aria-label="Tableau des réponses">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Date</th>
+                    <th>Complétion</th>
+                    <th>Statut</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <!-- EDITABLE: rempli par renderResponsesTable() -->
+                <tbody id="responses-tbody">
+                  <tr>
+                    <td colspan="5" style="text-align:center;padding:32px;color:var(--color-text-muted)">
+                      Chargement...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <!-- Pagination -->
+            <div class="st-pagination" id="st-pagination" style="display:none">
+              <span id="pagination-info"></span>
+              <div class="st-pagination-btns">
+                <button class="st-page-btn" id="btn-prev" onclick="changePage(-1)" disabled>← Préc.</button>
+                <span id="pagination-pages" style="font-size:0.78rem;color:var(--color-text-muted)"></span>
+                <button class="st-page-btn" id="btn-next" onclick="changePage(1)">Suiv. →</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Panel Export -->
+          <div class="st-export-card">
+            <div class="st-card-title" style="margin-bottom:14px">
+              Exporter les données enrichies
+            </div>
+
+            <!-- 4 onglets visuels -->
+            <!-- EDITABLE: 4 feuilles Excel décrites dans admin/content.json si besoin -->
+            <div class="st-tabs" role="tablist">
+              <button class="st-tab-btn active" role="tab" aria-selected="true"
+                      onclick="switchTab('brutes', this)">📊 Données brutes</button>
+              <button class="st-tab-btn" role="tab"
+                      onclick="switchTab('stats', this)">📈 Statistiques auto</button>
+              <button class="st-tab-btn" role="tab"
+                      onclick="switchTab('profils', this)">👥 Profils démo</button>
+              <button class="st-tab-btn" role="tab"
+                      onclick="switchTab('fiabilite', this)">✅ Fiabilité</button>
+            </div>
+
+            <!-- Contenu onglet 1 -->
+            <div class="st-tab-panel active" id="tab-brutes">
+              <div class="st-tab-cols">
+                <div class="st-tab-col-item">Email Google</div>
+                <div class="st-tab-col-item">Type répondant</div>
+                <div class="st-tab-col-item">Université</div>
+                <div class="st-tab-col-item">École</div>
+                <div class="st-tab-col-item">Filière</div>
+                <div class="st-tab-col-item">Niveau</div>
+                <div class="st-tab-col-item">Date soumission</div>
+                <div class="st-tab-col-item">Complétion (%)</div>
+                <div class="st-tab-col-item">Statut validation</div>
+              </div>
+            </div>
+
+            <!-- Contenu onglet 2 -->
+            <div class="st-tab-panel" id="tab-stats">
+              <div class="st-tab-cols">
+                <div class="st-tab-col-item">Résumé global</div>
+                <div class="st-tab-col-item">% étudiants vérifiés</div>
+                <div class="st-tab-col-item">% public général</div>
+                <div class="st-tab-col-item">Complétion moyenne</div>
+                <div class="st-tab-col-item">Validées par émetteur</div>
+                <div class="st-tab-col-item">Objectif atteint</div>
+              </div>
+              <div style="font-size:0.72rem;color:var(--color-text-muted);margin-top:8px">
+                + Graphique camembert prêt à copier dans Word/PowerPoint
+              </div>
+            </div>
+
+            <!-- Contenu onglet 3 -->
+            <div class="st-tab-panel" id="tab-profils">
+              <div class="st-tab-cols">
+                <div class="st-tab-col-item">Par université (barres)</div>
+                <div class="st-tab-col-item">Par niveau (camembert)</div>
+                <div class="st-tab-col-item">Par domaine (horizontal)</div>
+                <div class="st-tab-col-item">Par ville (tableau)</div>
+              </div>
+              <div style="font-size:0.72rem;color:var(--color-text-muted);margin-top:8px">
+                Graphiques openpyxl auto-générés inclus
+              </div>
+            </div>
+
+            <!-- Contenu onglet 4 -->
+            <div class="st-tab-panel" id="tab-fiabilite">
+              <div class="st-tab-cols">
+                <div class="st-tab-col-item">Complètes vs abandonnées</div>
+                <div class="st-tab-col-item">Par statut vérification</div>
+                <div class="st-tab-col-item">Validées / ignorées</div>
+                <div class="st-tab-col-item">Répondants suspects</div>
+              </div>
+              <div style="font-size:0.72rem;color:var(--color-text-muted);margin-top:8px">
+                Suspects (complétion &lt; 30%) surlignés en rouge
+              </div>
+            </div>
+
+            <!-- Options export -->
+            <div class="st-export-options">
+              <div class="st-export-selects">
+                <select class="st-select" aria-label="Format d'export">
+                  <option>Excel (.xlsx)</option>
+                </select>
+                <select class="st-select" aria-label="Filtre des réponses">
+                  <option>Toutes les réponses</option>
+                  <option>Vérifiées uniquement</option>
+                  <option>Validées uniquement</option>
+                </select>
+              </div>
+              <!-- EDITABLE: label depuis admin/settings.json → buttons.export_button_label -->
+              <button class="st-download-btn" id="export-btn-main" onclick="exportExcel()">
+                ⬇ Télécharger le fichier Excel complet
+              </button>
+              <div class="st-export-note" id="export-note">
+                — lignes · 4 feuilles · graphiques inclus
+              </div>
+              <a href="#" class="st-pdf-link" onclick="generatePdf(); return false">
+                📄 Générer aussi le rapport PDF
+              </a>
+            </div>
+
+            <!-- Paragraphe méthodologique -->
+            <div class="st-methodo">
+              <div class="st-methodo-label">Paragraphe méthodologique</div>
+              <!-- EDITABLE: texte généré depuis les données du questionnaire -->
+              <div class="st-methodo-text" id="methodo-text">
+                Les données seront disponibles après chargement du questionnaire.
+              </div>
+              <button class="st-copy-btn" onclick="copyParagraph()" aria-label="Copier le paragraphe">
+                📋 Copier ce paragraphe
+              </button>
+            </div>
+
+          </div>
+
+        </div><!-- /col-right -->
+
+      </div><!-- /st-body -->
+
+    </div><!-- /st-inner -->
+  </main>
+
+</div><!-- /st-shell -->
+
+<script src="js/main.js"></script>
+<script src="js/stats.js"></script>
+</body>
+</html>

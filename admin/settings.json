@@ -1,0 +1,25 @@
+{
+  "buttons": {
+    "respond_button_label": "Répondre",
+    "deposit_button_locked_label": "Dépôt verrouillé 🔒",
+    "deposit_button_half_label": "Presque là... (1/2) 🔓",
+    "deposit_button_unlocked_label": "Publier mon questionnaire →",
+    "export_button_label": "⬇ Exporter en Excel",
+    "google_signin_label": "Continuer avec Google",
+    "validate_button_label": "Valider",
+    "ignore_button_label": "Ignorer"
+  },
+  "features": {
+    "public_responses_enabled": true,
+    "founder_mode_active": true,
+    "monthly_reset_day": 1,
+    "live_counter_refresh_seconds": 30,
+    "min_respond_seconds": 90
+  },
+  "points": {
+    "response_complete": 10,
+    "response_bonus_fast": 5,
+    "streak_bonus": 20,
+    "deposit_reward": 5
+  }
+}

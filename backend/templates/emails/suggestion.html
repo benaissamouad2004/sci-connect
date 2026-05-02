@@ -1,0 +1,94 @@
+{% extends 'emails/base_email.html' %}
+{% block title %}3 questionnaires t'attendent · SciConnect{% endblock %}
+
+{% block content %}
+<!-- EDITABLE: email de suggestions hebdomadaires -->
+
+<!-- Titre -->
+<p style="margin:0 0 6px;font-size:20px;font-weight:700;color:#181816;font-family:Georgia,serif;">
+  3 questionnaires dans ton domaine t'attendent 📚
+</p>
+<p style="margin:0 0 20px;font-size:14px;color:#57564F;">
+  Bonjour {{ user.name.split()[0] if user.name else '' }}, voici les questionnaires de la semaine
+  {% if user.domains and user.domains[0] %}en <strong>{{ user.domains[0] }}</strong>{% endif %} :
+</p>
+
+<!-- 3 cartes questionnaires inline -->
+<!-- EDITABLE: rendu dynamique depuis la liste des formulaires suggérés -->
+{% for form in forms %}
+<table width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="margin-bottom:12px;border:1px solid #E2DED6;border-radius:10px;overflow:hidden;">
+  <tr>
+    <!-- Bande domaine gauche 4px -->
+    <td width="4" style="background-color:#005F54;border-radius:10px 0 0 10px;">&nbsp;</td>
+    <td style="padding:14px 16px;">
+      <!-- Titre -->
+      <p style="margin:0 0 5px;font-size:14px;font-weight:600;color:#181816;">
+        {{ form.title }}
+      </p>
+      <!-- Meta -->
+      <p style="margin:0 0 10px;font-size:12px;color:#9A9890;">
+        {% if form.school_id %}{{ form.school_id }}{% endif %}
+        {% if form.domain %} · {{ form.domain }}{% endif %}
+        {% if form.target_level %} · {{ form.target_level }}{% endif %}
+      </p>
+      <!-- Chips -->
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          {% if form.target_count %}
+          <td style="padding-right:8px;">
+            <span style="background-color:#E8F5F3;color:#005F54;font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;">
+              {{ form.target_count }} participants
+            </span>
+          </td>
+          {% endif %}
+          <td>
+            <span style="background-color:#FDF8EC;color:#BA6A1A;font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;">
+              +10 pts
+            </span>
+          </td>
+        </tr>
+      </table>
+    </td>
+    <!-- Bouton répondre -->
+    <td style="padding:14px 16px;text-align:right;vertical-align:middle;">
+      <a href="http://localhost:5000/respond.html?id={{ form.id }}"
+         style="display:inline-block;padding:8px 16px;background-color:#005F54;color:#FFFFFF;text-decoration:none;border-radius:8px;font-size:12px;font-weight:700;font-family:Arial,sans-serif;white-space:nowrap;">
+        Répondre →
+      </a>
+    </td>
+  </tr>
+</table>
+{% endfor %}
+
+<!-- Note réciprocité -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:16px 0;">
+  <tr>
+    <td style="background-color:#FEF3F2;border:1px solid #C0392B;border-radius:8px;padding:12px 16px;">
+      <p style="margin:0;font-size:12px;color:#C0392B;">
+        🔒 Rappel : réponds à <strong>2 questionnaires</strong> pour débloquer ton droit de dépôt ce mois.
+      </p>
+    </td>
+  </tr>
+</table>
+
+<!-- Bouton principal -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
+  <tr>
+    <td align="center">
+      <a href="{{ dashboard_url }}"
+         style="display:inline-block;padding:13px 28px;background-color:#005F54;color:#FFFFFF;text-decoration:none;border-radius:10px;font-size:13px;font-weight:700;font-family:Arial,sans-serif;">
+        Voir tous les questionnaires →
+      </a>
+    </td>
+  </tr>
+</table>
+
+<!-- Désinscription -->
+<p style="margin:0;text-align:center;font-size:11px;color:#9A9890;">
+  <a href="{{ dashboard_url }}" style="color:#9A9890;text-decoration:underline;">
+    Ne plus recevoir ces suggestions
+  </a>
+</p>
+
+{% endblock %}

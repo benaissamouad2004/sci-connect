@@ -1,0 +1,40 @@
+{
+  "universities": [
+    {
+      "id": "uca",
+      "name": "Université Cadi Ayyad",
+      "short": "UCA",
+      "city": "Marrakech",
+      "color": "#005F54",
+      "schools": [
+        {"id": "encg-mk",      "name": "ENCG Marrakech",                      "short": "ENCG MK"},
+        {"id": "fsjes-gueliz", "name": "FSJES Guéliz",                         "short": "FSJES"},
+        {"id": "fs-semlalia",  "name": "Faculté des Sciences Semlalia",        "short": "FS Semlalia"},
+        {"id": "fmpm",         "name": "Faculté de Médecine et Pharmacie",     "short": "FMPM"},
+        {"id": "flsh",         "name": "FLSH Marrakech",                       "short": "FLSH"},
+        {"id": "estav",        "name": "ESTAV Marrakech",                      "short": "ESTAV"},
+        {"id": "enp",          "name": "ENP Marrakech",                        "short": "ENP"},
+        {"id": "fst",          "name": "FST Marrakech",                        "short": "FST"},
+        {"id": "ensa-mk",      "name": "ENSA Marrakech",                       "short": "ENSA MK"}
+      ]
+    },
+    {
+      "id": "uh2",
+      "name": "Université Hassan II",
+      "short": "UH2",
+      "city": "Casablanca",
+      "color": "#C9A84C",
+      "schools": [
+        {"id": "encg-casa",  "name": "ENCG Casablanca",               "short": "ENCG Casa"},
+        {"id": "fsjes-bm",   "name": "FSJES Ben M'Sik",               "short": "FSJES BM"},
+        {"id": "fsjes-ac",   "name": "FSJES Aïn Chock",               "short": "FSJES AC"},
+        {"id": "fmp-uh2",    "name": "Faculté de Médecine UH2",       "short": "FMP UH2"},
+        {"id": "fs-uh2",     "name": "Faculté des Sciences UH2",      "short": "FS UH2"},
+        {"id": "emi",        "name": "EMI Casablanca",                "short": "EMI"},
+        {"id": "insa-casa",  "name": "INSA Casablanca",               "short": "INSA"},
+        {"id": "est-casa",   "name": "EST Casablanca",                "short": "EST"},
+        {"id": "hem",        "name": "HEM Business School",           "short": "HEM"}
+      ]
+    }
+  ]
+}

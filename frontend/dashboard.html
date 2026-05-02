@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — SciConnect</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <link rel="stylesheet" href="css/components.css" />
+</head>
+<body>
+
+<div class="dash-shell">
+
+  <!-- ═══════════════════════════════════════════════════════
+       SIDEBAR GAUCHE 280px
+       ═══════════════════════════════════════════════════════ -->
+  <aside class="sidebar" role="navigation" aria-label="Navigation principale">
+
+    <!-- Logo -->
+    <div class="sidebar-logo">
+      <a href="index.html" class="sidebar-logo-link">SciConnect</a>
+    </div>
+
+    <!-- ── CARTE IDENTITÉ UTILISATEUR ── -->
+    <div class="sidebar-identity-card" id="sidebar-identity-card">
+      <div class="identity-top-row">
+        <div class="identity-avatar-wrap">
+          <!-- EDITABLE: photo Google chargée dynamiquement par renderIdentityCard() -->
+          <div class="identity-avatar" id="identity-avatar">?</div>
+          <!-- EDITABLE: badge vérifié — visible si l'utilisateur a un email académique -->
+          <div class="identity-verified-badge">✓ Étudiant vérifié</div>
+        </div>
+        <!-- CIRCULAR PROGRESS RING SVG — animé selon le badge_level -->
+        <div class="identity-ring-wrap">
+          <svg class="identity-ring" width="56" height="56" viewBox="0 0 56 56" aria-hidden="true">
+            <circle class="ring-track" cx="28" cy="28" r="22" fill="none" stroke-width="3"/>
+            <circle class="ring-fill" id="ring-fill" cx="28" cy="28" r="22" fill="none" stroke-width="3"
+              stroke-dasharray="138.2" stroke-dashoffset="138.2"
+              stroke-linecap="round" transform="rotate(-90 28 28)"/>
+            <text class="ring-label" x="28" y="32" text-anchor="middle" id="ring-badge-text">⭐</text>
+          </svg>
+          <!-- EDITABLE: pts depuis user.points -->
+          <div class="identity-pts-pill" id="identity-pts">★ 0 pts</div>
+        </div>
+      </div>
+      <!-- EDITABLE: nom et meta depuis user -->
+      <div class="identity-name" id="identity-name">Chargement...</div>
+      <div class="identity-meta" id="identity-meta"></div>
+    </div>
+
+    <!-- ── STREAK WIDGET ── -->
+    <div class="streak-widget" id="streak-widget">
+      <div class="streak-header">
+        <span class="streak-title">🔥 Streak · <span id="streak-days-count">0</span> jours</span>
+      </div>
+      <!-- EDITABLE: 7 cercles Lun→Dim, remplis teal si complétés -->
+      <div class="streak-days" id="streak-days-row">
+        <div class="streak-day-wrap"><div class="streak-day" data-label="L"></div><span>L</span></div>
+        <div class="streak-day-wrap"><div class="streak-day" data-label="M"></div><span>M</span></div>
+        <div class="streak-day-wrap"><div class="streak-day" data-label="M"></div><span>M</span></div>
+        <div class="streak-day-wrap"><div class="streak-day" data-label="J"></div><span>J</span></div>
+        <div class="streak-day-wrap"><div class="streak-day" data-label="V"></div><span>V</span></div>
+        <div class="streak-day-wrap"><div class="streak-day" data-label="S"></div><span>S</span></div>
+        <div class="streak-day-wrap"><div class="streak-day" data-label="D"></div><span>D</span></div>
+      </div>
+      <div class="streak-bonus" id="streak-bonus" style="display:none">Bonus ×2 pts aujourd'hui !</div>
+    </div>
+
+    <!-- ── WIDGET RÉCIPROCITÉ SIDEBAR ── -->
+    <!-- EDITABLE: 3 états selon user.monthly_responses_given -->
+    <div class="sidebar-reciprocity" id="sidebar-reciprocity">
+      <div class="sidebar-recip-label">STATUT DE DÉPÔT</div>
+      <!-- Rendu dynamiquement par renderSidebarReciprocity() -->
+      <div id="sidebar-recip-content"></div>
+    </div>
+
+    <!-- ── NAVIGATION ── -->
+    <nav class="sidebar-nav">
+
+      <!-- Section PRINCIPAL -->
+      <div class="nav-section-title">PRINCIPAL</div>
+      <a href="dashboard.html" class="sidebar-nav-item active" aria-current="page">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Mon feed
+        <div class="nav-active-bar"></div>
+      </a>
+      <a href="#" class="sidebar-nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        Explorer
+      </a>
+      <a href="#" class="sidebar-nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+        Notifications
+        <span class="nav-badge" id="nav-notif-badge" style="display:none">0</span>
+      </a>
+
+      <!-- Section MES QUESTIONNAIRES -->
+      <div class="nav-section-title" style="margin-top:10px">MES QUESTIONNAIRES</div>
+      <a href="deposit.html" class="sidebar-nav-item" id="nav-deposit">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Déposer un formulaire
+        <span class="nav-lock-icon" id="nav-deposit-lock">🔒</span>
+      </a>
+      <a href="stats.html" class="sidebar-nav-item" id="nav-stats">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Mes questionnaires
+        <span class="nav-pill-teal" id="nav-my-forms-count" style="display:none">0 actifs</span>
+      </a>
+      <a href="profile.html" class="sidebar-nav-item" id="nav-profile">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Mon profil public
+      </a>
+
+      <!-- Section PROGRESSION -->
+      <div class="nav-section-title" style="margin-top:10px">PROGRESSION</div>
+      <a href="leaderboard.html" class="sidebar-nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6l4-4 4 4m-4-4v14"/><path d="M4 18h16"/></svg>
+        Classement
+      </a>
+
+      <!-- Section COMPTE -->
+      <div class="nav-section-title" style="margin-top:10px">COMPTE</div>
+      <a href="#" class="sidebar-nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Paramètres
+      </a>
+      <button class="sidebar-nav-item sidebar-nav-btn" onclick="logout()">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        Déconnexion
+      </button>
+
+    </nav>
+  </aside>
+
+  <!-- ═══════════════════════════════════════════════════════
+       CONTENU PRINCIPAL
+       ═══════════════════════════════════════════════════════ -->
+  <main class="dash-main" role="main">
+
+    <!-- TOP BAR -->
+    <div class="dash-topbar">
+      <div class="topbar-left">
+        <!-- EDITABLE: message de bienvenue depuis content.json → dashboard.welcome_message -->
+        <h1 class="topbar-greeting" id="topbar-greeting">Bonjour 👋</h1>
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+      <div class="topbar-right">
+        <!-- Barre de recherche -->
+        <div class="topbar-search-wrap" role="search">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="search" class="topbar-search-input" placeholder="Rechercher..."
+                 oninput="onSearch(this.value)" aria-label="Rechercher" />
+        </div>
+        <!-- Compteur actifs en direct -->
+        <!-- EDITABLE: chiffre fluctue via setInterval entre 28–41 toutes les 4s -->
+        <div class="topbar-live">
+          <div class="topbar-live-dot" aria-hidden="true"></div>
+          <span><strong id="topbar-live-count">34</strong> étudiants actifs maintenant</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SMART RECOMMENDATION BANNER -->
+    <!-- EDITABLE: chargé depuis GET /api/forms?recommended=true — premier résultat -->
+    <div class="reco-banner" id="reco-banner" style="display:none" role="complementary">
+      <div class="reco-banner-left">
+        <div class="reco-pill">⭐ Recommandé pour toi</div>
+        <h2 class="reco-title" id="reco-title"></h2>
+        <p class="reco-sub" id="reco-sub"></p>
+      </div>
+      <div class="reco-banner-right">
+        <a href="#" class="reco-btn" id="reco-btn">Répondre maintenant → +10 pts</a>
+        <div class="reco-tags" id="reco-tags"></div>
+      </div>
+    </div>
+
+    <!-- BANNIÈRE RÉCIPROCITÉ -->
+    <!-- EDITABLE: 3 états — masquée si 2/2, visible si 0/2 ou 1/2 -->
+    <div class="recip-banner" id="recip-banner" role="alert" aria-live="polite" style="display:none">
+      <div class="recip-banner-left">
+        <span class="recip-banner-icon" id="recip-banner-icon" aria-hidden="true">🔒</span>
+        <div>
+          <div class="recip-banner-title" id="recip-banner-title"></div>
+          <!-- EDITABLE: depuis content.json → dashboard.deposit_locked_message -->
+          <div class="recip-tracker" id="recip-tracker"></div>
+        </div>
+      </div>
+      <a href="#feed-grid" class="recip-btn" id="recip-banner-btn">Voir les questionnaires →</a>
+    </div>
+
+    <!-- SUGGESTIONS POUR TOI -->
+    <!-- EDITABLE: chargé depuis GET /api/forms/recommended — visible si nouveau (<5 réponses) ou en section séparée -->
+    <div class="suggestions-section" id="suggestions-section" style="display:none" aria-label="Formulaires recommandés">
+      <div class="suggestions-header">
+        <div class="suggestions-header-left">
+          <!-- EDITABLE: titre de la section suggestions -->
+          <span class="suggestions-title">💡 Suggestions basées sur ton profil</span>
+          <span class="suggestions-sub" id="suggestions-sub"></span>
+        </div>
+        <a href="#feed-grid" class="suggestions-view-all">Voir tout →</a>
+      </div>
+      <!-- EDITABLE: rendu par renderSuggestions() depuis GET /api/forms/recommended -->
+      <div class="suggestions-grid" id="suggestions-grid"></div>
+    </div>
+
+    <!-- FILTER ROW -->
+    <div class="filter-row">
+      <div class="filter-dropdowns">
+        <!-- EDITABLE: universités et écoles chargées depuis admin/schools.json -->
+        <select class="filter-select" id="filter-university" onchange="applyFilter('university_id', this.value)" aria-label="Université">
+          <option value="">Université : Toutes</option>
+        </select>
+        <select class="filter-select" id="filter-school" onchange="applyFilter('school_id', this.value)" aria-label="École">
+          <option value="">École : Toutes</option>
+        </select>
+        <select class="filter-select" id="filter-domain" onchange="applyFilter('domain', this.value)" aria-label="Domaine">
+          <option value="">Domaine : Tous</option>
+          <option value="Économie & Gestion">Économie & Gestion</option>
+          <option value="Informatique & IA">Informatique & IA</option>
+          <option value="Sciences & Ingénierie">Sciences & Ingénierie</option>
+          <option value="Médecine & Santé">Médecine & Santé</option>
+          <option value="Droit & Sciences Politiques">Droit & Sciences Politiques</option>
+          <option value="Lettres & Sciences Humaines">Lettres & Sciences Humaines</option>
+          <option value="Marketing & Communication">Marketing & Communication</option>
+          <option value="Finance & Comptabilité">Finance & Comptabilité</option>
+        </select>
+      </div>
+      <div class="filter-chips" id="filter-chips">
+        <!-- EDITABLE: chips de filtre rapide -->
+        <button class="filter-chip filter-chip--active" onclick="setChip('recent', this)">Récents</button>
+        <button class="filter-chip" onclick="setChip('flash', this)">Flash &lt; 2 min</button>
+        <button class="filter-chip" onclick="setChip('popular', this)">Populaires</button>
+        <button class="filter-chip" onclick="setChip('domain', this)">Mon domaine</button>
+        <button class="filter-chip" onclick="setChip('saved', this)">Sauvegardés ♡</button>
+      </div>
+      <span class="filter-count" id="filter-count"></span>
+    </div>
+
+    <!-- FEED QUESTIONNAIRES — grille 2 colonnes asymétrique 65/35 -->
+    <!-- EDITABLE: rempli par renderFeed() depuis GET /api/forms -->
+    <div class="feed-grid" id="feed-grid">
+      <div class="feed-col-main" id="feed-col-main"></div>
+      <div class="feed-col-side" id="feed-col-side"></div>
+    </div>
+
+  </main>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PANEL DROIT STICKY 320px
+       ═══════════════════════════════════════════════════════ -->
+  <aside class="dash-panel" aria-label="Suivi et dépôt">
+
+    <!-- LIVE TRACKER -->
+    <div class="panel-card panel-card--tracker" id="panel-tracker" style="display:none">
+      <div class="panel-card-label">Mon questionnaire actif</div>
+      <div class="tracker-title" id="tracker-title">—</div>
+      <div class="tracker-published" id="tracker-published"></div>
+
+      <!-- Réponses en temps réel -->
+      <div class="sparkline-wrap">
+        <div class="sparkline-header">
+          <span class="sparkline-label">RÉPONSES EN TEMPS RÉEL</span>
+        </div>
+        <div class="sparkline-count-row">
+          <span class="sparkline-count" id="sparkline-count">0</span>
+          <span class="sparkline-goal" id="sparkline-goal">/100 souhaitées</span>
+        </div>
+        <div class="sparkline-progress-track">
+          <div class="sparkline-progress-fill" id="sparkline-progress-fill" style="width:0%"></div>
+        </div>
+        <div class="activity-grid" id="activity-grid">
+          <div class="activity-row">
+            <span class="activity-label">Aujourd'hui</span>
+            <span class="activity-val" id="activity-today">—</span>
+          </div>
+          <div class="activity-row">
+            <span class="activity-label">Hier</span>
+            <span class="activity-val" id="activity-yesterday">—</span>
+          </div>
+          <div class="activity-row">
+            <span class="activity-label">7 derniers jours</span>
+            <span class="activity-val" id="activity-week">—</span>
+          </div>
+        </div>
+        <div class="sparkline-update">
+          <div class="live-dot" aria-hidden="true"></div>
+          <span id="sparkline-update-text">Mis à jour à l'instant</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- BREAKDOWN RÉPONDANTS -->
+    <div class="panel-card" id="panel-breakdown" style="display:none">
+      <div class="panel-card-label">Profils répondants</div>
+      <div class="breakdown-row">
+        <span class="breakdown-dot breakdown-dot--teal" aria-hidden="true"></span>
+        <span class="breakdown-text" id="breakdown-verified">0 étudiants vérifiés ✓</span>
+        <span class="breakdown-pct" id="breakdown-verified-pct">0%</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="breakdown-dot breakdown-dot--gold" aria-hidden="true"></span>
+        <span class="breakdown-text" id="breakdown-public">0 public général</span>
+        <span class="breakdown-pct" id="breakdown-public-pct">0%</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="breakdown-dot breakdown-dot--grey" aria-hidden="true"></span>
+        <span class="breakdown-text" id="breakdown-anon">0 non vérifiés</span>
+        <span class="breakdown-pct" id="breakdown-anon-pct">0%</span>
+      </div>
+    </div>
+
+    <!-- VÉRIFICATION -->
+    <div class="panel-card" id="panel-verify" style="display:none">
+      <div class="panel-card-label">Vérification</div>
+      <div id="verify-list"></div>
+      <a href="#" class="panel-link">Tableau complet →</a>
+    </div>
+
+    <!-- BADGES MINI -->
+    <div class="panel-card">
+      <div class="panel-card-label">Progression</div>
+      <div class="badge-mini-row">
+        <svg class="badge-mini-icon badge-mini-icon--teal" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <span class="badge-mini-name">Contributeur</span>
+        <div class="badge-mini-track"><div class="badge-mini-fill badge-mini-fill--teal" id="badge-fill-contrib" style="width:40%"></div></div>
+        <span class="badge-mini-val" id="badge-val-contrib">8/20</span>
+      </div>
+      <div class="badge-mini-row">
+        <svg class="badge-mini-icon badge-mini-icon--gold" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2C6 2 2 7 2 7l10 15L22 7s-4-5-10-5z"/></svg>
+        <span class="badge-mini-name">Streak</span>
+        <div class="badge-mini-track"><div class="badge-mini-fill badge-mini-fill--gold" id="badge-fill-streak" style="width:100%"></div></div>
+        <span class="badge-mini-val" id="badge-val-streak">7/7 🔥</span>
+      </div>
+      <div class="badge-mini-row">
+        <svg class="badge-mini-icon badge-mini-icon--grey" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        <span class="badge-mini-name">Expert</span>
+        <div class="badge-mini-track"><div class="badge-mini-fill" style="width:0%"></div></div>
+        <span class="badge-mini-val">50 rép. requis</span>
+      </div>
+    </div>
+
+  </aside>
+
+</div>
+
+<script src="js/main.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>

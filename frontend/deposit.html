@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Déposer un questionnaire — SciConnect</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <link rel="stylesheet" href="css/deposit.css" />
+</head>
+<body>
+
+<div class="dep-shell">
+
+  <!-- ═══════════════════════════════════════════════════════
+       SIDEBAR GAUCHE 280px (identique au dashboard)
+       ═══════════════════════════════════════════════════════ -->
+  <aside class="sidebar" role="navigation" aria-label="Navigation principale">
+
+    <div class="sidebar-logo">
+      <a href="index.html" class="sidebar-logo-link">SciConnect</a>
+    </div>
+
+    <!-- Carte identité utilisateur -->
+    <div class="sidebar-identity-card" id="sidebar-identity-card">
+      <div class="identity-top-row">
+        <div class="identity-avatar-wrap">
+          <div class="identity-avatar" id="identity-avatar">?</div>
+          <div class="identity-verified-badge">✓ Étudiant vérifié</div>
+        </div>
+        <div class="identity-ring-wrap">
+          <svg class="identity-ring" width="56" height="56" viewBox="0 0 56 56" aria-hidden="true">
+            <circle class="ring-track" cx="28" cy="28" r="22" fill="none" stroke-width="3"/>
+            <circle class="ring-fill" id="ring-fill" cx="28" cy="28" r="22" fill="none" stroke-width="3"
+              stroke-dasharray="138.2" stroke-dashoffset="138.2"
+              stroke-linecap="round" transform="rotate(-90 28 28)"/>
+            <text class="ring-label" x="28" y="32" text-anchor="middle" id="ring-badge-text">⭐</text>
+          </svg>
+          <div class="identity-pts-pill" id="identity-pts">★ 0 pts</div>
+        </div>
+      </div>
+      <div class="identity-name" id="identity-name">Chargement...</div>
+      <div class="identity-meta" id="identity-meta"></div>
+    </div>
+
+    <!-- Widget réciprocité sidebar -->
+    <div class="sidebar-reciprocity" id="sidebar-reciprocity">
+      <div class="sidebar-recip-label">STATUT DE DÉPÔT</div>
+      <div id="sidebar-recip-content"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">PRINCIPAL</div>
+      <a href="dashboard.html" class="sidebar-nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Mon feed
+      </a>
+      <a href="#" class="sidebar-nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        Explorer
+      </a>
+
+      <div class="nav-section-title" style="margin-top:10px">MES QUESTIONNAIRES</div>
+      <a href="deposit.html" class="sidebar-nav-item active" aria-current="page">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Déposer un formulaire
+        <div class="nav-active-bar"></div>
+      </a>
+      <a href="stats.html" class="sidebar-nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Mes questionnaires
+      </a>
+      <a href="stats.html" class="sidebar-nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75"/></svg>
+        Mes répondants
+      </a>
+      <a href="#" class="sidebar-nav-item" id="nav-profile">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Mon profil public
+      </a>
+
+      <div class="nav-section-title" style="margin-top:10px">PROGRESSION</div>
+      <a href="leaderboard.html" class="sidebar-nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6l4-4 4 4m-4-4v14"/><path d="M4 18h16"/></svg>
+        Classement
+      </a>
+
+      <div class="nav-section-title" style="margin-top:10px">COMPTE</div>
+      <a href="#" class="sidebar-nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Paramètres
+      </a>
+      <button class="sidebar-nav-item sidebar-nav-btn" onclick="logout()">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        Déconnexion
+      </button>
+    </nav>
+  </aside>
+
+  <!-- ═══════════════════════════════════════════════════════
+       CONTENU PRINCIPAL
+       ═══════════════════════════════════════════════════════ -->
+  <main class="dep-main" role="main">
+    <div class="dep-inner">
+
+      <!-- BREADCRUMB -->
+      <!-- EDITABLE: fil d'ariane -->
+      <nav class="dep-breadcrumb" aria-label="Fil d'ariane">
+        <a href="dashboard.html" class="dep-breadcrumb-link">Tableau de bord</a>
+        <span class="dep-breadcrumb-sep" aria-hidden="true">›</span>
+        <span class="dep-breadcrumb-current">Déposer un questionnaire</span>
+      </nav>
+
+      <!-- HEADER PAGE -->
+      <div class="dep-header">
+        <div class="dep-header-left">
+          <!-- EDITABLE: titre et sous-titre de la page -->
+          <h1 class="dep-header-title">Déposer un questionnaire</h1>
+          <p class="dep-header-sub">Ton lien Google Forms sera enrichi, ciblé et partagé avec la communauté.</p>
+        </div>
+        <!-- EDITABLE: badge état de dépôt — mis à jour par JS selon monthly_responses_given -->
+        <div class="dep-status-badge" id="dep-status-badge">
+          <div class="dep-status-dot" id="dep-status-dot"></div>
+          <span id="dep-status-text">Chargement...</span>
+        </div>
+      </div>
+
+      <!-- UNLOCK CONFIRMATION CARD (visible si dépôt autorisé) -->
+      <!-- EDITABLE: visible si 2/2 réponses ou fondateur — masqué sinon -->
+      <div class="dep-unlock-card" id="dep-unlock-card" style="display:none">
+        <div class="dep-unlock-left">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 019.9-1"/></svg>
+          <div>
+            <!-- EDITABLE: depuis content.json → dashboard.deposit_unlocked_message -->
+            <div class="dep-unlock-title">Condition de dépôt remplie</div>
+            <div class="dep-unlock-sub" id="dep-unlock-sub">Tu peux déposer 1 questionnaire ce mois.</div>
+          </div>
+        </div>
+        <div class="dep-unlock-right" id="dep-unlock-right"></div>
+      </div>
+
+      <!-- LOCKED CARD (visible si dépôt bloqué) -->
+      <div class="dep-locked-card" id="dep-locked-card" style="display:none">
+        <div class="dep-locked-left">
+          <span class="dep-locked-icon" aria-hidden="true">🔒</span>
+          <div>
+            <!-- EDITABLE: depuis content.json → dashboard.deposit_locked_message -->
+            <div class="dep-locked-title" id="dep-locked-title">Dépôt verrouillé</div>
+            <div class="dep-locked-sub" id="dep-locked-sub">Réponds à 2 questionnaires pour débloquer.</div>
+          </div>
+        </div>
+        <a href="dashboard.html#feed-grid" class="dep-locked-btn">Voir les questionnaires →</a>
+      </div>
+
+      <!-- INDICATEUR 3 ÉTAPES -->
+      <!-- EDITABLE: 3 étapes du processus de dépôt -->
+      <div class="dep-steps-indicator" id="dep-steps-indicator" aria-label="Étapes de dépôt">
+        <div class="dep-step-item dep-step-item--active" id="step-ind-1">
+          <div class="dep-step-num">01</div>
+          <div class="dep-step-label">Lien &amp; Validation</div>
+        </div>
+        <div class="dep-step-connector" aria-hidden="true"></div>
+        <div class="dep-step-item" id="step-ind-2">
+          <div class="dep-step-num">02</div>
+          <div class="dep-step-label">Enrichissement</div>
+        </div>
+        <div class="dep-step-connector" aria-hidden="true"></div>
+        <div class="dep-step-item" id="step-ind-3">
+          <div class="dep-step-num">03</div>
+          <div class="dep-step-label">Ciblage &amp; Publication</div>
+        </div>
+      </div>
+
+      <!-- CORPS 2 COLONNES : formulaire 58% | prévisualisation 42% -->
+      <div class="dep-body">
+
+        <!-- ── COLONNE GAUCHE : Formulaire ── -->
+        <div class="dep-form-col">
+
+          <!-- ÉTAPE 1 : Lien Google Forms -->
+          <div class="dep-card" id="dep-step1">
+            <h2 class="dep-card-title">
+              <span class="dep-card-num">01</span>
+              Ton lien Google Forms
+            </h2>
+
+            <!-- EDITABLE: validation URL Google Forms avec regex — ne jamais supprimer -->
+            <div class="dep-url-wrap" id="dep-url-wrap">
+              <svg class="dep-url-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+              <input type="url" class="dep-url-input" id="dep-url-input"
+                     placeholder="https://docs.google.com/forms/d/e/..."
+                     oninput="onUrlInput(this.value)"
+                     aria-label="Lien Google Forms" autocomplete="off" />
+              <svg class="dep-url-check" id="dep-url-check" width="18" height="18"
+                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                   aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+
+            <!-- Feedback URL (vide / scan / valide / invalide) -->
+            <div class="dep-url-feedback" id="dep-url-feedback" aria-live="polite"></div>
+
+            <!-- Carte succès validation (visible si URL valide) -->
+            <div class="dep-url-success" id="dep-url-success" style="display:none">
+              <div class="dep-url-success-row">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                <!-- EDITABLE: message validation lien -->
+                <span class="dep-url-success-label">Formulaire Google détecté</span>
+              </div>
+              <div class="dep-url-success-meta" id="dep-url-success-meta"></div>
+            </div>
+          </div>
+
+          <!-- ÉTAPE 2 : Enrichissement -->
+          <div class="dep-card" id="dep-step2">
+            <h2 class="dep-card-title">
+              <span class="dep-card-num">02</span>
+              Enrichis ton questionnaire
+            </h2>
+
+            <!-- Titre de la recherche -->
+            <div class="dep-field">
+              <label class="dep-label" for="dep-title">Titre de la recherche</label>
+              <input type="text" class="dep-input" id="dep-title"
+                     placeholder="Ex : Impact des réseaux sociaux sur la concentration étudiante"
+                     oninput="updatePreview()" maxlength="300" aria-required="true" />
+            </div>
+
+            <!-- Description courte -->
+            <div class="dep-field">
+              <label class="dep-label" for="dep-desc">Description courte</label>
+              <textarea class="dep-textarea" id="dep-desc" rows="3"
+                        placeholder="Décris brièvement l'objectif et le public cible de ton questionnaire..."
+                        oninput="onDescInput(this)" maxlength="300"></textarea>
+              <div class="dep-char-count">
+                <span id="dep-desc-count">0</span>/300
+              </div>
+            </div>
+
+            <!-- Domaine principal -->
+            <div class="dep-field">
+              <label class="dep-label" for="dep-domain">Domaine principal</label>
+              <!-- EDITABLE: domaines listés — modifier ici pour changer les options -->
+              <select class="dep-select" id="dep-domain" onchange="updatePreview()" aria-required="true">
+                <option value="">Sélectionner un domaine...</option>
+                <option value="Économie & Gestion">Économie &amp; Gestion</option>
+                <option value="Informatique & IA">Informatique &amp; IA</option>
+                <option value="Sciences & Ingénierie">Sciences &amp; Ingénierie</option>
+                <option value="Médecine & Santé">Médecine &amp; Santé</option>
+                <option value="Droit & Sciences Politiques">Droit &amp; Sciences Politiques</option>
+                <option value="Lettres & Sciences Humaines">Lettres &amp; Sciences Humaines</option>
+                <option value="Marketing & Communication">Marketing &amp; Communication</option>
+                <option value="Finance & Comptabilité">Finance &amp; Comptabilité</option>
+                <option value="Autre">Autre</option>
+              </select>
+            </div>
+
+            <!-- Niveau d'études cible -->
+            <div class="dep-field">
+              <label class="dep-label">Niveau d'études cible</label>
+              <!-- EDITABLE: chips de niveau — multi-sélection -->
+              <div class="dep-chips-wrap" id="dep-level-chips" role="group" aria-label="Niveau cible">
+                <button type="button" class="dep-chip" data-value="L1" onclick="toggleChip(this, 'level')">L1</button>
+                <button type="button" class="dep-chip" data-value="L2" onclick="toggleChip(this, 'level')">L2</button>
+                <button type="button" class="dep-chip" data-value="L3" onclick="toggleChip(this, 'level')">L3</button>
+                <button type="button" class="dep-chip" data-value="M1" onclick="toggleChip(this, 'level')">M1</button>
+                <button type="button" class="dep-chip" data-value="M2" onclick="toggleChip(this, 'level')">M2</button>
+                <button type="button" class="dep-chip" data-value="Doctorat" onclick="toggleChip(this, 'level')">Doctorat</button>
+                <button type="button" class="dep-chip" data-value="Ingénieur" onclick="toggleChip(this, 'level')">Ingénieur</button>
+                <button type="button" class="dep-chip dep-chip--active" data-value="Tous niveaux" onclick="toggleChip(this, 'level')">Tous niveaux</button>
+              </div>
+            </div>
+
+            <!-- Durée estimée -->
+            <div class="dep-field dep-field--row">
+              <div class="dep-field-half">
+                <label class="dep-label" for="dep-duration">Durée estimée (minutes)</label>
+                <input type="number" class="dep-input" id="dep-duration" min="1" max="120" value="5"
+                       oninput="updatePreview()" aria-label="Durée estimée en minutes" />
+              </div>
+              <div class="dep-field-half">
+                <label class="dep-label" for="dep-questions">Nombre de questions</label>
+                <input type="number" class="dep-input" id="dep-questions" min="1" max="100" value=""
+                       placeholder="Optionnel" oninput="updatePreview()" aria-label="Nombre de questions" />
+              </div>
+            </div>
+
+            <!-- Tags -->
+            <div class="dep-field">
+              <label class="dep-label" for="dep-tags-input">Tags (Entrée pour ajouter)</label>
+              <input type="text" class="dep-input" id="dep-tags-input"
+                     placeholder="Ex : bien-être, psychologie, étudiants..."
+                     onkeydown="onTagKeydown(event)" />
+              <div class="dep-tags-list" id="dep-tags-list"></div>
+            </div>
+
+          </div>
+
+          <!-- ÉTAPE 3 : Ciblage & Publication -->
+          <div class="dep-card" id="dep-step3">
+            <h2 class="dep-card-title">
+              <span class="dep-card-num">03</span>
+              Qui peut voir ton questionnaire ?
+            </h2>
+
+            <!-- 4 radio cards 2x2 -->
+            <!-- EDITABLE: options de ciblage — modifier les audiences estimées ci-dessous -->
+            <div class="dep-target-grid" role="radiogroup" aria-label="Ciblage">
+              <label class="dep-target-card dep-target-card--selected" id="target-all">
+                <input type="radio" name="target" value="all" checked onchange="onTargetChange('all')" class="dep-radio-hidden" />
+                <div class="dep-target-icon">🌐</div>
+                <div class="dep-target-info">
+                  <div class="dep-target-name">Toute la communauté SciConnect</div>
+                  <!-- EDITABLE: audience estimée toute communauté -->
+                  <div class="dep-target-audience">~1 247 répondants</div>
+                </div>
+              </label>
+              <label class="dep-target-card" id="target-uni">
+                <input type="radio" name="target" value="university" onchange="onTargetChange('university')" class="dep-radio-hidden" />
+                <div class="dep-target-icon">🏛</div>
+                <div class="dep-target-info">
+                  <div class="dep-target-name">Mon université</div>
+                  <!-- EDITABLE: audience estimée université -->
+                  <div class="dep-target-audience">~680 répondants</div>
+                </div>
+              </label>
+              <label class="dep-target-card" id="target-school">
+                <input type="radio" name="target" value="school" onchange="onTargetChange('school')" class="dep-radio-hidden" />
+                <div class="dep-target-icon">🏫</div>
+                <div class="dep-target-info">
+                  <div class="dep-target-name">Mon école uniquement</div>
+                  <!-- EDITABLE: audience estimée école -->
+                  <div class="dep-target-audience">~340 répondants</div>
+                </div>
+              </label>
+              <label class="dep-target-card" id="target-public">
+                <input type="radio" name="target" value="public" onchange="onTargetChange('public')" class="dep-radio-hidden" />
+                <div class="dep-target-icon">🔗</div>
+                <div class="dep-target-info">
+                  <div class="dep-target-name">Lien public partageable</div>
+                  <!-- EDITABLE: audience estimée public -->
+                  <div class="dep-target-audience">Illimité</div>
+                </div>
+              </label>
+            </div>
+
+            <!-- Compteur audience dynamique -->
+            <div class="dep-audience-counter">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75"/></svg>
+              <!-- EDITABLE: texte compteur audience -->
+              <span>Environ </span>
+              <strong class="dep-audience-count" id="dep-audience-count">1 247</strong>
+              <span> répondants qualifiés</span>
+            </div>
+
+            <!-- Objectif et date limite -->
+            <div class="dep-field dep-field--row" style="margin-top:16px">
+              <div class="dep-field-half">
+                <label class="dep-label" for="dep-target-count">Objectif réponses</label>
+                <input type="number" class="dep-input" id="dep-target-count" min="10" max="10000" value="100"
+                       oninput="updatePreview()" aria-label="Objectif nombre de réponses" />
+              </div>
+              <div class="dep-field-half">
+                <label class="dep-label" for="dep-deadline">Date limite (optionnel)</label>
+                <input type="date" class="dep-input" id="dep-deadline" aria-label="Date limite" />
+              </div>
+            </div>
+
+            <!-- Toast d'erreur -->
+            <div class="dep-form-error" id="dep-form-error" style="display:none" role="alert" aria-live="assertive"></div>
+
+            <!-- BOUTON PUBLIER -->
+            <!-- EDITABLE: label depuis settings.json → buttons.deposit_button_unlocked_label -->
+            <button class="dep-publish-btn" id="dep-publish-btn" onclick="publishForm()">
+              <span id="dep-publish-label">Publier mon questionnaire →</span>
+            </button>
+            <p class="dep-publish-note">Sera visible par les étudiants de ton domaine et université</p>
+
+          </div>
+
+        </div>
+
+        <!-- ── COLONNE DROITE STICKY : Aperçu ── -->
+        <div class="dep-preview-col">
+
+          <!-- Aperçu en temps réel -->
+          <div class="dep-preview-wrap">
+            <!-- EDITABLE: label aperçu -->
+            <div class="dep-preview-label">Aperçu en temps réel</div>
+
+            <!-- Carte prévisualisation — identique aux cartes du feed -->
+            <article class="dep-preview-card" id="dep-preview-card">
+              <div class="dep-preview-stripe" id="prev-stripe"></div>
+              <div class="dep-preview-body">
+                <div class="dep-preview-row1">
+                  <div>
+                    <span class="dep-preview-school" id="prev-school"></span>
+                  </div>
+                  <span class="dep-preview-time">À l'instant</span>
+                </div>
+                <h3 class="dep-preview-title" id="prev-title">Titre de ton questionnaire...</h3>
+                <p class="dep-preview-desc" id="prev-desc"></p>
+                <div class="dep-preview-chips" id="prev-chips"></div>
+              </div>
+              <div class="dep-preview-footer">
+                <div class="dep-preview-meta" id="prev-meta"></div>
+                <!-- EDITABLE: label bouton depuis settings.json → buttons.respond_button_label -->
+                <span class="dep-preview-btn" id="prev-btn">Répondre +10pts</span>
+              </div>
+            </article>
+
+            <!-- EDITABLE: légende aperçu -->
+            <p class="dep-preview-caption">Voilà ce que verront les répondants</p>
+          </div>
+
+          <!-- Ce qui se passe ensuite -->
+          <div class="dep-next-card">
+            <div class="dep-next-title">Ce qui se passe ensuite</div>
+            <!-- EDITABLE: étapes post-publication -->
+            <div class="dep-next-item">
+              <span class="dep-next-dot" aria-hidden="true">·</span>
+              Notification envoyée aux étudiants du domaine
+            </div>
+            <div class="dep-next-item">
+              <span class="dep-next-dot" aria-hidden="true">·</span>
+              Apparaît dans leur feed immédiatement
+            </div>
+            <div class="dep-next-item">
+              <span class="dep-next-dot" aria-hidden="true">·</span>
+              Réponses vérifiables en temps réel
+            </div>
+            <!-- EDITABLE: email de confirmation — intégré via email_service.py -->
+            <div class="dep-next-item">
+              <span class="dep-next-dot" aria-hidden="true">·</span>
+              Email de confirmation envoyé à ton adresse Google
+            </div>
+          </div>
+
+          <!-- Rappel mensuel -->
+          <div class="dep-monthly-card" id="dep-monthly-card">
+            <!-- EDITABLE: rappel reset mensuel — calculé par JS -->
+            <div id="dep-monthly-text">Le 1er du mois, ton compteur repart à 0/2.</div>
+            <em class="dep-monthly-sub">C'est le contrat communautaire SciConnect.</em>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="js/main.js"></script>
+<script src="js/deposit.js"></script>
+</body>
+</html>

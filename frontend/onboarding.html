@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bienvenue — SciConnect</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      background-color: var(--color-bg);
+      padding: 32px 20px 40px;
+      gap: 14px;
+    }
+
+    /* ─── Card ─── */
+    .auth-card {
+      background-color: var(--color-surface);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 480px;
+      border-top: 3px solid var(--color-primary);
+      padding: 28px 32px 32px;
+    }
+
+    .auth-logo {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    /* ═══ STEPPER 3 ÉTAPES ═══ */
+    .auth-stepper {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .auth-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+
+    .auth-step-circle {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 2px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--color-text-muted);
+      background-color: var(--color-surface);
+    }
+
+    .auth-step--done .auth-step-circle {
+      background-color: var(--color-primary);
+      border-color: var(--color-primary);
+      color: var(--color-surface);
+    }
+
+    .auth-step--active .auth-step-circle {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+
+    .auth-step-name {
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      white-space: nowrap;
+    }
+
+    .auth-step--done .auth-step-name  { color: var(--color-text-secondary); }
+    .auth-step--active .auth-step-name { color: var(--color-primary); font-weight: 700; }
+
+    .auth-step-line {
+      flex: 1;
+      height: 2px;
+      background-color: var(--color-border);
+      margin-top: 15px; /* aligne au centre du cercle 30px */
+    }
+
+    .auth-step-line--done { background-color: var(--color-primary); }
+
+    /* ═══ PROGRESSION INTERNE ═══ */
+    .onb-sub-progress {
+      margin-bottom: 22px;
+    }
+
+    .onb-sub-progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 7px;
+    }
+
+    .onb-sub-progress-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+    }
+
+    .onb-sub-progress-pct {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .onb-sub-progress-track {
+      height: 5px;
+      background-color: var(--color-surface-2);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+
+    .onb-sub-progress-fill {
+      height: 100%;
+      background-color: var(--color-primary);
+      border-radius: 100px;
+      transition: width 0.4s ease;
+    }
+
+    /* ═══ ÉTAPES CONTENU ═══ */
+    .onb-step { display: none; }
+    .onb-step.active { display: block; }
+
+    .onb-q-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--color-text);
+      text-align: center;
+      margin-bottom: 5px;
+    }
+
+    .onb-q-subtitle {
+      font-size: 0.82rem;
+      color: var(--color-text-secondary);
+      text-align: center;
+      line-height: 1.55;
+      margin-bottom: 20px;
+    }
+
+    /* ─── Q1 : Niveau — grille ─── */
+    .level-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .level-chip {
+      padding: 12px 6px;
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-md);
+      text-align: center;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      transition: all var(--transition);
+      background-color: var(--color-bg);
+      user-select: none;
+    }
+
+    .level-chip.selected {
+      border-color: var(--color-primary);
+      background-color: var(--color-primary-light);
+      color: var(--color-primary);
+    }
+
+    .level-chip:hover:not(.selected) {
+      border-color: var(--color-text-muted);
+      background-color: var(--color-surface-2);
+    }
+
+    /* ─── Q2 : Domaine — grille cartes avec SVG ─── */
+    .domain-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .domain-card {
+      position: relative;
+      padding: 16px 10px 12px;
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-md);
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transition);
+      background-color: var(--color-bg);
+      user-select: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .domain-card:hover:not(.selected) {
+      border-color: var(--color-text-muted);
+      background-color: var(--color-surface-2);
+    }
+
+    .domain-card.selected {
+      border-color: var(--color-primary);
+      background-color: var(--color-primary-light);
+    }
+
+    /* Icône SVG dans la card */
+    .domain-card-svg {
+      width: 28px;
+      height: 28px;
+      color: var(--color-text-muted);
+      flex-shrink: 0;
+    }
+
+    .domain-card.selected .domain-card-svg {
+      color: var(--color-primary);
+    }
+
+    .domain-card-label {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      line-height: 1.2;
+    }
+
+    .domain-card.selected .domain-card-label {
+      color: var(--color-primary);
+    }
+
+    /* Checkmark overlay quand sélectionné */
+    .domain-card.selected::after {
+      content: '✓';
+      position: absolute;
+      top: 5px;
+      right: 6px;
+      width: 18px;
+      height: 18px;
+      background-color: var(--color-primary);
+      color: var(--color-surface);
+      border-radius: 50%;
+      font-size: 0.65rem;
+      line-height: 18px;
+      text-align: center;
+    }
+
+    /* ─── Q3 : Multi-sélection ─── */
+    .multi-list {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      margin-bottom: 20px;
+    }
+
+    .multi-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition);
+      background-color: var(--color-bg);
+      user-select: none;
+    }
+
+    .multi-item:hover:not(.selected) {
+      border-color: var(--color-text-muted);
+      background-color: var(--color-surface-2);
+    }
+
+    .multi-item.selected {
+      border-color: var(--color-primary);
+      background-color: var(--color-primary-light);
+    }
+
+    .multi-checkbox {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      flex-shrink: 0;
+      transition: all var(--transition);
+    }
+
+    .multi-item.selected .multi-checkbox {
+      background-color: var(--color-primary);
+      border-color: var(--color-primary);
+      color: var(--color-surface);
+    }
+
+    .multi-item-icon { font-size: 1rem; }
+
+    .multi-item-text {
+      font-size: 0.84rem;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+    }
+
+    .multi-item.selected .multi-item-text { color: var(--color-primary); }
+
+    /* ─── Q4 : Temps ─── */
+    .time-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .time-chip {
+      flex: 1;
+      min-width: 100px;
+      padding: 14px 10px;
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-md);
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transition);
+      background-color: var(--color-bg);
+      user-select: none;
+    }
+
+    .time-chip:hover:not(.selected) {
+      border-color: var(--color-text-muted);
+      background-color: var(--color-surface-2);
+    }
+
+    .time-chip.selected {
+      border-color: var(--color-primary);
+      background-color: var(--color-primary-light);
+    }
+
+    .time-chip-value {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--color-text);
+      display: block;
+    }
+
+    .time-chip.selected .time-chip-value { color: var(--color-primary); }
+
+    .time-chip-label {
+      font-size: 0.72rem;
+      color: var(--color-text-muted);
+      margin-top: 3px;
+    }
+
+    /* ─── École selector ─── */
+    .school-selects {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .onb-select {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-md);
+      background-color: var(--color-bg);
+      font-family: var(--font-ui);
+      font-size: 0.88rem;
+      color: var(--color-text);
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239A9890' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      cursor: pointer;
+      transition: border-color var(--transition);
+    }
+
+    .onb-select:focus {
+      outline: none;
+      border-color: var(--color-primary);
+    }
+
+    /* ─── Hint ─── */
+    .onb-hint {
+      font-size: 0.77rem;
+      color: var(--color-text-muted);
+      margin-bottom: 10px;
+    }
+
+    /* ─── Erreur ─── */
+    .onb-error {
+      font-size: 0.81rem;
+      color: var(--color-danger);
+      margin-bottom: 10px;
+      display: none;
+    }
+    .onb-error.visible { display: block; }
+
+    /* ═══ NAVIGATION ═══ */
+    .onb-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .onb-btn-back {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 4px;
+      background: none;
+      border: none;
+      font-family: var(--font-ui);
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      transition: color var(--transition);
+    }
+    .onb-btn-back:hover { color: var(--color-text); }
+
+    .onb-btn-next {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background-color: var(--color-primary);
+      color: var(--color-surface);
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: var(--font-ui);
+      font-size: 0.93rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .onb-btn-next:hover { background-color: var(--color-primary-hover); }
+    .onb-btn-next:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* ─── Security note ─── */
+    .auth-security {
+      width: 100%;
+      max-width: 480px;
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 14px 18px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .auth-security-icon {
+      width: 34px;
+      height: 34px;
+      background-color: var(--color-primary);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .auth-security-icon svg { width: 18px; height: 18px; stroke: var(--color-surface); }
+
+    .auth-security-title {
+      font-size: 0.83rem;
+      font-weight: 700;
+      color: var(--color-text);
+      margin-bottom: 3px;
+    }
+
+    .auth-security-desc {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      line-height: 1.55;
+    }
+    .auth-security-desc .link-primary { color: var(--color-primary); }
+    .auth-security-desc .link-accent  { color: var(--color-warning); }
+
+    @media (max-width: 520px) {
+      .auth-card { padding: 22px 20px 26px; }
+      .level-grid { grid-template-columns: repeat(2, 1fr); }
+      .domain-grid { grid-template-columns: repeat(2, 1fr); }
+      .time-chips { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="auth-card">
+
+    <div class="auth-logo">SciConnect</div>
+
+    <!-- Stepper — step 1 Connexion ✓ (done), step 2 Profil (actif) -->
+    <div class="auth-stepper" role="list" aria-label="Étapes d'inscription">
+      <div class="auth-step auth-step--done" role="listitem">
+        <div class="auth-step-circle" aria-label="Connexion terminée">✓</div>
+        <span class="auth-step-name">Connexion</span>
+      </div>
+      <div class="auth-step-line auth-step-line--done"></div>
+      <div class="auth-step auth-step--active" role="listitem">
+        <div class="auth-step-circle" aria-label="Étape Profil, active">2</div>
+        <span class="auth-step-name">Profil</span>
+      </div>
+      <div class="auth-step-line"></div>
+      <div class="auth-step" role="listitem">
+        <div class="auth-step-circle">3</div>
+        <span class="auth-step-name">Découvrir</span>
+      </div>
+    </div>
+
+    <!-- Progression interne (Question X sur 5) -->
+    <div class="onb-sub-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+      <div class="onb-sub-progress-header">
+        <span class="onb-sub-progress-label" id="onb-sub-label">Question 1 sur 5</span>
+        <span class="onb-sub-progress-pct" id="onb-sub-pct">20%</span>
+      </div>
+      <div class="onb-sub-progress-track">
+        <div class="onb-sub-progress-fill" id="onb-sub-fill" style="width:20%"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         Q1 : Niveau d'études
+    ══════════════════════════════════════ -->
+    <div class="onb-step active" id="step-1">
+      <h2 class="onb-q-title">Quel est ton niveau d'études ?</h2>
+      <p class="onb-q-subtitle">Pour mieux cibler les questionnaires qui te correspondent.</p>
+
+      <div class="level-grid" role="group" aria-label="Sélectionne ton niveau">
+        <div class="level-chip" data-value="L1" onclick="selectSingle(this,'level')" role="radio" tabindex="0">L1</div>
+        <div class="level-chip" data-value="L2" onclick="selectSingle(this,'level')" role="radio" tabindex="0">L2</div>
+        <div class="level-chip" data-value="L3" onclick="selectSingle(this,'level')" role="radio" tabindex="0">L3</div>
+        <div class="level-chip" data-value="M1" onclick="selectSingle(this,'level')" role="radio" tabindex="0">M1</div>
+        <div class="level-chip" data-value="M2" onclick="selectSingle(this,'level')" role="radio" tabindex="0">M2</div>
+        <div class="level-chip" data-value="Doctorat" onclick="selectSingle(this,'level')" role="radio" tabindex="0">Doctorat</div>
+        <div class="level-chip" data-value="Ingénieur" onclick="selectSingle(this,'level')" role="radio" tabindex="0">Ingénieur</div>
+        <div class="level-chip" data-value="BTS" onclick="selectSingle(this,'level')" role="radio" tabindex="0">BTS</div>
+      </div>
+
+      <p class="onb-error" id="error-1">Sélectionne ton niveau pour continuer.</p>
+      <div class="onb-actions">
+        <div></div><!-- spacer -->
+        <button class="onb-btn-next" onclick="nextStep(1)">Suivant →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         Q2 : Domaine principal — cartes SVG
+    ══════════════════════════════════════ -->
+    <div class="onb-step" id="step-2">
+      <h2 class="onb-q-title">Quel est ton domaine principal ?</h2>
+      <p class="onb-q-subtitle">Cela nous aide à personnaliser tes recommandations de recherche.</p>
+
+      <div class="domain-grid" role="group" aria-label="Sélectionne ton domaine">
+
+        <!-- Gestion -->
+        <div class="domain-card" data-value="Économie & Gestion" onclick="selectSingle(this,'domain')" role="radio" tabindex="0">
+          <svg class="domain-card-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2" y="7" width="20" height="14" rx="2"/>
+            <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+          </svg>
+          <span class="domain-card-label">Gestion</span>
+        </div>
+
+        <!-- Informatique -->
+        <div class="domain-card" data-value="Informatique & IA" onclick="selectSingle(this,'domain')" role="radio" tabindex="0">
+          <svg class="domain-card-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2" y="3" width="20" height="14" rx="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+          <span class="domain-card-label">Informatique</span>
+        </div>
+
+        <!-- Médecine -->
+        <div class="domain-card" data-value="Médecine & Santé" onclick="selectSingle(this,'domain')" role="radio" tabindex="0">
+          <svg class="domain-card-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <line x1="12" y1="8" x2="12" y2="16"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+          </svg>
+          <span class="domain-card-label">Médecine</span>
+        </div>
+
+        <!-- Sciences -->
+        <div class="domain-card" data-value="Sciences & Ingénierie" onclick="selectSingle(this,'domain')" role="radio" tabindex="0">
+          <svg class="domain-card-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 3h6"/>
+            <path d="M9 3v6L4 20h16L15 9V3"/>
+          </svg>
+          <span class="domain-card-label">Sciences</span>
+        </div>
+
+        <!-- Droit -->
+        <div class="domain-card" data-value="Droit & Sciences Politiques" onclick="selectSingle(this,'domain')" role="radio" tabindex="0">
+          <svg class="domain-card-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="12" y1="3" x2="12" y2="21"/>
+            <path d="M3 6h18"/>
+            <path d="M6 6L3 15h6L6 6z"/>
+            <path d="M18 6l-3 9h6l-3-9z"/>
+            <line x1="3" y1="21" x2="21" y2="21"/>
+          </svg>
+          <span class="domain-card-label">Droit</span>
+        </div>
+
+        <!-- Lettres -->
+        <div class="domain-card" data-value="Lettres & Sciences Humaines" onclick="selectSingle(this,'domain')" role="radio" tabindex="0">
+          <svg class="domain-card-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+          </svg>
+          <span class="domain-card-label">Lettres</span>
+        </div>
+
+        <!-- Économie -->
+        <div class="domain-card" data-value="Finance & Comptabilité" onclick="selectSingle(this,'domain')" role="radio" tabindex="0">
+          <svg class="domain-card-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 7v10M9.5 9.5a2.5 2.5 0 015 0c0 1.5-2.5 2-2.5 3s2.5 1.5 2.5 3a2.5 2.5 0 01-5 0"/>
+          </svg>
+          <span class="domain-card-label">Économie</span>
+        </div>
+
+        <!-- Ingénierie -->
+        <div class="domain-card" data-value="Marketing & Communication" onclick="selectSingle(this,'domain')" role="radio" tabindex="0">
+          <svg class="domain-card-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="8" cy="7" r="3"/>
+            <path d="M2 21v-2a6 6 0 0112 0v2"/>
+            <circle cx="18" cy="14" r="3"/>
+            <path d="M18 10v1m0 6v1m-3-3h-1m7 0h1m-2.12-2.12l-.7-.7M15.82 16.82l-.7.7m4.76 0l.7.7m-4.76-4.76l.7-.7"/>
+          </svg>
+          <span class="domain-card-label">Ingénierie</span>
+        </div>
+
+        <!-- Psychologie -->
+        <div class="domain-card" data-value="Autre" onclick="selectSingle(this,'domain')" role="radio" tabindex="0">
+          <svg class="domain-card-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"/>
+            <circle cx="12" cy="12" r="4"/>
+            <circle cx="12" cy="12" r="1" fill="currentColor"/>
+          </svg>
+          <span class="domain-card-label">Psychologie</span>
+        </div>
+
+      </div>
+
+      <p class="onb-error" id="error-2">Sélectionne ton domaine pour continuer.</p>
+      <div class="onb-actions">
+        <button class="onb-btn-back" onclick="prevStep(2)">← Précédent</button>
+        <button class="onb-btn-next" onclick="nextStep(2)">Suivant →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         Q3 : Pourquoi rejoindre — multi-sélection
+    ══════════════════════════════════════ -->
+    <div class="onb-step" id="step-3">
+      <h2 class="onb-q-title">Pourquoi tu rejoins SciConnect ?</h2>
+      <p class="onb-q-subtitle">Plusieurs réponses possibles.</p>
+      <p class="onb-hint">Sélectionne tout ce qui s'applique</p>
+
+      <div class="multi-list" role="group" aria-label="Raisons de rejoindre">
+        <div class="multi-item" data-value="Trouver des répondants pour mon mémoire" onclick="toggleMulti(this,'why_join')">
+          <div class="multi-checkbox" aria-hidden="true">✓</div>
+          <span class="multi-item-icon">📝</span>
+          <span class="multi-item-text">Trouver des répondants pour mon mémoire / PFE</span>
+        </div>
+        <div class="multi-item" data-value="Répondre pour aider d'autres étudiants" onclick="toggleMulti(this,'why_join')">
+          <div class="multi-checkbox" aria-hidden="true">✓</div>
+          <span class="multi-item-icon">🤝</span>
+          <span class="multi-item-text">Répondre pour aider d'autres étudiants</span>
+        </div>
+        <div class="multi-item" data-value="Découvrir des recherches de ma discipline" onclick="toggleMulti(this,'why_join')">
+          <div class="multi-checkbox" aria-hidden="true">✓</div>
+          <span class="multi-item-icon">🔍</span>
+          <span class="multi-item-text">Découvrir des recherches de ma discipline</span>
+        </div>
+        <div class="multi-item" data-value="Gagner des points et badges" onclick="toggleMulti(this,'why_join')">
+          <div class="multi-checkbox" aria-hidden="true">✓</div>
+          <span class="multi-item-icon">🏆</span>
+          <span class="multi-item-text">Gagner des points et badges</span>
+        </div>
+        <div class="multi-item" data-value="Contribuer à la communauté académique" onclick="toggleMulti(this,'why_join')">
+          <div class="multi-checkbox" aria-hidden="true">✓</div>
+          <span class="multi-item-icon">🌐</span>
+          <span class="multi-item-text">Contribuer à la communauté académique marocaine</span>
+        </div>
+      </div>
+
+      <p class="onb-error" id="error-3">Sélectionne au moins une raison pour continuer.</p>
+      <div class="onb-actions">
+        <button class="onb-btn-back" onclick="prevStep(3)">← Précédent</button>
+        <button class="onb-btn-next" onclick="nextStep(3)">Suivant →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         Q4 : Temps disponible
+    ══════════════════════════════════════ -->
+    <div class="onb-step" id="step-4">
+      <h2 class="onb-q-title">Combien de temps par semaine ?</h2>
+      <p class="onb-q-subtitle">Pour répondre à des questionnaires sur SciConnect.</p>
+
+      <div class="time-chips" role="group" aria-label="Temps disponible">
+        <div class="time-chip" data-value="moins de 30 min" onclick="selectSingle(this,'available_time')">
+          <span class="time-chip-value">−30 min</span>
+          <div class="time-chip-label">Peu de temps</div>
+        </div>
+        <div class="time-chip" data-value="30 à 60 min" onclick="selectSingle(this,'available_time')">
+          <span class="time-chip-value">30–60 min</span>
+          <div class="time-chip-label">Régulièrement</div>
+        </div>
+        <div class="time-chip" data-value="1 à 2 heures" onclick="selectSingle(this,'available_time')">
+          <span class="time-chip-value">1–2 h</span>
+          <div class="time-chip-label">Assidu</div>
+        </div>
+        <div class="time-chip" data-value="plus de 2 heures" onclick="selectSingle(this,'available_time')">
+          <span class="time-chip-value">+2 h</span>
+          <div class="time-chip-label">Très actif</div>
+        </div>
+      </div>
+
+      <p class="onb-error" id="error-4">Sélectionne une disponibilité pour continuer.</p>
+      <div class="onb-actions">
+        <button class="onb-btn-back" onclick="prevStep(4)">← Précédent</button>
+        <button class="onb-btn-next" onclick="nextStep(4)">Suivant →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         Q5 : Domaines à répondre + École
+    ══════════════════════════════════════ -->
+    <div class="onb-step" id="step-5">
+      <h2 class="onb-q-title">Tes préférences de réponse</h2>
+      <p class="onb-q-subtitle">Quelques derniers détails pour personnaliser ton expérience.</p>
+
+      <p class="onb-hint">Quels domaines veux-tu prioritairement répondre ? (max 3)</p>
+      <div class="multi-list" id="respond-domains-list" role="group" aria-label="Domaines pour répondre">
+        <div class="multi-item" data-value="Économie & Gestion" onclick="toggleMultiMax(this,'respond_domains',3)">
+          <div class="multi-checkbox" aria-hidden="true">✓</div>
+          <span class="multi-item-icon">📊</span>
+          <span class="multi-item-text">Économie & Gestion</span>
+        </div>
+        <div class="multi-item" data-value="Informatique & IA" onclick="toggleMultiMax(this,'respond_domains',3)">
+          <div class="multi-checkbox" aria-hidden="true">✓</div>
+          <span class="multi-item-icon">💻</span>
+          <span class="multi-item-text">Informatique & IA</span>
+        </div>
+        <div class="multi-item" data-value="Sciences & Ingénierie" onclick="toggleMultiMax(this,'respond_domains',3)">
+          <div class="multi-checkbox" aria-hidden="true">✓</div>
+          <span class="multi-item-icon">⚗️</span>
+          <span class="multi-item-text">Sciences & Ingénierie</span>
+        </div>
+        <div class="multi-item" data-value="Médecine & Santé" onclick="toggleMultiMax(this,'respond_domains',3)">
+          <div class="multi-checkbox" aria-hidden="true">✓</div>
+          <span class="multi-item-icon">🏥</span>
+          <span class="multi-item-text">Médecine & Santé</span>
+        </div>
+        <div class="multi-item" data-value="Droit & Sciences Politiques" onclick="toggleMultiMax(this,'respond_domains',3)">
+          <div class="multi-checkbox" aria-hidden="true">✓</div>
+          <span class="multi-item-icon">⚖️</span>
+          <span class="multi-item-text">Droit & Sciences Politiques</span>
+        </div>
+        <div class="multi-item" data-value="Lettres & Sciences Humaines" onclick="toggleMultiMax(this,'respond_domains',3)">
+          <div class="multi-checkbox" aria-hidden="true">✓</div>
+          <span class="multi-item-icon">📚</span>
+          <span class="multi-item-text">Lettres & Sciences Humaines</span>
+        </div>
+      </div>
+
+      <!-- EDITABLE: universités chargées depuis admin/schools.json -->
+      <div class="school-selects">
+        <select class="onb-select" id="select-university" onchange="onUniversityChange(this.value)" aria-label="Université">
+          <option value="">Sélectionne ton université</option>
+        </select>
+        <select class="onb-select" id="select-school" aria-label="École ou faculté" disabled>
+          <option value="">Sélectionne d'abord une université</option>
+        </select>
+      </div>
+
+      <p class="onb-error" id="error-5">Sélectionne au moins un domaine et ton université.</p>
+      <div class="onb-actions">
+        <button class="onb-btn-back" onclick="prevStep(5)">← Précédent</button>
+        <button class="onb-btn-next" onclick="submitOnboarding()">Rejoindre SciConnect →</button>
+      </div>
+    </div>
+
+  </div><!-- /auth-card -->
+
+  <!-- Note sécurité (hors card) -->
+  <div class="auth-security" role="note" aria-label="Information de sécurité">
+    <div class="auth-security-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+    </div>
+    <div>
+      <div class="auth-security-title">Sécurité de vos données</div>
+      <p class="auth-security-desc">
+        Vos réponses sont cryptées et utilisées uniquement pour
+        <span class="link-primary">améliorer votre expérience académique</span>.
+        Nous ne partageons jamais vos
+        <span class="link-accent">informations personnelles</span> avec des tiers.
+      </p>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    /* ═══ État local de l'onboarding ═══ */
+    const answers = {
+      level:           null,
+      domain:          null,
+      why_join:        [],
+      available_time:  null,
+      respond_domains: [],
+      university_id:   null,
+      school_id:       null,
+    };
+
+    let currentStep  = 1;
+    const totalSteps = 5;
+    let schoolsData  = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadContent();
+
+      const me = await fetch('/api/auth/me', { credentials: 'include' })
+                        .then(r => r.json()).catch(() => null);
+      if (!me || !me.authenticated) {
+        window.location.href = '/login.html';
+        return;
+      }
+      if (me.user.onboarding_complete) {
+        window.location.href = '/dashboard.html';
+        return;
+      }
+
+      /* EDITABLE: chargement des écoles depuis admin/schools.json */
+      const data = await loadSchools();
+      if (data) {
+        schoolsData = data.universities;
+        populateUniversitySelect();
+      }
+    });
+
+    /* ─── Remplit le select des universités ─── */
+    function populateUniversitySelect() {
+      const sel = document.getElementById('select-university');
+      if (!schoolsData) return;
+      schoolsData.forEach(uni => {
+        const opt = document.createElement('option');
+        opt.value       = uni.id;
+        opt.textContent = `${uni.short} — ${uni.name}`;
+        sel.appendChild(opt);
+      });
+    }
+
+    /* ─── Met à jour le select des écoles ─── */
+    function onUniversityChange(uniId) {
+      const schoolSel = document.getElementById('select-school');
+      schoolSel.innerHTML = '<option value="">Sélectionne ton école / faculté</option>';
+      answers.university_id = uniId || null;
+      answers.school_id     = null;
+
+      if (!uniId || !schoolsData) {
+        schoolSel.disabled = true;
+        return;
+      }
+
+      const uni = schoolsData.find(u => u.id === uniId);
+      if (!uni) return;
+
+      schoolSel.disabled = false;
+      uni.schools.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value       = s.id;
+        opt.textContent = s.name;
+        schoolSel.appendChild(opt);
+      });
+
+      schoolSel.onchange = () => { answers.school_id = schoolSel.value || null; };
+    }
+
+    /* ─── Navigation entre étapes ─── */
+    function nextStep(step) {
+      hideError(step);
+      if (step === 1 && !answers.level)                      { showError(1); return; }
+      if (step === 2 && !answers.domain)                     { showError(2); return; }
+      if (step === 3 && answers.why_join.length === 0)        { showError(3); return; }
+      if (step === 4 && !answers.available_time)             { showError(4); return; }
+      goToStep(step + 1);
+    }
+
+    function prevStep(step) {
+      hideError(step);
+      goToStep(step - 1);
+    }
+
+    function goToStep(n) {
+      document.getElementById(`step-${currentStep}`).classList.remove('active');
+      currentStep = n;
+      document.getElementById(`step-${currentStep}`).classList.add('active');
+
+      /* Mise à jour barre de progression interne */
+      const pct = Math.round((currentStep / totalSteps) * 100);
+      document.getElementById('onb-sub-fill').style.width  = pct + '%';
+      document.getElementById('onb-sub-pct').textContent   = pct + '%';
+      document.getElementById('onb-sub-label').textContent = `Question ${currentStep} sur ${totalSteps}`;
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* ─── Sélection unique ─── */
+    function selectSingle(el, key) {
+      el.closest('.level-grid, .domain-grid, .time-chips')
+        ?.querySelectorAll('.level-chip, .domain-card, .time-chip')
+        .forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      answers[key] = el.dataset.value;
+    }
+
+    /* ─── Multi-sélection illimitée ─── */
+    function toggleMulti(el, key) {
+      const val = el.dataset.value;
+      if (el.classList.contains('selected')) {
+        el.classList.remove('selected');
+        answers[key] = answers[key].filter(v => v !== val);
+      } else {
+        el.classList.add('selected');
+        answers[key].push(val);
+      }
+    }
+
+    /* ─── Multi-sélection avec max ─── */
+    function toggleMultiMax(el, key, max) {
+      const val = el.dataset.value;
+      if (el.classList.contains('selected')) {
+        el.classList.remove('selected');
+        answers[key] = answers[key].filter(v => v !== val);
+      } else {
+        if (answers[key].length >= max) {
+          showToast(`Maximum ${max} domaines sélectionnables.`, 'info');
+          return;
+        }
+        el.classList.add('selected');
+        answers[key].push(val);
+      }
+    }
+
+    function showError(step) {
+      const el = document.getElementById(`error-${step}`);
+      if (el) el.classList.add('visible');
+    }
+    function hideError(step) {
+      const el = document.getElementById(`error-${step}`);
+      if (el) el.classList.remove('visible');
+    }
+
+    /* ─── Soumission finale ─── */
+    async function submitOnboarding() {
+      hideError(5);
+      if (answers.respond_domains.length === 0) { showError(5); return; }
+      if (!answers.university_id)               { showError(5); return; }
+
+      const schoolSel = document.getElementById('select-school');
+      answers.school_id = schoolSel.value || null;
+
+      const payload = {
+        level:           answers.level,
+        domains:         [answers.domain],
+        why_join:        answers.why_join,
+        available_time:  answers.available_time,
+        respond_domains: answers.respond_domains,
+        university_id:   answers.university_id,
+        school_id:       answers.school_id,
+      };
+
+      try {
+        const resp = await fetch('/api/auth/onboarding', {
+          method:      'POST',
+          headers:     { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body:        JSON.stringify(payload),
+        });
+
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          showToast(err.error || 'Erreur lors de la sauvegarde.', 'error');
+          return;
+        }
+
+        const data = await resp.json();
+        if (data.success) {
+          window.location.href = data.redirect || '/dashboard.html';
+        }
+      } catch (err) {
+        showToast('Erreur réseau. Réessaie.', 'error');
+      }
+    }
+  </script>
+
+</body>
+</html>

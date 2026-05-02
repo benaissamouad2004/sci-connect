@@ -1,0 +1,122 @@
+{% extends 'emails/base_email.html' %}
+{% block title %}Ton questionnaire est en ligne · SciConnect{% endblock %}
+
+{% block content %}
+<!-- EDITABLE: email de confirmation de dépôt -->
+
+<!-- Titre -->
+<p style="margin:0 0 6px;font-size:22px;font-weight:700;color:#005F54;font-family:Georgia,serif;">
+  Ton questionnaire est publié ! 🎉
+</p>
+<p style="margin:0 0 24px;font-size:14px;color:#57564F;">
+  Bonjour {{ user.name.split()[0] if user.name else '' }}, il est maintenant visible par la communauté SciConnect.
+</p>
+
+<!-- Bloc récapitulatif -->
+<!-- EDITABLE: informations du questionnaire -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+  <tr>
+    <td style="background-color:#E8F5F3;border:1px solid #005F54;border-radius:10px;padding:18px 22px;">
+      <p style="margin:0 0 10px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;color:#005F54;">
+        Récapitulatif
+      </p>
+      <p style="margin:0 0 6px;font-size:15px;font-weight:700;color:#181816;">
+        {{ questionnaire.title }}
+      </p>
+      <p style="margin:0 0 8px;font-size:12px;color:#57564F;">
+        {% if questionnaire.domain %}{{ questionnaire.domain }}{% endif %}
+        {% if questionnaire.target_level %} · {{ questionnaire.target_level }}{% endif %}
+        {% if questionnaire.target_count %} · Objectif : {{ questionnaire.target_count }} réponses{% endif %}
+      </p>
+      <p style="margin:0;font-size:12px;">
+        <a href="{{ questionnaire.google_forms_url }}"
+           style="color:#005F54;text-decoration:underline;word-break:break-all;">
+          {{ questionnaire.google_forms_url[:60] }}{% if questionnaire.google_forms_url|length > 60 %}...{% endif %}
+        </a>
+      </p>
+    </td>
+  </tr>
+</table>
+
+<!-- Bloc progression -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+  <tr>
+    <td style="background-color:#F7F6F2;border-radius:10px;padding:14px 18px;">
+      <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#57564F;">
+        Objectif : {{ questionnaire.target_count or 100 }} réponses
+      </p>
+      <!-- Barre progression HTML -->
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:6px;">
+        <tr>
+          <td style="height:8px;background-color:#E2DED6;border-radius:100px;overflow:hidden;">
+            <div style="height:8px;width:0%;background-color:#005F54;border-radius:100px;"></div>
+          </td>
+        </tr>
+      </table>
+      <p style="margin:0;font-size:11px;color:#9A9890;">
+        0 / {{ questionnaire.target_count or 100 }} réponses reçues · Suivi en temps réel sur le dashboard
+      </p>
+    </td>
+  </tr>
+</table>
+
+<!-- Comment les répondants te trouvent -->
+<!-- EDITABLE: explication de la diffusion -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+  <tr>
+    <td style="background-color:#FDF8EC;border:1px solid #C9A84C;border-radius:10px;padding:14px 18px;">
+      <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#BA6A1A;">
+        Comment les répondants te trouvent :
+      </p>
+      <p style="margin:0 0 4px;font-size:12px;color:#57564F;">
+        ✓ Affiché dans le feed
+        {% if questionnaire.domain %} · {{ questionnaire.domain }}{% endif %}
+      </p>
+      {% if school_name %}
+      <p style="margin:0 0 4px;font-size:12px;color:#57564F;">
+        ✓ Filtré pour {{ school_name }}
+      </p>
+      {% endif %}
+      <p style="margin:0;font-size:12px;color:#57564F;">
+        ✓ Notification envoyée aux profils compatibles
+      </p>
+    </td>
+  </tr>
+</table>
+
+<!-- Rappel mensuel -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+  <tr>
+    <td style="background-color:#FEF3F2;border:1px solid #C0392B;border-radius:8px;padding:10px 16px;">
+      <p style="margin:0;font-size:12px;color:#C0392B;">
+        🔒 Ton compteur repart le 1er <strong>{{ next_month }}</strong>.
+        Tu pourras alors répondre à 2 nouveaux questionnaires pour redéposer.
+      </p>
+    </td>
+  </tr>
+</table>
+
+<!-- 2 boutons côte à côte -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+  <tr>
+    <td align="center" style="padding-right:8px;">
+      <a href="{{ stats_url }}"
+         style="display:inline-block;padding:12px 24px;background-color:#005F54;color:#FFFFFF;text-decoration:none;border-radius:10px;font-size:13px;font-weight:700;font-family:Arial,sans-serif;">
+        Voir mes statistiques →
+      </a>
+    </td>
+    <td align="center" style="padding-left:8px;">
+      <a href="{{ respond_url }}"
+         style="display:inline-block;padding:12px 24px;background-color:#FFFFFF;color:#005F54;text-decoration:none;border-radius:10px;font-size:13px;font-weight:700;font-family:Arial,sans-serif;border:1.5px solid #005F54;">
+        Partager le lien →
+      </a>
+    </td>
+  </tr>
+</table>
+
+<!-- URL partageable -->
+<p style="margin:0;text-align:center;font-size:12px;color:#9A9890;">
+  Lien direct : <a href="{{ respond_url }}" style="color:#005F54;">{{ respond_url }}</a>
+</p>
+
+{% endblock %}

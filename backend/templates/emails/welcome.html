@@ -1,0 +1,118 @@
+{% extends 'emails/base_email.html' %}
+{% block title %}Bienvenue sur SciConnect{% endblock %}
+
+{% block content %}
+<!-- EDITABLE: email de bienvenue — modifier le texte ci-dessous -->
+
+<!-- Titre de bienvenue -->
+<p style="margin:0 0 6px;font-size:22px;font-weight:700;color:#181816;font-family:Georgia,serif;">
+  Bonjour {{ user.name.split()[0] if user.name else 'étudiant' }}, 👋
+</p>
+<p style="margin:0 0 24px;font-size:15px;font-weight:600;color:#005F54;">
+  Ton compte SciConnect est créé !
+</p>
+
+<p style="margin:0 0 20px;font-size:14px;color:#57564F;line-height:1.6;">
+  Bienvenue dans la plateforme collaborative de recherche académique marocaine.
+  Tu peux maintenant répondre aux questionnaires de tes collègues et bientôt déposer le tien.
+</p>
+
+<!-- Bloc école détectée -->
+<!-- EDITABLE: informations académiques de l'utilisateur -->
+{% if school_name or university_name %}
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+  <tr>
+    <td style="background-color:#E8F5F3;border:1px solid #005F54;border-radius:10px;padding:16px 20px;">
+      <p style="margin:0 0 4px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;color:#005F54;">
+        Établissement détecté
+      </p>
+      {% if school_name %}
+      <p style="margin:0 0 4px;font-size:13px;color:#181816;">
+        🏫 <strong>École :</strong> {{ school_name }}
+      </p>
+      {% endif %}
+      {% if university_name %}
+      <p style="margin:0 0 4px;font-size:13px;color:#181816;">
+        🎓 <strong>Université :</strong> {{ university_name }}
+      </p>
+      {% endif %}
+      {% if user.level %}
+      <p style="margin:0;font-size:13px;color:#181816;">
+        📚 <strong>Niveau :</strong> {{ user.level }}
+      </p>
+      {% endif %}
+    </td>
+  </tr>
+</table>
+{% endif %}
+
+<!-- Bloc règle des 2 -->
+<!-- EDITABLE: explication de la règle des 2 réponses -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+  <tr>
+    <td style="background-color:#FDF8EC;border:1px solid #C9A84C;border-radius:10px;padding:16px 20px;">
+      <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#BA6A1A;">
+        🔒 Ta prochaine étape
+      </p>
+      <p style="margin:0 0 12px;font-size:13px;color:#57564F;line-height:1.5;">
+        Réponds à <strong>2 questionnaires</strong> avant de pouvoir déposer le tien.
+        C'est le contrat communautaire SciConnect.
+      </p>
+      <!-- Tracker visuel -->
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="padding-right:8px;">
+            <div style="width:28px;height:28px;border-radius:50%;border:2px solid #C0392B;background-color:transparent;text-align:center;line-height:24px;font-size:11px;color:#C0392B;">○</div>
+          </td>
+          <td style="padding-right:12px;font-size:12px;color:#57564F;">Réponse 1</td>
+          <td style="padding-right:8px;color:#C9A84C;font-size:16px;">›</td>
+          <td style="padding-right:8px;">
+            <div style="width:28px;height:28px;border-radius:50%;border:2px solid #C0392B;background-color:transparent;text-align:center;line-height:24px;font-size:11px;color:#C0392B;">○</div>
+          </td>
+          <td style="padding-right:12px;font-size:12px;color:#57564F;">Réponse 2</td>
+          <td style="padding-right:8px;color:#C9A84C;font-size:16px;">›</td>
+          <td style="padding-right:8px;">
+            <div style="width:28px;height:28px;border-radius:50%;border:2px solid #9A9890;background-color:#F0EDE6;text-align:center;line-height:24px;font-size:11px;">🔒</div>
+          </td>
+          <td style="font-size:12px;color:#9A9890;">Dépôt</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<!-- Bloc Fondateur -->
+<!-- EDITABLE: visible uniquement si is_founder=True -->
+{% if is_founder %}
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+  <tr>
+    <td style="background-color:#FDF8EC;border:1px solid #C9A84C;border-left:4px solid #C9A84C;border-radius:10px;padding:14px 18px;">
+      <p style="margin:0 0 4px;font-size:14px;font-weight:700;color:#BA6A1A;">
+        ⭐ Tu fais partie des 50 premiers Fondateurs !
+      </p>
+      <p style="margin:0;font-size:13px;color:#57564F;">
+        Badge Fondateur débloqué — <strong>1 dépôt gratuit ce mois</strong>, sans attendre les 2 réponses.
+      </p>
+    </td>
+  </tr>
+</table>
+{% endif %}
+
+<!-- Bouton principal -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+  <tr>
+    <td align="center">
+      <a href="{{ dashboard_url }}"
+         style="display:inline-block;padding:14px 32px;background-color:#005F54;color:#FFFFFF;text-decoration:none;border-radius:10px;font-size:14px;font-weight:700;font-family:Arial,sans-serif;">
+        Voir les questionnaires disponibles →
+      </a>
+    </td>
+  </tr>
+</table>
+
+<!-- Slogan -->
+<p style="margin:0;text-align:center;font-style:italic;color:#C9A84C;font-size:13px;font-family:Georgia,serif;">
+  Par les étudiants, pour les étudiants
+</p>
+
+{% endblock %}

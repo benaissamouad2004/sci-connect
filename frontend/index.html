@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- EDITABLE: titre de la page — changer ici pour modifier l'onglet -->
+  <title>SciConnect — Par les étudiants, pour les étudiants</title>
+  <meta name="description" content="Plateforme collaborative de questionnaires académiques pour les étudiants marocains." />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/landing.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════
+       NAVIGATION STICKY
+       ═══════════════════════════════════════════════════════ -->
+  <nav class="navbar" role="navigation" aria-label="Navigation principale">
+    <div class="navbar-inner">
+      <a href="index.html" class="navbar-logo" aria-label="SciConnect accueil">
+        SciConnect<span class="navbar-logo-dot" aria-hidden="true"></span>
+        <span class="navbar-slogan">
+          <!-- EDITABLE: chargé depuis admin/content.json → landing.slogan -->
+          <span data-content="landing.slogan">Par les étudiants, pour les étudiants</span>
+        </span>
+      </a>
+      <div class="navbar-actions">
+        <a href="dashboard.html" class="navbar-link">Explorer</a>
+        <a href="login.html" class="btn-primary navbar-btn">
+          <!-- EDITABLE: chargé depuis admin/settings.json → buttons.google_signin_label -->
+          <span data-setting="buttons.google_signin_label">Continuer avec Google</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION HERO
+         ═══════════════════════════════════════════════════════ -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-inner">
+
+        <!-- Texte hero gauche -->
+        <div class="hero-text">
+          <div class="hero-tag">
+            <span class="hero-tag-dot" aria-hidden="true"></span>
+            Plateforme académique marocaine
+          </div>
+
+          <h1 class="hero-title" id="hero-title">
+            <!-- EDITABLE: chargé depuis admin/content.json → landing.hero_title_line1 -->
+            <span data-content="landing.hero_title_line1">La recherche étudiante,</span><br>
+            <!-- EDITABLE: chargé depuis admin/content.json → landing.hero_title_line2 -->
+            <span class="hero-title-accent" data-content="landing.hero_title_line2">rendue collaborative.</span>
+          </h1>
+
+          <!-- EDITABLE: chargé depuis admin/content.json → landing.hero_subtitle -->
+          <p class="hero-subtitle" data-content="landing.hero_subtitle">
+            Dépose ton questionnaire Google Forms, touche les bons répondants, suis les réponses en temps réel et valide chaque contribution. Une seule règle : réponds à 2 questionnaires avant de déposer.
+          </p>
+
+          <!-- EDITABLE: chargé depuis admin/content.json → landing.slogan -->
+          <p class="hero-slogan" data-content="landing.slogan">Par les étudiants, pour les étudiants</p>
+
+          <div class="hero-cta">
+            <!-- EDITABLE: chargé depuis admin/content.json → landing.cta_primary -->
+            <a href="login.html" class="btn-primary" data-content="landing.cta_primary">
+              Continuer avec Google — c'est gratuit
+            </a>
+            <!-- EDITABLE: chargé depuis admin/content.json → landing.cta_secondary -->
+            <a href="dashboard.html" class="btn-secondary" data-content="landing.cta_secondary">
+              Explorer les questionnaires
+            </a>
+          </div>
+        </div>
+
+        <!-- Carte visuelle hero droite -->
+        <div class="hero-visual" aria-hidden="true">
+          <div class="hero-floating-badge">
+            <div class="hero-floating-badge-icon">✓</div>
+            <div class="hero-floating-badge-text">
+              <strong>Réponse validée</strong>
+              <span>+10 points gagnés</span>
+            </div>
+          </div>
+
+          <div class="hero-card">
+            <div class="hero-card-header">
+              <div class="hero-card-avatar">S</div>
+              <div class="hero-card-info">
+                <h4>Sara El Amrani</h4>
+                <p>ENCG Marrakech · M1 Finance</p>
+              </div>
+              <span class="pill pill-teal" style="margin-left:auto">Fondatrice</span>
+            </div>
+
+            <div class="hero-card-tag">Économie comportementale</div>
+            <div class="hero-card-form-title">Impact du numérique sur les habitudes d'épargne</div>
+
+            <div class="hero-card-progress-label">
+              <span>73 réponses</span>
+              <span>Objectif : 100</span>
+            </div>
+            <div class="hero-card-progress-bar">
+              <div class="hero-card-progress-fill"></div>
+            </div>
+
+            <div class="hero-card-stats">
+              <div class="hero-card-stat">
+                <span class="hero-card-stat-value">73</span>
+                <span class="hero-card-stat-label">réponses</span>
+              </div>
+              <div class="hero-card-stat">
+                <span class="hero-card-stat-value">91%</span>
+                <span class="hero-card-stat-label">complétion</span>
+              </div>
+              <div class="hero-card-stat">
+                <span class="hero-card-stat-value">12</span>
+                <span class="hero-card-stat-label">écoles</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         BANDE STATISTIQUES
+         ═══════════════════════════════════════════════════════ -->
+    <section class="stats-band" aria-label="Statistiques SciConnect">
+      <div class="stats-band-inner">
+        <div class="stat-item">
+          <!-- EDITABLE: chargé depuis admin/content.json → landing.stats_students -->
+          <span class="stat-item-value" data-content="landing.stats_students">1 200+</span>
+          <!-- EDITABLE: chargé depuis admin/content.json → landing.stats_students_label -->
+          <div class="stat-item-label" data-content="landing.stats_students_label">étudiants inscrits</div>
+        </div>
+        <div class="stat-item">
+          <!-- EDITABLE: chargé depuis admin/content.json → landing.stats_questionnaires -->
+          <span class="stat-item-value" data-content="landing.stats_questionnaires">340</span>
+          <!-- EDITABLE: chargé depuis admin/content.json → landing.stats_questionnaires_label -->
+          <div class="stat-item-label" data-content="landing.stats_questionnaires_label">questionnaires actifs</div>
+        </div>
+        <div class="stat-item">
+          <!-- EDITABLE: chargé depuis admin/content.json → landing.stats_completion -->
+          <span class="stat-item-value" data-content="landing.stats_completion">92%</span>
+          <!-- EDITABLE: chargé depuis admin/content.json → landing.stats_completion_label -->
+          <div class="stat-item-label" data-content="landing.stats_completion_label">taux de complétion moyen</div>
+        </div>
+        <div class="stat-item">
+          <!-- EDITABLE: chargé depuis admin/content.json → landing.stats_rule -->
+          <span class="stat-item-value gold" data-content="landing.stats_rule">2 réponses</span>
+          <!-- EDITABLE: chargé depuis admin/content.json → landing.stats_rule_label -->
+          <div class="stat-item-label" data-content="landing.stats_rule_label">pour déposer le vôtre</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         COMMENT ÇA MARCHE — 5 étapes
+         ═══════════════════════════════════════════════════════ -->
+    <section class="how-it-works" aria-labelledby="how-title">
+      <div class="section-header">
+        <div class="section-tag">Fonctionnement</div>
+        <h2 class="section-title" id="how-title">Comment ça marche</h2>
+        <p class="section-subtitle">Cinq étapes simples, une règle d'or pour garantir la qualité des données.</p>
+      </div>
+
+      <div class="steps-grid">
+        <div class="steps-connector" aria-hidden="true"></div>
+
+        <!-- Étape 1 -->
+        <article class="step-card">
+          <div class="step-number" aria-label="Étape 1">1</div>
+          <span class="step-icon" aria-hidden="true">🔐</span>
+          <h3 class="step-title">Connecte-toi</h3>
+          <p class="step-desc">Avec ton compte Google universitaire. Pas de mot de passe à retenir.</p>
+        </article>
+
+        <!-- Étape 2 -->
+        <article class="step-card">
+          <div class="step-number" aria-label="Étape 2">2</div>
+          <span class="step-icon" aria-hidden="true">🎯</span>
+          <h3 class="step-title">Complète ton profil</h3>
+          <p class="step-desc">École, domaine, niveau. On sélectionne les bons questionnaires pour toi.</p>
+        </article>
+
+        <!-- Étape 3 — Règle des 2, surlignée en or -->
+        <article class="step-card highlighted" aria-label="Étape clé : La règle des 2">
+          <div class="step-number" aria-label="Étape 3">2</div>
+          <span class="step-icon" aria-hidden="true">📋</span>
+          <h3 class="step-title">Réponds à 2 questionnaires</h3>
+          <p class="step-desc">C'est la règle d'or : donne avant de recevoir. Chaque réponse vaut 10 points.</p>
+          <span class="step-badge">La règle des 2 ✦</span>
+        </article>
+
+        <!-- Étape 4 -->
+        <article class="step-card">
+          <div class="step-number" aria-label="Étape 4">4</div>
+          <span class="step-icon" aria-hidden="true">📤</span>
+          <h3 class="step-title">Dépose le tien</h3>
+          <p class="step-desc">Partage ton lien Google Forms. Il est diffusé aux étudiants qui correspondent.</p>
+        </article>
+
+        <!-- Étape 5 -->
+        <article class="step-card">
+          <div class="step-number" aria-label="Étape 5">5</div>
+          <span class="step-icon" aria-hidden="true">📊</span>
+          <h3 class="step-title">Suis & exporte</h3>
+          <p class="step-desc">Tableau de bord en temps réel. Export Excel en un clic pour ton mémoire.</p>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         OUVERT À TOUS — 2 cartes
+         ═══════════════════════════════════════════════════════ -->
+    <section class="access-section" aria-labelledby="access-title">
+      <div class="section-header">
+        <div class="section-tag">Accès</div>
+        <h2 class="section-title" id="access-title">Ouvert à tous</h2>
+        <p class="section-subtitle">Compte Google ou visiteur public — chacun a sa place sur SciConnect.</p>
+      </div>
+
+      <div class="access-grid">
+
+        <!-- Carte compte Google -->
+        <article class="access-card connected">
+          <div class="access-card-icon" aria-hidden="true">🎓</div>
+          <h3 class="access-card-title">Avec un compte Google</h3>
+          <p class="access-card-subtitle">Déverrouille toutes les fonctionnalités de la plateforme.</p>
+          <ul class="access-features" aria-label="Fonctionnalités compte Google">
+            <li class="access-feature">
+              <span class="access-check" aria-hidden="true">✓</span>
+              Répondre aux questionnaires et gagner des points
+            </li>
+            <li class="access-feature">
+              <span class="access-check" aria-hidden="true">✓</span>
+              Déposer son questionnaire après 2 réponses
+            </li>
+            <li class="access-feature">
+              <span class="access-check" aria-hidden="true">✓</span>
+              Vérification automatique via Google Forms API
+            </li>
+            <li class="access-feature">
+              <span class="access-check" aria-hidden="true">✓</span>
+              Tableau de bord + export Excel
+            </li>
+            <li class="access-feature">
+              <span class="access-check" aria-hidden="true">✓</span>
+              Badge Fondateur pour les 50 premiers
+            </li>
+          </ul>
+          <div class="access-card-cta">
+            <!-- EDITABLE: chargé depuis admin/content.json → landing.cta_primary -->
+            <a href="login.html" class="btn-primary" data-content="landing.cta_primary">
+              Continuer avec Google — c'est gratuit
+            </a>
+          </div>
+        </article>
+
+        <!-- Carte visiteur public -->
+        <article class="access-card public">
+          <div class="access-card-icon" aria-hidden="true">👁️</div>
+          <h3 class="access-card-title">Visiteur public</h3>
+          <p class="access-card-subtitle" style="color: var(--color-text-secondary)">Accès en lecture sans inscription.</p>
+          <ul class="access-features" aria-label="Fonctionnalités visiteur public">
+            <li class="access-feature">
+              <span class="access-check" aria-hidden="true">✓</span>
+              Parcourir les questionnaires disponibles
+            </li>
+            <li class="access-feature">
+              <span class="access-check" aria-hidden="true">✓</span>
+              Répondre via lien partagé sans compte
+            </li>
+            <li class="access-feature">
+              <span class="access-check" aria-hidden="true">—</span>
+              Pas de points ni de vérification
+            </li>
+            <li class="access-feature">
+              <span class="access-check" aria-hidden="true">—</span>
+              Pas de dépôt de questionnaire
+            </li>
+            <li class="access-feature">
+              <span class="access-check" aria-hidden="true">—</span>
+              Pas de statistiques personnelles
+            </li>
+          </ul>
+          <div class="access-card-cta">
+            <!-- EDITABLE: chargé depuis admin/content.json → landing.cta_secondary -->
+            <a href="dashboard.html" class="btn-secondary" data-content="landing.cta_secondary">
+              Explorer les questionnaires
+            </a>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         POURQUOI LA RÈGLE DES 2 — 3 cartes + FAQ
+         ═══════════════════════════════════════════════════════ -->
+    <section class="why-section" aria-labelledby="why-title">
+      <div class="section-header">
+        <div class="section-tag">La règle des 2</div>
+        <h2 class="section-title" id="why-title">Pourquoi cette règle ?</h2>
+        <p class="section-subtitle">Un système équitable qui garantit la qualité et la réciprocité.</p>
+      </div>
+
+      <div class="why-cards">
+        <article class="why-card">
+          <div class="why-card-icon" aria-hidden="true">⚖️</div>
+          <h3 class="why-card-title">Équité garantie</h3>
+          <p class="why-card-desc">Chaque étudiant contribue avant de recevoir. Personne ne peut exploiter la plateforme sans donner en retour.</p>
+        </article>
+        <article class="why-card">
+          <div class="why-card-icon" aria-hidden="true">📈</div>
+          <h3 class="why-card-title">Données de qualité</h3>
+          <p class="why-card-desc">Des répondants motivés et engagés produisent des réponses plus complètes et plus fiables pour ta recherche.</p>
+        </article>
+        <article class="why-card">
+          <div class="why-card-icon" aria-hidden="true">🌐</div>
+          <h3 class="why-card-title">Communauté active</h3>
+          <p class="why-card-desc">Le système de réciprocité crée un cercle vertueux où tout le monde bénéficie de la participation collective.</p>
+        </article>
+      </div>
+
+      <!-- FAQ -->
+      <div class="faq-list" role="list" aria-label="Questions fréquentes">
+
+        <div class="faq-item" role="listitem">
+          <button class="faq-question" aria-expanded="false" onclick="toggleFaq(this)">
+            Est-ce que la règle des 2 est réinitialisée chaque mois ?
+            <span class="faq-chevron" aria-hidden="true">▼</span>
+          </button>
+          <div class="faq-answer" role="region">
+            <p class="faq-answer-inner">Oui. Le compteur de réponses se réinitialise le 1er de chaque mois. Tu dois répondre à 2 questionnaires par mois pour déposer le tien ce mois-là. Les points accumulés, eux, ne sont pas réinitialisés.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" role="listitem">
+          <button class="faq-question" aria-expanded="false" onclick="toggleFaq(this)">
+            Comment est vérifiée ma réponse à un questionnaire ?
+            <span class="faq-chevron" aria-hidden="true">▼</span>
+          </button>
+          <div class="faq-answer" role="region">
+            <p class="faq-answer-inner">SciConnect utilise l'API Google Forms pour vérifier automatiquement que ton adresse Google figure parmi les répondants et que le formulaire a été rempli en entier. C'est instantané et fiable.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" role="listitem">
+          <button class="faq-question" aria-expanded="false" onclick="toggleFaq(this)">
+            Les 50 premiers ont un badge Fondateur — qu'est-ce que ça change ?
+            <span class="faq-chevron" aria-hidden="true">▼</span>
+          </button>
+          <div class="faq-answer" role="region">
+            <p class="faq-answer-inner">Les Fondateurs peuvent déposer leur premier questionnaire sans avoir répondu à 2 questionnaires au préalable. C'est un remerciement pour les pionniers qui ont contribué à lancer la communauté.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         UNIVERSITÉS — chargées depuis schools.json
+         ═══════════════════════════════════════════════════════ -->
+    <section class="universities-section" aria-labelledby="universities-title">
+      <div class="section-header">
+        <div class="section-tag">Universités partenaires</div>
+        <h2 class="section-title" id="universities-title">Nos établissements</h2>
+        <p class="section-subtitle">Les écoles de la communauté SciConnect — chargées dynamiquement.</p>
+      </div>
+
+      <!-- EDITABLE: écoles chargées depuis admin/schools.json — ne jamais coder en dur -->
+      <div class="universities-grid" id="universities-grid" aria-label="Liste des universités">
+        <!-- Rempli dynamiquement par renderUniversities() dans main.js -->
+        <p style="text-align:center;color:var(--color-text-muted);grid-column:1/-1">Chargement des établissements...</p>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         TÉMOIGNAGES — 3 cartes
+         ═══════════════════════════════════════════════════════ -->
+    <section class="testimonials-section" aria-labelledby="testimonials-title">
+      <div class="section-header">
+        <div class="section-tag">Témoignages</div>
+        <h2 class="section-title" id="testimonials-title">Ce qu'ils en disent</h2>
+        <p class="section-subtitle">Des étudiants qui ont utilisé SciConnect pour leurs mémoires et PFE.</p>
+      </div>
+
+      <div class="testimonials-grid">
+
+        <article class="testimonial-card">
+          <div class="testimonial-stars" aria-label="5 étoiles">
+            <span class="testimonial-star" aria-hidden="true">★</span>
+            <span class="testimonial-star" aria-hidden="true">★</span>
+            <span class="testimonial-star" aria-hidden="true">★</span>
+            <span class="testimonial-star" aria-hidden="true">★</span>
+            <span class="testimonial-star" aria-hidden="true">★</span>
+          </div>
+          <!-- EDITABLE: texte témoignage 1 — peut être déplacé dans content.json -->
+          <blockquote class="testimonial-quote">
+            "J'ai obtenu 87 réponses en 5 jours pour mon PFE en gestion. La vérification automatique via Google Forms a convaincu mon encadrant que les données étaient fiables."
+          </blockquote>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" style="background:linear-gradient(135deg,var(--color-primary),var(--color-primary-hover))" aria-hidden="true">Y</div>
+            <div>
+              <div class="testimonial-name">Youssef Benali</div>
+              <div class="testimonial-school">ENCG Casablanca · M2 Management</div>
+            </div>
+          </div>
+        </article>
+
+        <article class="testimonial-card">
+          <div class="testimonial-stars" aria-label="5 étoiles">
+            <span class="testimonial-star" aria-hidden="true">★</span>
+            <span class="testimonial-star" aria-hidden="true">★</span>
+            <span class="testimonial-star" aria-hidden="true">★</span>
+            <span class="testimonial-star" aria-hidden="true">★</span>
+            <span class="testimonial-star" aria-hidden="true">★</span>
+          </div>
+          <!-- EDITABLE: texte témoignage 2 -->
+          <blockquote class="testimonial-quote">
+            "La règle des 2 m'a forcée à découvrir des recherches que je n'aurais jamais lues autrement. Et l'export Excel m'a économisé des heures de saisie manuelle."
+          </blockquote>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" style="background:linear-gradient(135deg,var(--color-accent),#B8942A)" aria-hidden="true">N</div>
+            <div>
+              <div class="testimonial-name">Nadia Ouhammou</div>
+              <div class="testimonial-school">FSJES Guéliz · L3 Économie</div>
+            </div>
+          </div>
+        </article>
+
+        <article class="testimonial-card">
+          <div class="testimonial-stars" aria-label="5 étoiles">
+            <span class="testimonial-star" aria-hidden="true">★</span>
+            <span class="testimonial-star" aria-hidden="true">★</span>
+            <span class="testimonial-star" aria-hidden="true">★</span>
+            <span class="testimonial-star" aria-hidden="true">★</span>
+            <span class="testimonial-star" aria-hidden="true">★</span>
+          </div>
+          <!-- EDITABLE: texte témoignage 3 -->
+          <blockquote class="testimonial-quote">
+            "En tant que Fondateur, j'ai pu déposer dès le premier jour. Maintenant j'ai 120 réponses vérifiées et mon mémoire de fin d'études est en bonne voie."
+          </blockquote>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" style="background:linear-gradient(135deg,#1A7A5E,#0D5C46)" aria-hidden="true">K</div>
+            <div>
+              <div class="testimonial-name">Karim Ait Benhaddou</div>
+              <div class="testimonial-school">ENSA Marrakech · Ingénierie Informatique</div>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         CTA FINAL
+         ═══════════════════════════════════════════════════════ -->
+    <section class="cta-section" aria-labelledby="cta-title">
+      <div class="cta-inner">
+        <h2 class="cta-title" id="cta-title">Prêt à rejoindre la communauté ?</h2>
+        <p class="cta-subtitle">
+          Connecte-toi avec ton compte Google, réponds à 2 questionnaires et dépose le tien.
+          C'est gratuit, sécurisé, et réservé aux étudiants marocains.
+        </p>
+        <!-- EDITABLE: chargé depuis admin/content.json → landing.cta_primary -->
+        <a href="login.html" class="btn-primary cta-btn" data-content="landing.cta_primary">
+          Continuer avec Google — c'est gratuit
+        </a>
+        <p class="cta-note">Aucune carte bancaire. Aucun engagement. Juste ton compte Google.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══════════════════════════════════════════════════════
+       FOOTER
+       ═══════════════════════════════════════════════════════ -->
+  <footer class="footer" role="contentinfo">
+    <div class="footer-inner">
+      <div class="footer-logo">SciConnect</div>
+      <!-- EDITABLE: chargé depuis admin/content.json → landing.slogan -->
+      <div class="footer-slogan" data-content="landing.slogan">Par les étudiants, pour les étudiants</div>
+      <nav class="footer-links" aria-label="Liens de pied de page">
+        <a href="#" class="footer-link">À propos</a>
+        <a href="#" class="footer-link">Confidentialité</a>
+        <a href="#" class="footer-link">Contact</a>
+        <a href="#" class="footer-link">Conditions</a>
+      </nav>
+      <div class="footer-copy">© 2026 SciConnect — Plateforme académique marocaine</div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/main.js"></script>
+  <script>
+    /* ─── Chargement du contenu dynamique au démarrage ─── */
+    document.addEventListener('DOMContentLoaded', async () => {
+      /* EDITABLE: loadContent() charge content.json + settings.json et applique les textes */
+      await loadContent();
+
+      /* EDITABLE: écoles chargées depuis admin/schools.json — ne jamais coder en dur */
+      const schoolsData = await loadSchools();
+      if (schoolsData) {
+        renderUniversities(schoolsData.universities);
+      }
+    });
+
+    /* ─── Rendu dynamique des universités ─── */
+    function renderUniversities(universities) {
+      const grid = document.getElementById('universities-grid');
+      if (!grid || !universities) return;
+
+      grid.innerHTML = universities.map(uni => `
+        <div class="university-block">
+          <div class="university-block-header">
+            <!-- EDITABLE: couleur chargée depuis schools.json → universities[n].color -->
+            <div class="university-color-dot" style="background-color:${uni.color}" aria-hidden="true"></div>
+            <div>
+              <!-- EDITABLE: nom chargé depuis schools.json → universities[n].name -->
+              <div class="university-block-name">${escapeHtml(uni.name)}</div>
+              <!-- EDITABLE: ville chargée depuis schools.json → universities[n].city -->
+              <div class="university-block-city">${escapeHtml(uni.city)}</div>
+            </div>
+            <!-- EDITABLE: sigle chargé depuis schools.json → universities[n].short -->
+            <div class="university-short-badge">${escapeHtml(uni.short)}</div>
+          </div>
+          <div class="schools-list" role="list" aria-label="Écoles de ${escapeHtml(uni.name)}">
+            ${uni.schools.map(s => `
+              <!-- EDITABLE: école chargée depuis schools.json → schools[n].name -->
+              <span class="school-chip" role="listitem">${escapeHtml(s.name)}</span>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    /* Utilitaire anti-XSS */
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    /* ─── FAQ accordéon ─── */
+    function toggleFaq(btn) {
+      const answer = btn.nextElementSibling;
+      const isOpen = answer.classList.contains('open');
+
+      /* Fermer tous les autres */
+      document.querySelectorAll('.faq-answer.open').forEach(a => {
+        a.classList.remove('open');
+        a.previousElementSibling.classList.remove('open');
+        a.previousElementSibling.setAttribute('aria-expanded', 'false');
+      });
+
+      if (!isOpen) {
+        answer.classList.add('open');
+        btn.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+      }
+    }
+  </script>
+
+</body>
+</html>

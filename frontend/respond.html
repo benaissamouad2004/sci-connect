@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Répondre — SciConnect</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    body { background-color: var(--color-bg); margin: 0; overflow: hidden; height: 100vh; }
+
+    /* ─── Navbar ─── */
+    .respond-nav {
+      height: 52px;
+      background-color: var(--color-surface);
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+    }
+
+    .respond-nav-logo {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+
+    .respond-nav-back {
+      font-size: 0.83rem;
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color var(--transition);
+    }
+    .respond-nav-back:hover { color: var(--color-primary); }
+
+    .respond-nav-center {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--color-text);
+      max-width: 400px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ─── Layout 2 colonnes ─── */
+    .respond-shell {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      height: calc(100vh - 52px);
+      margin-top: 52px;
+    }
+
+    /* ══════════════════════════════
+       PANNEAU GAUCHE
+    ══════════════════════════════ */
+    .respond-panel {
+      background-color: var(--color-surface);
+      border-right: 1px solid var(--color-border);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      gap: 16px;
+    }
+
+    /* Infos questionnaire */
+    .rp-info {}
+
+    .rp-tag {
+      display: inline-block;
+      padding: 3px 10px;
+      background-color: var(--color-primary-light);
+      color: var(--color-primary);
+      border-radius: 100px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .rp-title {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--color-text);
+      line-height: 1.35;
+      margin-bottom: 6px;
+    }
+
+    .rp-desc {
+      font-size: 0.78rem;
+      color: var(--color-text-secondary);
+      line-height: 1.55;
+      display: none;
+      margin-bottom: 6px;
+    }
+
+    .rp-meta {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      line-height: 1.6;
+    }
+
+    /* Divider */
+    .rp-divider {
+      height: 1px;
+      background-color: var(--color-border);
+    }
+
+    /* Collectif — progression */
+    .rp-section-label {
+      font-size: 0.65rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--color-text-muted);
+      margin-bottom: 8px;
+    }
+
+    .rp-progress-track {
+      height: 7px;
+      background-color: var(--color-surface-2);
+      border-radius: 100px;
+      overflow: hidden;
+      margin: 6px 0;
+    }
+
+    .rp-progress-fill {
+      height: 100%;
+      background-color: var(--color-primary);
+      border-radius: 100px;
+      transition: width 0.6s ease;
+    }
+
+    .rp-progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.73rem;
+      color: var(--color-text-muted);
+    }
+
+    /* ══ TIMER — suivi d'activité ══ */
+    .rp-timer {
+      background-color: var(--color-bg);
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+    }
+
+    .rp-timer.ready {
+      border-color: var(--color-unlocked-border);
+      background-color: var(--color-unlocked-bg);
+    }
+
+    .rp-timer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .rp-timer-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--color-text-secondary);
+    }
+
+    .rp-timer.ready .rp-timer-label { color: var(--color-unlocked-text); }
+
+    .rp-timer-elapsed {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .rp-timer-bar {
+      height: 5px;
+      background-color: var(--color-border);
+      border-radius: 100px;
+      overflow: hidden;
+      margin-bottom: 7px;
+    }
+
+    .rp-timer-fill {
+      height: 100%;
+      background-color: var(--color-primary);
+      border-radius: 100px;
+      transition: width 1s linear;
+    }
+
+    .rp-timer.ready .rp-timer-fill { background-color: var(--color-success); }
+
+    .rp-timer-status {
+      font-size: 0.71rem;
+      color: var(--color-text-muted);
+      line-height: 1.4;
+    }
+
+    .rp-timer.ready .rp-timer-status {
+      color: var(--color-unlocked-text);
+      font-weight: 600;
+    }
+
+    /* ══ BOUTON VÉRIFICATION ══ */
+    .rp-submit-area { margin-top: auto; }
+
+    .rp-already-banner {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background-color: var(--color-unlocked-bg);
+      border: 1px solid var(--color-unlocked-border);
+      border-radius: var(--radius-md);
+      font-size: 0.78rem;
+      color: var(--color-unlocked-text);
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+
+    .rp-public-note {
+      display: none;
+      padding: 10px 12px;
+      background-color: var(--color-accent-light);
+      border: 1px solid var(--color-accent);
+      border-radius: var(--radius-md);
+      font-size: 0.75rem;
+      color: var(--color-warning);
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 13px 16px;
+      background-color: var(--color-primary);
+      color: var(--color-surface);
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: var(--font-ui);
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .submit-btn:hover:not(:disabled) {
+      background-color: var(--color-primary-hover);
+      transform: translateY(-1px);
+    }
+
+    .submit-btn:disabled {
+      background-color: var(--color-surface-2);
+      color: var(--color-text-muted);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Résultat vérification */
+    .verify-result {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      border: 1.5px solid;
+      display: none;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .verify-result--success { background-color: var(--color-unlocked-bg); border-color: var(--color-unlocked-border); }
+    .verify-result--warning { background-color: var(--color-half-bg);     border-color: var(--color-half-border); }
+    .verify-result--error   { background-color: var(--color-locked-bg);   border-color: var(--color-locked-border); }
+    .verify-result--info    { background-color: var(--color-primary-light); border-color: var(--color-primary); }
+
+    .verify-result-icon { font-size: 1.2rem; flex-shrink: 0; }
+
+    .verify-result-title {
+      font-size: 0.84rem;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .verify-result--success .verify-result-title { color: var(--color-unlocked-text); }
+    .verify-result--warning .verify-result-title { color: var(--color-half-text); }
+    .verify-result--error   .verify-result-title { color: var(--color-locked-text); }
+    .verify-result--info    .verify-result-title { color: var(--color-primary); }
+
+    .verify-result-desc { font-size: 0.78rem; line-height: 1.55; color: var(--color-text-secondary); }
+
+    /* ══════════════════════════════
+       ZONE IFRAME DROITE
+    ══════════════════════════════ */
+    .respond-iframe-area {
+      position: relative;
+      overflow: hidden;
+      background-color: var(--color-bg);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Barre de progression globale (collectif) */
+    .iframe-progress-bar {
+      height: 3px;
+      background-color: var(--color-border);
+      flex-shrink: 0;
+    }
+
+    .iframe-progress-fill {
+      height: 100%;
+      background-color: var(--color-primary);
+      transition: width 0.6s ease;
+    }
+
+    /* Loader pendant chargement iframe */
+    .iframe-loader {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--color-bg);
+      gap: 12px;
+      z-index: 5;
+    }
+
+    .iframe-loader-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--color-border);
+      border-top-color: var(--color-primary);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .iframe-loader-text {
+      font-size: 0.84rem;
+      color: var(--color-text-muted);
+    }
+
+    /* Iframe elle-même */
+    #iframe-container {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    #iframe-container iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    /* Demo placeholder */
+    .demo-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 14px;
+      text-align: center;
+      padding: 40px;
+    }
+
+    .demo-placeholder-icon { font-size: 3.5rem; }
+
+    .demo-placeholder-title {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--color-text);
+    }
+
+    .demo-placeholder-desc {
+      font-size: 0.84rem;
+      color: var(--color-text-muted);
+      line-height: 1.6;
+      max-width: 380px;
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 900px) {
+      body { overflow: auto; }
+      .respond-shell {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+      .respond-panel {
+        border-right: none;
+        border-bottom: 1px solid var(--color-border);
+        overflow: visible;
+      }
+      .respond-iframe-area {
+        height: 70vh;
+        min-height: 500px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="respond-nav" role="navigation">
+    <a href="index.html" class="respond-nav-logo">SciConnect</a>
+    <span class="respond-nav-center" id="nav-title">Chargement...</span>
+    <a href="dashboard.html" class="respond-nav-back">← Dashboard</a>
+  </nav>
+
+  <div class="respond-shell" id="respond-main">
+
+    <!-- ══════════════════════════════
+         PANNEAU GAUCHE — infos + timer + action
+    ══════════════════════════════ -->
+    <aside class="respond-panel" aria-label="Informations et validation">
+
+      <!-- Infos questionnaire -->
+      <div class="rp-info">
+        <div class="rp-tag" id="rp-domain-tag">Questionnaire</div>
+        <h1 class="rp-title" id="q-title">Chargement...</h1>
+        <p class="rp-desc" id="q-desc"></p>
+        <div class="rp-meta" id="q-meta"></div>
+      </div>
+
+      <div class="rp-divider"></div>
+
+      <!-- Progression collective -->
+      <div>
+        <div class="rp-section-label">Réponses collectées</div>
+        <div class="rp-progress-track">
+          <div class="rp-progress-fill" id="q-progress-fill" style="width:0%"></div>
+        </div>
+        <div class="rp-progress-label">
+          <span id="q-progress-label">—</span>
+          <span id="q-progress-pct">0%</span>
+        </div>
+      </div>
+
+      <div class="rp-divider"></div>
+
+      <!-- ══ TIMER — suivi d'activité sur le formulaire ══ -->
+      <div class="rp-timer" id="rp-timer" role="status" aria-live="polite">
+        <div class="rp-timer-header">
+          <span class="rp-timer-label" id="rp-timer-label">Ton activité sur le formulaire</span>
+          <span class="rp-timer-elapsed" id="rp-timer-elapsed">0s</span>
+        </div>
+        <div class="rp-timer-bar">
+          <div class="rp-timer-fill" id="rp-timer-fill" style="width:0%"></div>
+        </div>
+        <div class="rp-timer-status" id="rp-timer-status">
+          Commence à remplir le formulaire →
+        </div>
+      </div>
+
+      <!-- Bannières état -->
+      <div class="rp-already-banner" id="already-responded-banner" role="alert">
+        <span>✅</span>
+        <span>Tu as déjà répondu à ce questionnaire ce mois-ci.</span>
+      </div>
+
+      <div class="rp-public-note" id="public-banner" role="note">
+        👁️ Tu réponds en tant que <strong>visiteur public</strong>.
+        <a href="login.html" style="color:var(--color-warning);font-weight:700">Connecte-toi</a> pour gagner des points.
+      </div>
+
+      <!-- Action submit -->
+      <div class="rp-submit-area">
+        <button class="submit-btn" id="submit-btn"
+                onclick="onSubmitClicked()" disabled
+                aria-label="Vérifier ma réponse">
+          <span>⏳</span>
+          <span id="submit-btn-text">Remplis le formulaire d'abord</span>
+        </button>
+
+        <div class="verify-result" id="verify-result" role="status" aria-live="polite"></div>
+      </div>
+
+    </aside>
+
+    <!-- ══════════════════════════════
+         ZONE DROITE — Google Forms iframe
+    ══════════════════════════════ -->
+    <main class="respond-iframe-area" role="main">
+
+      <!-- Barre de progression (collectif) -->
+      <div class="iframe-progress-bar" role="progressbar"
+           aria-label="Réponses collectées" aria-valuemin="0" aria-valuemax="100">
+        <div class="iframe-progress-fill" id="iframe-progress-fill" style="width:0%"></div>
+      </div>
+
+      <!-- Loader -->
+      <div class="iframe-loader" id="iframe-loader">
+        <div class="iframe-loader-spinner" aria-hidden="true"></div>
+        <div class="iframe-loader-text">Chargement du formulaire Google Forms...</div>
+      </div>
+
+      <!-- Contenu : iframe ou placeholder démo -->
+      <!-- EDITABLE: iframe chargée avec ?embedded=true — ne jamais supprimer ce paramètre -->
+      <div id="iframe-container"></div>
+
+    </main>
+
+  </div><!-- /respond-shell -->
+
+  <script src="js/main.js"></script>
+  <script src="js/respond.js"></script>
+
+</body>
+</html>

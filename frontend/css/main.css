@@ -1,0 +1,212 @@
+/* ═══════════════════════════════════════════════════════════
+   SCICONNECT — Design System Global
+   Toutes les variables CSS sont définies ici dans :root
+   Ne jamais coder de couleur en dur dans HTML ou JS
+   ═══════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  /* ═══ COULEURS PRIMAIRES ═══
+     Changer --color-primary pour modifier tous les boutons principaux */
+  --color-primary:        #005F54;
+  --color-primary-hover:  #004A41;
+  --color-primary-light:  #E8F5F3;
+
+  /* ═══ COULEURS ACCENT OR ═══
+     Changer --color-accent pour modifier tous les accents dorés */
+  --color-accent:         #C9A84C;
+  --color-accent-light:   #FDF8EC;
+
+  /* ═══ ARRIÈRE-PLANS ═══
+     Changer --color-bg pour la couleur de fond de toutes les pages */
+  --color-bg:             #F7F6F2;
+  --color-surface:        #FFFFFF;
+  --color-surface-2:      #F0EDE6;
+
+  /* ═══ TEXTES ═══ */
+  --color-text:           #181816;
+  --color-text-secondary: #57564F;
+  --color-text-muted:     #9A9890;
+
+  /* ═══ BORDURES ═══ */
+  --color-border:         #E2DED6;
+
+  /* ═══ STATUTS — ne pas modifier ces valeurs ═══ */
+  --color-success:        #1A7A5E;
+  --color-warning:        #BA6A1A;
+  --color-danger:         #C0392B;
+
+  /* ═══ ÉTAT VERROUILLÉ 0/2 réponses ═══
+     Changer pour modifier l'apparence du dépôt verrouillé */
+  --color-locked-bg:      #FEF3F2;
+  --color-locked-border:  #C0392B;
+  --color-locked-text:    #C0392B;
+
+  /* ═══ ÉTAT À MOITIÉ 1/2 réponses ═══ */
+  --color-half-bg:        #FFF8EC;
+  --color-half-border:    #BA6A1A;
+  --color-half-text:      #BA6A1A;
+
+  /* ═══ ÉTAT DÉVERROUILLÉ 2/2 réponses ═══ */
+  --color-unlocked-bg:    #E8F5F3;
+  --color-unlocked-border:#005F54;
+  --color-unlocked-text:  #1A7A5E;
+
+  /* ═══ TYPOGRAPHIE ═══ */
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-ui:      'DM Sans', system-ui, sans-serif;
+  --font-mono:    'Courier New', monospace;
+
+  /* ═══ ESPACEMENTS ═══ */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 20px;
+
+  /* ═══ OMBRES ═══ */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.07);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.09);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+
+  /* ═══ TRANSITIONS ═══ */
+  --transition: 0.2s ease;
+}
+
+/* ─── Reset & Base ─── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-ui);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Typographie globale ─── */
+h1, h2, h3, h4, h5 {
+  font-family: var(--font-display);
+  line-height: 1.2;
+  color: var(--color-text);
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+a:hover {
+  color: var(--color-primary-hover);
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* ─── Boutons globaux ─── */
+
+/* ═══ BOUTON PRINCIPAL ═══
+   Changer --color-primary dans :root pour modifier tous les boutons principaux */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background-color: var(--color-primary);
+  color: var(--color-surface);
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--transition), transform var(--transition), box-shadow var(--transition);
+  text-decoration: none;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-hover);
+  color: var(--color-surface);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* ═══ BOUTON SECONDAIRE ═══
+   Changer --color-border et --color-text pour modifier les boutons secondaires */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background-color: transparent;
+  color: var(--color-text);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  text-decoration: none;
+}
+
+.btn-secondary:hover {
+  border-color: var(--color-text);
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  transform: translateY(-1px);
+}
+
+/* ─── Utilitaires ─── */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  border: 0;
+}
+
+/* ─── Pill / Badge ─── */
+.pill {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.pill-teal {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.pill-gold {
+  background-color: var(--color-accent-light);
+  color: var(--color-warning);
+}
+
+.pill-grey {
+  background-color: var(--color-surface-2);
+  color: var(--color-text-secondary);
+}

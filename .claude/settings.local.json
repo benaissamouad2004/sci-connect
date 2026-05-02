@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install *)",
+      "Bash(python backend/app.py)",
+      "Bash(curl -s http://localhost:5000/admin/content)",
+      "Bash(python -m json.tool)",
+      "Bash(curl -s http://localhost:5000/admin/settings)",
+      "Bash(curl -s http://localhost:5000/admin/schools)",
+      "Bash(/c/Users/user/AppData/Local/Programs/Python/Python313/python.exe -m pip install flask flask-cors --quiet)",
+      "Bash(/c/Users/user/AppData/Local/Programs/Python/Python312/python.exe -m flask --version)",
+      "Bash(/c/Users/user/AppData/Local/Programs/Python/Python314/python.exe -m flask --version)",
+      "Bash(/c/Users/user/AppData/Local/Programs/Python/Python314/python.exe -m pip install flask-cors --quiet)",
+      "Bash(/c/Users/user/AppData/Local/Programs/Python/Python314/python.exe -m pip install python-dotenv --quiet)",
+      "Bash($PYTHON *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5000/)"
+    ]
+  }
+}

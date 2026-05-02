@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- EDITABLE: titre mis à jour par JS depuis le nom du profil -->
+  <title>Profil — SciConnect</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/profile.css" />
+</head>
+<body>
+
+  <!-- Navbar minimaliste -->
+  <nav class="prof-nav" role="navigation">
+    <a href="index.html" class="prof-nav-logo">SciConnect</a>
+    <div class="prof-nav-actions">
+      <a href="dashboard.html" class="prof-nav-link" id="nav-dashboard" style="display:none">← Mon dashboard</a>
+      <a href="login.html"     class="prof-nav-link" id="nav-login">Se connecter</a>
+    </div>
+  </nav>
+
+  <!-- Shell centré -->
+  <div class="prof-shell" id="prof-shell">
+
+    <!-- ══ HERO CARD ══ -->
+    <div class="prof-hero-card">
+
+      <!-- Bannière teal avec motif points -->
+      <div class="prof-banner">
+        <!-- EDITABLE: bouton partage — copie l'URL dans le presse-papiers -->
+        <button class="prof-share-btn" onclick="shareProfile()" aria-label="Partager ce profil">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+            <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/>
+          </svg>
+          Partager ce profil
+        </button>
+
+        <!-- Avatar positionné en débordement bas-gauche -->
+        <div class="prof-avatar-anchor">
+          <!-- EDITABLE: photo Google depuis avatar_url, fallback initiale -->
+          <div class="prof-avatar" id="prof-avatar">?</div>
+          <span class="prof-verified-pill">✓ Email académique vérifié</span>
+        </div>
+      </div>
+
+      <!-- Infos profil -->
+      <div class="prof-info">
+        <div class="prof-info-left">
+          <!-- EDITABLE: nom depuis GET /api/profiles/:slug → name -->
+          <h1 class="prof-name" id="prof-name">Chargement...</h1>
+          <div class="prof-school-row" id="prof-school-row">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <!-- EDITABLE: école + université depuis GET /api/profiles/:slug → school_name, university_name -->
+            <span id="prof-school" style="color:var(--color-primary);font-weight:600"></span>
+            <span style="color:var(--color-text-muted)">·</span>
+            <span id="prof-university" style="color:var(--color-text-muted)"></span>
+          </div>
+          <div class="prof-meta-row" id="prof-meta-row">
+            <!-- EDITABLE: domaine + niveau depuis GET /api/profiles/:slug → domain, level -->
+            <span id="prof-domain-level"></span>
+          </div>
+          <div class="prof-date-row">
+            <span id="prof-since"></span>
+            <!-- EDITABLE: badge fondateur si is_founder = true -->
+            <span class="prof-founder-badge" id="prof-founder" style="display:none">★ Fondateur</span>
+          </div>
+        </div>
+
+        <div class="prof-info-right">
+          <!-- EDITABLE: badge actuel depuis user.badge_level -->
+          <div class="prof-badge-circle" id="prof-badge-circle">
+            <span class="prof-badge-icon" id="prof-badge-icon">⭐</span>
+          </div>
+          <div class="prof-badge-name" id="prof-badge-name">Novice</div>
+          <div class="prof-badge-sub" id="prof-badge-sub"></div>
+          <div class="prof-url" id="prof-url"></div>
+        </div>
+      </div>
+
+      <!-- Stats row (4 colonnes) -->
+      <div class="prof-stats-row" aria-label="Statistiques du profil">
+        <div class="prof-stat">
+          <!-- EDITABLE: depuis GET /api/profiles/:slug → total_responses -->
+          <div class="prof-stat-value" id="stat-responses">—</div>
+          <div class="prof-stat-label">réponses données</div>
+        </div>
+        <div class="prof-stat">
+          <!-- EDITABLE: depuis GET /api/profiles/:slug → total_questionnaires -->
+          <div class="prof-stat-value" id="stat-questionnaires">—</div>
+          <div class="prof-stat-label">questionnaires déposés</div>
+        </div>
+        <div class="prof-stat">
+          <!-- EDITABLE: depuis GET /api/profiles/:slug → avg_completion -->
+          <div class="prof-stat-value gold" id="stat-completion">—</div>
+          <div class="prof-stat-label">taux de complétion</div>
+        </div>
+        <div class="prof-stat">
+          <!-- EDITABLE: depuis GET /api/profiles/:slug → school_rank, school_name -->
+          <div class="prof-stat-value" id="stat-rank">—</div>
+          <div class="prof-stat-label" id="stat-rank-label">classement</div>
+        </div>
+      </div>
+
+    </div><!-- /hero-card -->
+
+    <!-- ══ BODY 2 COLONNES ══ -->
+    <div class="prof-body">
+
+      <!-- ─ COLONNE GAUCHE 60% ─ -->
+      <div class="prof-col-left">
+
+        <!-- Portfolio de recherche -->
+        <div class="prof-card">
+          <div class="prof-card-title">Portfolio de recherche</div>
+          <div class="prof-card-sub">Questionnaires déposés sur SciConnect</div>
+          <!-- EDITABLE: rempli par renderPortfolio() depuis GET /api/profiles/:slug/questionnaires -->
+          <div id="portfolio-list">
+            <div style="text-align:center;padding:24px;color:var(--color-text-muted);font-size:0.82rem">
+              Chargement...
+            </div>
+          </div>
+        </div>
+
+        <!-- Identité académique -->
+        <div class="prof-card">
+          <div class="prof-card-title">Identité académique</div>
+          <div class="prof-verified-row">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Email académique vérifié
+          </div>
+          <div class="prof-identity-rows" id="prof-identity-rows">
+            <!-- EDITABLE: rempli par renderIdentity() -->
+          </div>
+          <div class="prof-identity-note">
+            Informations vérifiées via email institutionnel
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ─ COLONNE DROITE 40% ─ -->
+      <div class="prof-col-right">
+
+        <!-- Badges -->
+        <div class="prof-card">
+          <div class="prof-card-title">Badges obtenus</div>
+          <!-- EDITABLE: grille 2 colonnes remplie par renderBadges() -->
+          <div class="prof-badges-grid" id="prof-badges-grid">
+            <!-- Chargement -->
+          </div>
+        </div>
+
+        <!-- Contribution -->
+        <div class="prof-card">
+          <div class="prof-card-title">Contribution</div>
+          <div id="contribution-body">
+            <!-- EDITABLE: rempli par renderContribution() -->
+          </div>
+        </div>
+
+        <!-- Classement -->
+        <div class="prof-card prof-ranking-card">
+          <div class="prof-card-title">Classement</div>
+          <!-- EDITABLE: rang depuis GET /api/profiles/:slug → school_rank, top_pct, general_rank -->
+          <div class="prof-rank-main" id="rank-main">—</div>
+          <div class="prof-rank-teal"  id="rank-teal"></div>
+          <div class="prof-rank-muted" id="rank-muted"></div>
+        </div>
+
+      </div>
+
+    </div><!-- /prof-body -->
+
+    <!-- Pied de page discret -->
+    <footer class="prof-footer">
+      <!-- EDITABLE: depuis content.json → footer.copyright -->
+      <span data-content="footer.copyright">© 2025 SciConnect · Marrakech, Maroc · Projet académique ENCGM</span>
+    </footer>
+
+  </div><!-- /prof-shell -->
+
+  <script src="js/main.js"></script>
+  <script src="js/profile.js"></script>
+</body>
+</html>
