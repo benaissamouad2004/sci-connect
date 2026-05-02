@@ -1,0 +1,79 @@
+{% extends 'emails/base_email.html' %}
+{% block title %}Nouveau questionnaire dans ton domaine · SciConnect{% endblock %}
+
+{% block content %}
+<!-- Email: nouveau questionnaire dans le même domaine -->
+
+<p style="margin:0 0 6px;font-size:22px;font-weight:700;color:#005F54;font-family:Georgia,serif;">
+  Nouveau questionnaire dans ton domaine 🔔
+</p>
+<p style="margin:0 0 24px;font-size:14px;color:#57564F;">
+  Bonjour {{ user.name.split()[0] if user.name else '' }},
+  un étudiant de ta communauté vient de déposer un questionnaire en
+  <strong>{{ questionnaire.domain or 'ton domaine' }}</strong>.
+</p>
+
+<!-- Carte questionnaire -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+  <tr>
+    <td style="background-color:#E8F5F3;border:1px solid #005F54;border-radius:10px;padding:18px 22px;">
+      <p style="margin:0 0 10px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;color:#005F54;">
+        Questionnaire
+      </p>
+      <p style="margin:0 0 6px;font-size:16px;font-weight:700;color:#181816;">
+        {{ questionnaire.title }}
+      </p>
+      {% if questionnaire.description %}
+      <p style="margin:0 0 8px;font-size:13px;color:#57564F;line-height:1.5;">
+        {{ questionnaire.description[:150] }}{% if questionnaire.description|length > 150 %}...{% endif %}
+      </p>
+      {% endif %}
+      <p style="margin:0;font-size:12px;color:#9A9890;">
+        {% if questionnaire.domain %}{{ questionnaire.domain }}{% endif %}
+        {% if questionnaire.target_level %} · {{ questionnaire.target_level }}{% endif %}
+        {% if questionnaire.target_count %} · Objectif : {{ questionnaire.target_count }} réponses{% endif %}
+        {% if author_school %} · {{ author_school }}{% endif %}
+      </p>
+    </td>
+  </tr>
+</table>
+
+<!-- Info récompense -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+  <tr>
+    <td style="background-color:#FDF8EC;border:1px solid #C9A84C;border-radius:10px;padding:14px 18px;">
+      <p style="margin:0 0 4px;font-size:12px;font-weight:700;color:#BA6A1A;">
+        Pourquoi répondre ?
+      </p>
+      <p style="margin:0 0 4px;font-size:12px;color:#57564F;">
+        ✓ +{{ points_per_response }} points ajoutés à ton profil
+      </p>
+      <p style="margin:0 0 4px;font-size:12px;color:#57564F;">
+        ✓ Comptabilisé dans tes 2 réponses mensuelles requises
+      </p>
+      <p style="margin:0;font-size:12px;color:#57564F;">
+        ✓ Contribue à la recherche académique marocaine
+      </p>
+    </td>
+  </tr>
+</table>
+
+<!-- Bouton CTA -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+  <tr>
+    <td align="center">
+      <a href="{{ respond_url }}"
+         style="display:inline-block;padding:14px 32px;background-color:#005F54;color:#FFFFFF;text-decoration:none;border-radius:10px;font-size:14px;font-weight:700;font-family:Arial,sans-serif;">
+        Répondre au questionnaire →
+      </a>
+    </td>
+  </tr>
+</table>
+
+<!-- Lien désabonnement -->
+<p style="margin:0;text-align:center;font-size:12px;color:#9A9890;">
+  Questionnaire déposé sur <a href="{{ dashboard_url }}" style="color:#005F54;">SciConnect</a>.
+  Tu reçois cet email car ce questionnaire correspond à ton domaine <strong>{{ questionnaire.domain }}</strong>.
+</p>
+
+{% endblock %}

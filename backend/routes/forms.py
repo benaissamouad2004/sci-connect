@@ -47,15 +47,14 @@ def list_forms():
     if level:
         q = q.filter_by(target_level=level)
 
-    # Exclure les formulaires déjà répondus par l'utilisateur connecté
+    # Récupérer les questionnaires déjà répondus (pour les marquer, sans les cacher)
     user_id = session.get('user_id')
+    answered_ids = set()
     if user_id:
         answered_ids = {
             r.questionnaire_id
             for r in Response.query.filter_by(respondent_id=user_id).all()
         }
-        if answered_ids:
-            q = q.filter(~Questionnaire.id.in_(answered_ids))
 
     total = q.count()
     items = q.order_by(Questionnaire.created_at.desc()).offset(offset).limit(limit).all()
@@ -63,12 +62,16 @@ def list_forms():
     results = []
     for item in items:
         d = item.to_dict()
+        d['already_responded'] = item.id in answered_ids
         author = User.query.filter_by(id=item.author_id).first()
         if author:
             d['author_name']   = author.name
             d['author_school'] = author.school_id
             d['author_level']  = author.level
         results.append(d)
+
+    # Tri : questionnaires non répondus en premier
+    results.sort(key=lambda x: x.get('already_responded', False))
 
     return jsonify({'items': results, 'total': total, 'limit': limit, 'offset': offset})
 
@@ -86,23 +89,33 @@ def create_form():
     if not user:
         return jsonify({'error': 'utilisateur introuvable'}), 404
 
-    # Vérifier la règle des 2 (ou Fondateur au premier dépôt)
+    # Vérifier la règle multi-dépôt : chaque dépôt nécessite 2 réponses supplémentaires
     try:
         content = _get_content()
-        required = content.get('rules', {}).get('responses_required', 2)
+        responses_per_deposit = content.get('rules', {}).get('responses_required', 2)
     except Exception:
-        required = 2
+        responses_per_deposit = 2
 
-    can_deposit = (
-        user.monthly_responses_given >= required or
-        (user.is_founder and Questionnaire.query.filter_by(author_id=user_id).count() == 0)
-    )
+    # Compter les dépôts effectués ce mois-ci
+    now = datetime.utcnow()
+    first_of_month = datetime(now.year, now.month, 1)
+    monthly_deposits = Questionnaire.query.filter(
+        Questionnaire.author_id == user_id,
+        Questionnaire.created_at >= first_of_month
+    ).count()
+
+    # Réponses requises = (dépôts_ce_mois + 1) × responses_per_deposit
+    required = (monthly_deposits + 1) * responses_per_deposit
+    is_founder_first = user.is_founder and Questionnaire.query.filter_by(author_id=user_id).count() == 0
+
+    can_deposit = user.monthly_responses_given >= required or is_founder_first
 
     if not can_deposit:
         return jsonify({
             'error': 'règle des 2 non remplie',
             'monthly_responses_given': user.monthly_responses_given,
-            'required': required
+            'required': required,
+            'monthly_deposits': monthly_deposits,
         }), 403
 
     data = request.get_json()
@@ -139,9 +152,37 @@ def create_form():
     db.session.add(q)
     db.session.commit()
 
+    # EMAIL 1 : confirmation à l'auteur
     try:
         from backend.services.email_service import send_deposit_confirmation_email
         send_deposit_confirmation_email(q, user)
+    except Exception:
+        pass
+
+    # EMAIL 2 : notification aux utilisateurs du même domaine
+    try:
+        if q.domain:
+            from backend.services.email_service import send_new_questionnaire_domain_notification
+
+            try:
+                points_per_response = content.get('rules', {}).get('points_per_response', 10)
+            except Exception:
+                points_per_response = 10
+
+            # Trouver les utilisateurs ayant ce domaine dans leurs centres d'intérêt
+            # et exclure l'auteur lui-même
+            all_users = User.query.filter(
+                User.id != user_id,
+                User.onboarding_complete == True,
+                User.email != None,
+            ).limit(300).all()
+
+            matching_users = [
+                u for u in all_users
+                if u.domains and q.domain in (u.domains if isinstance(u.domains, list) else [])
+            ]
+
+            send_new_questionnaire_domain_notification(q, user, matching_users, points_per_response)
     except Exception:
         pass
 

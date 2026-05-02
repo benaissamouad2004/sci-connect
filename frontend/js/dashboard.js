@@ -56,9 +56,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     state.user = me.user;
     renderIdentityCard(me.user);
     renderStreakWidget(me.user.streak || 0);
-    renderSidebarReciprocity(me.user.monthly_responses_given || 0);
-    renderReciprocityBanner(me.user.monthly_responses_given || 0);
-    updateNavLock(me.user.monthly_responses_given || 0);
+    renderStatsStrip(me.user);
+    renderSidebarReciprocity(me.user);
+    renderReciprocityBanner(me.user);
+    updateNavLock(me.user.can_deposit);
+    renderDepositPanel(me.user);
     setGreeting(me.user);
 
     /* Lien profil public dans la nav */
@@ -106,6 +108,67 @@ function setGreeting(user) {
   const welcome   = state.content?.dashboard?.welcome_message || 'Bonjour';
   const firstName = (user.name || '').split(' ')[0];
   el.textContent = `${welcome}, ${firstName} 👋`;
+}
+
+/* ─── Stats Strip — 4 KPI tiles ─── */
+function renderStatsStrip(user) {
+  const strip = document.getElementById('stats-strip');
+  if (!strip) return;
+  strip.style.display = 'grid';
+
+  const streak   = user.streak || 0;
+  const points   = user.points || 0;
+  const count    = user.monthly_responses_given || 0;
+  const deposits = user.monthly_deposits || 0;
+  const needed   = user.responses_needed_for_next_deposit || 2;
+  const canDep   = user.can_deposit;
+  const rpd      = user.responses_per_deposit || 2;
+  const progressInCycle = count - (deposits * rpd);
+  const pct = Math.min(100, Math.round((progressInCycle / rpd) * 100));
+
+  /* Streak */
+  const streakEl = document.getElementById('stat-streak');
+  if (streakEl) streakEl.textContent = streak;
+
+  /* Points */
+  const ptsEl = document.getElementById('stat-points');
+  if (ptsEl) ptsEl.textContent = points;
+
+  /* Réponses */
+  const respEl  = document.getElementById('stat-responses-count');
+  const denomEl = document.getElementById('stat-responses-denom');
+  const barEl   = document.getElementById('stat-responses-bar');
+  const pillEl  = document.getElementById('stat-responses-pill');
+  if (respEl)  respEl.textContent  = progressInCycle;
+  if (denomEl) denomEl.textContent = `/${rpd}`;
+  if (barEl)   barEl.style.width   = `${pct}%`;
+  if (pillEl) {
+    if (canDep) {
+      pillEl.textContent = '✓ Débloqué';
+      pillEl.className   = 'stat-tile-status-pill unlocked';
+    } else if (progressInCycle >= 1) {
+      pillEl.textContent = `${rpd - progressInCycle} restante${rpd - progressInCycle > 1 ? 's' : ''}`;
+      pillEl.className   = 'stat-tile-status-pill half';
+    } else {
+      pillEl.textContent = 'Verrouillé';
+      pillEl.className   = 'stat-tile-status-pill';
+    }
+  }
+
+  /* Dépôt */
+  const iconEl   = document.getElementById('stat-deposit-icon');
+  const labelEl  = document.getElementById('stat-deposit-label');
+  const ctaEl    = document.getElementById('stat-deposit-cta');
+  const tileEl   = document.getElementById('stat-tile-deposit');
+  if (iconEl)  iconEl.textContent  = canDep ? '✅' : progressInCycle >= 1 ? '🔓' : '🔒';
+  if (labelEl) labelEl.textContent = canDep
+    ? (deposits > 0 ? `Dépôt ${deposits + 1} prêt` : 'Disponible !')
+    : (progressInCycle >= 1 ? `${progressInCycle}/${rpd} réponses` : 'Verrouillé');
+  if (ctaEl)   ctaEl.style.display = canDep ? 'inline-block' : 'none';
+  if (tileEl)  {
+    if (canDep) tileEl.classList.add('unlocked-state');
+    else tileEl.classList.remove('unlocked-state');
+  }
 }
 
 /* EDITABLE: compteur live — fluctue entre 28 et 41 toutes les 4 secondes */
@@ -209,64 +272,68 @@ function renderStreakWidget(streakCount) {
   }
 }
 
-/* ─── Réciprocité sidebar (widget détaillé) ─── */
-/* EDITABLE: 3 états selon monthly_responses_given */
-function renderSidebarReciprocity(count) {
+/* ─── Réciprocité sidebar (widget multi-dépôt) ─── */
+function renderSidebarReciprocity(user) {
   const el = document.getElementById('sidebar-recip-content');
   if (!el) return;
 
-  const stateName = count >= 2 ? 'unlocked' : count === 1 ? 'half' : 'locked';
+  const count      = user.monthly_responses_given || 0;
+  const deposits   = user.monthly_deposits || 0;
+  const needed     = user.responses_needed_for_next_deposit || 2;
+  const canDeposit = user.can_deposit;
+  const rpd        = user.responses_per_deposit || 2;
 
-  if (stateName === 'locked') {
-    el.innerHTML = `
-      <div class="recip-state-card locked">
-        <div class="recip-state-header">
-          <span class="recip-state-icon">🔒</span>
-          <span class="recip-state-title">Dépôt verrouillé</span>
-        </div>
-        <div class="recip-progress-track"><div class="recip-progress-fill locked" style="width:0%"></div></div>
-        <div class="recip-steps">
-          <div class="recip-step"><div class="recip-step-dot recip-step-dot--lock"></div>Réponse 1 — en attente</div>
-          <div class="recip-step"><div class="recip-step-dot recip-step-dot--lock"></div>Réponse 2 — en attente</div>
-          <div class="recip-step"><div class="recip-step-dot recip-step-dot--lock">🔒</div>Dépôt — verrouillé</div>
-        </div>
-        <a href="#feed-grid" class="recip-link">Répondre maintenant →</a>
-      </div>`;
-  } else if (stateName === 'half') {
-    el.innerHTML = `
-      <div class="recip-state-card half">
-        <div class="recip-state-header">
-          <span class="recip-state-icon">🔓</span>
-          <span class="recip-state-title">Presque là !</span>
-        </div>
-        <div class="recip-progress-track"><div class="recip-progress-fill half" style="width:50%"></div></div>
-        <div class="recip-steps">
-          <div class="recip-step"><div class="recip-step-dot recip-step-dot--ok">✓</div>Réponse 1 — complétée</div>
-          <div class="recip-step"><div class="recip-step-dot recip-step-dot--half"></div>Réponse 2 — en attente</div>
-          <div class="recip-step"><div class="recip-step-dot recip-step-dot--lock">🔒</div>Dépôt — bientôt</div>
-        </div>
-        <a href="#feed-grid" class="recip-link">Encore 1 réponse →</a>
-      </div>`;
-  } else {
-    el.innerHTML = `
-      <div class="recip-state-card unlocked">
-        <div class="recip-state-header">
-          <span class="recip-state-icon">✅</span>
-          <span class="recip-state-title">Dépôt autorisé ✓</span>
-        </div>
-        <div class="recip-progress-track"><div class="recip-progress-fill unlocked" style="width:100%"></div></div>
-        <div class="recip-steps">
-          <div class="recip-step"><div class="recip-step-dot recip-step-dot--ok">✓</div>Réponse 1 — complétée</div>
-          <div class="recip-step"><div class="recip-step-dot recip-step-dot--ok">✓</div>Réponse 2 — complétée</div>
-          <div class="recip-step"><div class="recip-step-dot recip-step-dot--ok">✓</div>Dépôt — débloqué</div>
-        </div>
-        <a href="deposit.html" class="recip-link">Déposer mon formulaire →</a>
-      </div>`;
+  /* Avancement vers le prochain dépôt */
+  const progressInCycle = count - (deposits * rpd);
+  const pct = Math.min(100, Math.round((progressInCycle / rpd) * 100));
+
+  /* Ligne de titre */
+  const slotLabel = deposits > 0
+    ? `Dépôt ${deposits + 1} ce mois`
+    : 'Statut de dépôt';
+  const stateClass = canDeposit ? 'unlocked' : progressInCycle >= 1 ? 'half' : 'locked';
+  const icon = canDeposit ? '✅' : progressInCycle >= 1 ? '🔓' : '🔒';
+  const title = canDeposit ? `Dépôt ${deposits + 1} débloqué !` : `${progressInCycle}/${rpd} réponses`;
+
+  /* Générer les étapes dynamiques */
+  const steps = [];
+  for (let i = 1; i <= rpd; i++) {
+    const done = progressInCycle >= i;
+    steps.push(`
+      <div class="recip-step">
+        <div class="recip-step-dot ${done ? 'recip-step-dot--ok' : 'recip-step-dot--lock'}">${done ? '✓' : ''}</div>
+        Réponse ${deposits * rpd + i} — ${done ? 'complétée' : 'en attente'}
+      </div>`);
   }
+  const depositDot = canDeposit ? 'recip-step-dot--ok' : 'recip-step-dot--lock';
+  const depositLabel = canDeposit ? `Dépôt ${deposits + 1} — débloqué` : `Dépôt ${deposits + 1} — verrouillé`;
+  steps.push(`<div class="recip-step"><div class="recip-step-dot ${depositDot}">${canDeposit ? '✓' : '🔒'}</div>${depositLabel}</div>`);
+
+  /* Historique dépôts précédents */
+  const histLine = deposits > 0
+    ? `<div style="font-size:0.7rem;color:var(--color-text-muted);margin-top:6px;padding-top:6px;border-top:1px solid var(--color-border)">${deposits} dépôt${deposits > 1 ? 's' : ''} déjà effectué${deposits > 1 ? 's' : ''} ce mois</div>`
+    : '';
+
+  el.innerHTML = `
+    <div class="recip-state-card ${stateClass}">
+      <div class="recip-state-header">
+        <span class="recip-state-icon">${icon}</span>
+        <span class="recip-state-title">${title}</span>
+      </div>
+      <div class="recip-progress-track">
+        <div class="recip-progress-fill ${stateClass}" style="width:${pct}%"></div>
+      </div>
+      ${steps.join('')}
+      ${histLine}
+      ${canDeposit
+        ? `<a href="deposit.html" class="recip-link">Déposer mon formulaire →</a>`
+        : `<a href="#feed-grid" class="recip-link">${progressInCycle >= 1 ? 'Encore ' + (rpd - progressInCycle) + ' réponse →' : 'Répondre maintenant →'}</a>`
+      }
+    </div>`;
 }
 
-/* ─── Bannière réciprocité (contenu principal) ─── */
-function renderReciprocityBanner(count) {
+/* ─── Bannière réciprocité (contenu principal) — multi-dépôt ─── */
+function renderReciprocityBanner(user) {
   const banner  = document.getElementById('recip-banner');
   const titleEl = document.getElementById('recip-banner-title');
   const tracker = document.getElementById('recip-tracker');
@@ -274,44 +341,58 @@ function renderReciprocityBanner(count) {
 
   if (!banner) return;
 
-  if (count >= 2) {
+  const canDeposit      = user.can_deposit;
+  const count           = user.monthly_responses_given || 0;
+  const deposits        = user.monthly_deposits || 0;
+  const needed          = user.responses_needed_for_next_deposit || 2;
+  const rpd             = user.responses_per_deposit || 2;
+  const progressInCycle = count - (deposits * rpd);
+
+  if (canDeposit) {
     banner.style.display = 'none';
     return;
   }
 
   banner.style.display = 'flex';
 
-  if (count === 0) {
-    banner.className = 'recip-banner locked';
-    /* EDITABLE: depuis content.json → dashboard.deposit_locked_message */
-    if (titleEl) titleEl.textContent = state.content?.dashboard?.deposit_locked_message ||
-      'Réponds à 2 questionnaires pour débloquer le dépôt.';
-    if (tracker) tracker.innerHTML = `
-      <span>○ Réponse 1</span>
-      <span style="color:var(--color-border)">›</span>
-      <span>○ Réponse 2</span>
-      <span style="color:var(--color-border)">›</span>
-      <span>🔒 Dépôt</span>`;
-    if (btnEl) { btnEl.textContent = 'Voir les questionnaires →'; btnEl.href = '#feed-grid'; }
-  } else {
-    banner.className = 'recip-banner half';
-    /* EDITABLE: depuis content.json → dashboard.deposit_half_message */
-    if (titleEl) titleEl.textContent = state.content?.dashboard?.deposit_half_message ||
-      'Encore 1 réponse avant de déposer !';
-    if (tracker) tracker.innerHTML = `
-      <span style="color:var(--color-primary)">✓ Réponse 1</span>
-      <span style="color:var(--color-border)">›</span>
-      <span>○ Réponse 2</span>
-      <span style="color:var(--color-border)">›</span>
-      <span>🔒</span>`;
-    if (btnEl) { btnEl.textContent = 'Répondre maintenant →'; btnEl.href = '#feed-grid'; }
+  const remaining = rpd - progressInCycle;
+  const isHalf    = progressInCycle >= 1;
+
+  banner.className = `recip-banner ${isHalf ? 'half' : 'locked'}`;
+
+  if (titleEl) {
+    if (deposits > 0) {
+      titleEl.textContent = isHalf
+        ? `Encore ${remaining} réponse${remaining > 1 ? 's' : ''} pour ton dépôt ${deposits + 1} !`
+        : `Réponds à ${rpd} questionnaires pour déposer à nouveau.`;
+    } else {
+      titleEl.textContent = isHalf
+        ? (state.content?.dashboard?.deposit_half_message || 'Encore 1 réponse avant de déposer !')
+        : (state.content?.dashboard?.deposit_locked_message || 'Réponds à 2 questionnaires pour débloquer le dépôt.');
+    }
+  }
+
+  if (tracker) {
+    const parts = [];
+    for (let i = 1; i <= rpd; i++) {
+      const done = progressInCycle >= i;
+      parts.push(`<span style="color:${done ? 'var(--color-primary)' : 'inherit'}">${done ? '✓' : '○'} Réponse ${deposits * rpd + i}</span>`);
+      parts.push(`<span style="color:var(--color-border)">›</span>`);
+    }
+    parts.push(`<span>🔒 Dépôt ${deposits + 1}</span>`);
+    tracker.innerHTML = parts.join('');
+  }
+
+  if (btnEl) {
+    btnEl.textContent = isHalf ? 'Répondre maintenant →' : 'Voir les questionnaires →';
+    btnEl.href = '#feed-grid';
   }
 }
 
 /* ─── Icône cadenas nav dépôt ─── */
-function updateNavLock(count) {
+function updateNavLock(canDeposit) {
   const lockEl = document.getElementById('nav-deposit-lock');
-  if (lockEl) lockEl.style.display = count >= 2 ? 'none' : 'inline';
+  if (lockEl) lockEl.style.display = canDeposit ? 'none' : 'inline';
 }
 
 /* ─── Visiteur ─── */
@@ -467,51 +548,54 @@ function renderFeed(forms) {
   const mainItems = userDomain ? items.filter(f => f.domain === userDomain) : items.slice(0, Math.ceil(items.length * 0.65));
   const sideItems = userDomain ? items.filter(f => f.domain !== userDomain)  : items.slice(Math.ceil(items.length * 0.65));
 
-  const recipCount = state.user?.monthly_responses_given || 0;
-
   mainCol.innerHTML = mainItems.length
-    ? mainItems.map(f => renderLargeCard(f, recipCount)).join('')
+    ? mainItems.map(f => renderLargeCard(f, state.user)).join('')
     : `<div class="feed-empty"><div class="feed-empty-icon">💡</div><div class="feed-empty-title">Pas encore de questionnaires dans ton domaine</div></div>`;
 
   sideCol.innerHTML = sideItems.map(f => renderCompactCard(f)).join('');
 }
 
 /* ─── Grande carte (colonne gauche) ─── */
-function renderLargeCard(form, recipCount) {
-  const color    = DOMAIN_COLORS[form.domain] || '#005F54';
-  const timeAgo  = relativeTime(form.created_at);
-  const isNew    = isRecentForm(form.created_at, 3);
-  const isTrend  = (form.response_count || 0) > 20;
+function renderLargeCard(form, user) {
+  const color     = DOMAIN_COLORS[form.domain] || '#005F54';
+  const timeAgo   = relativeTime(form.created_at);
+  const isNew     = isRecentForm(form.created_at, 3) && !form.already_responded;
+  const isTrend   = (form.response_count || 0) > 20;
+  const answered  = !!form.already_responded;
 
-  /* Indicateur de chaleur */
-  const heatColor = (form.response_count || 0) > 15 ? 'var(--color-danger)' : 'var(--color-primary)';
+  /* Réciprocité — masquée si déjà répondu */
+  const rpd        = user?.responses_per_deposit || 2;
+  const deposits   = user?.monthly_deposits || 0;
+  const count      = user?.monthly_responses_given || 0;
+  const progressInCycle = count - (deposits * rpd);
+  const canDeposit = user?.can_deposit;
 
-  /* Réciprocité dans la carte */
-  const recipMsg = recipCount >= 2
+  const recipMsg = answered || canDeposit
     ? ''
-    : recipCount === 1
-      ? `<div class="card-recip-row card-recip-row--active">🔓 Répondre ici = 2/2 → dépôt débloqué !</div>`
-      : `<div class="card-recip-row">🔒 Répondre comptabilise 1/2 vers le dépôt</div>`;
+    : progressInCycle >= rpd - 1
+      ? `<div class="card-recip-row card-recip-row--active">🔓 Répondre ici = ${rpd}/${rpd} → dépôt débloqué !</div>`
+      : `<div class="card-recip-row">🔒 Répondre comptabilise ${progressInCycle + 1}/${rpd} vers le dépôt</div>`;
 
-  /* EDITABLE: label bouton depuis settings.json → buttons.respond_button_label */
   const respondLabel = state.settings?.buttons?.respond_button_label || 'Répondre';
-
-  /* Aperçu questions (description tronquée en lignes) */
   const desc = form.description || '';
-  const previewLines = desc ? `<div class="card-preview-q">• ${escapeHtml(desc.slice(0, 80))}${desc.length > 80 ? '...' : ''}</div>` : '';
+  const previewLines = desc && !answered ? `<div class="card-preview-q">• ${escapeHtml(desc.slice(0, 80))}${desc.length > 80 ? '...' : ''}</div>` : '';
+
+  const answeredAttr = answered ? ' aria-disabled="true"' : '';
+  const cardClass    = `q-card-large${answered ? ' q-card-large--answered' : ''}`;
 
   return `
-    <article class="q-card-large" onclick="openForm('${form.id}')"
-             role="button" tabindex="0"
+    <article class="${cardClass}" onclick="${answered ? '' : `openForm('${form.id}')`}"
+             role="${answered ? 'article' : 'button'}" tabindex="${answered ? '-1' : '0'}"
              aria-label="${escapeHtml(form.title)}"
-             onkeydown="if(event.key==='Enter')openForm('${form.id}')">
-      <div class="card-stripe" style="background-color:${color}"></div>
+             ${answered ? '' : `onkeydown="if(event.key==='Enter')openForm('${form.id}')"`}${answeredAttr}>
+      <div class="card-stripe" style="background-color:${color}${answered ? ';opacity:0.5' : ''}"></div>
       <div class="card-large-body">
         <div class="card-row1">
           <div>
             ${form.school_id ? `<span class="card-school-pill">${escapeHtml(form.school_id)}</span>` : ''}
+            ${answered ? '<span class="card-answered-pill">✓ Déjà répondu</span>' : ''}
             ${isNew ? '<span class="card-new-pill">Nouveau</span>' : ''}
-            ${isTrend ? '<span class="card-trending-pill">🔥 Tendance</span>' : ''}
+            ${isTrend && !answered ? '<span class="card-trending-pill">🔥 Tendance</span>' : ''}
           </div>
           <span class="card-time">${timeAgo}</span>
         </div>
@@ -522,8 +606,6 @@ function renderLargeCard(form, recipCount) {
           ${form.target_level ? `<span class="card-chip">${escapeHtml(form.target_level)}</span>` : ''}
           ${form.target_count ? `<span class="card-chip">${form.target_count} participants</span>` : ''}
         </div>
-
-        <!-- EDITABLE: aperçu questions — slide down au hover -->
         ${previewLines ? `
         <div class="card-preview">
           <div class="card-preview-inner">
@@ -531,44 +613,54 @@ function renderLargeCard(form, recipCount) {
             ${previewLines}
           </div>
         </div>` : ''}
-
         ${recipMsg}
       </div>
       <div class="card-large-footer">
         <div class="card-footer-meta">
-          <div class="card-footer-dot" style="background-color:${color}"></div>
+          <div class="card-footer-dot" style="background-color:${color}${answered ? ';opacity:0.5' : ''}"></div>
           ${form.school_id ? `<span>${escapeHtml(form.school_id)}</span>` : ''}
           ${form.response_count ? `<span>· ${form.response_count} réponses</span>` : ''}
         </div>
-        <a href="respond.html?id=${form.id}" class="card-respond-btn"
-           onclick="event.stopPropagation()" aria-label="Répondre à ${escapeHtml(form.title)}">
-          ${respondLabel} +10pts
-        </a>
+        ${answered
+          ? `<span class="card-already-btn">✓ Répondu</span>`
+          : `<a href="respond.html?id=${form.id}" class="card-respond-btn"
+               onclick="event.stopPropagation()" aria-label="Répondre à ${escapeHtml(form.title)}">
+               ${respondLabel} +10pts
+             </a>`
+        }
       </div>
     </article>`;
 }
 
 /* ─── Carte compacte (colonne droite) ─── */
 function renderCompactCard(form) {
-  const color = DOMAIN_COLORS[form.domain] || '#005F54';
-  /* EDITABLE: label bouton depuis settings.json */
+  const color    = DOMAIN_COLORS[form.domain] || '#005F54';
+  const answered = !!form.already_responded;
   const respondLabel = state.settings?.buttons?.respond_button_label || 'Répondre';
 
   return `
-    <article class="q-card-compact" onclick="openForm('${form.id}')"
-             role="button" tabindex="0" aria-label="${escapeHtml(form.title)}"
-             onkeydown="if(event.key==='Enter')openForm('${form.id}')">
-      <div class="card-stripe" style="background-color:${color};height:3px"></div>
+    <article class="q-card-compact${answered ? ' q-card-compact--answered' : ''}"
+             onclick="${answered ? '' : `openForm('${form.id}')`}"
+             role="${answered ? 'article' : 'button'}" tabindex="${answered ? '-1' : '0'}"
+             aria-label="${escapeHtml(form.title)}"
+             ${answered ? '' : `onkeydown="if(event.key==='Enter')openForm('${form.id}')"`}>
+      <div class="card-stripe" style="background-color:${color};height:3px${answered ? ';opacity:0.4' : ''}"></div>
       <div class="card-compact-body">
-        ${form.domain ? `<span class="card-chip" style="background-color:${color}20;color:${color};font-size:0.65rem">${escapeHtml(form.domain)}</span>` : ''}
+        <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+          ${form.domain ? `<span class="card-chip" style="background-color:${color}20;color:${color};font-size:0.65rem">${escapeHtml(form.domain)}</span>` : ''}
+          ${answered ? '<span class="card-answered-pill" style="font-size:0.62rem">✓ Répondu</span>' : ''}
+        </div>
         <h3 class="card-compact-title" style="margin-top:5px">${escapeHtml(form.title)}</h3>
       </div>
       <div class="card-compact-footer">
         <span style="font-size:0.7rem;color:var(--color-text-muted)">${form.response_count || 0} rép.</span>
-        <a href="respond.html?id=${form.id}" class="card-respond-btn"
-           onclick="event.stopPropagation()" style="font-size:0.73rem;padding:4px 10px">
-          ${respondLabel}
-        </a>
+        ${answered
+          ? `<span class="card-already-btn" style="font-size:0.68rem;padding:3px 8px">✓ Répondu</span>`
+          : `<a href="respond.html?id=${form.id}" class="card-respond-btn"
+               onclick="event.stopPropagation()" style="font-size:0.73rem;padding:4px 10px">
+               ${respondLabel}
+             </a>`
+        }
       </div>
     </article>`;
 }
@@ -744,21 +836,22 @@ async function ignoreResponse(responseId, btn) {
   } catch { btn.disabled = false; }
 }
 
-/* ─── Panel dépôt (3 états) ─── */
-/* EDITABLE: 3 états visuels selon monthly_responses_given */
-function renderDepositPanel(count) {
+/* ─── Panel dépôt (multi-dépôt) ─── */
+function renderDepositPanel(user) {
   const el = document.getElementById('deposit-content');
   if (!el) return;
 
-  const isFounder     = state.user?.is_founder;
-  const hasNoForms    = !state.forms.some(f => state.user && f.author_id === state.user.id);
-  const founderExempt = isFounder && hasNoForms;
-  const canDeposit    = count >= 2 || founderExempt;
+  const canDeposit      = user?.can_deposit;
+  const count           = user?.monthly_responses_given || 0;
+  const deposits        = user?.monthly_deposits || 0;
+  const needed          = user?.responses_needed_for_next_deposit || 2;
+  const rpd             = user?.responses_per_deposit || 2;
+  const progressInCycle = count - (deposits * rpd);
 
   /* Réinitialiser la carte panel au bon style */
   const card = document.getElementById('panel-deposit');
 
-  if (count < 0) {
+  if (!user) {
     /* Visiteur non connecté */
     el.innerHTML = `
       <div class="deposit-state locked">
@@ -769,37 +862,41 @@ function renderDepositPanel(count) {
     return;
   }
 
+  /* Générer les étapes du cycle courant */
+  const stepsHtml = [];
+  for (let i = 1; i <= rpd; i++) {
+    const done = progressInCycle >= i;
+    stepsHtml.push(`
+      <div class="deposit-step">
+        <div class="deposit-step-dot ${done ? 'deposit-step-dot--ok' : 'deposit-step-dot--lock'}">${done ? '✓' : '○'}</div>
+        Réponse ${deposits * rpd + i} — ${done ? 'complétée' : 'en attente'}
+      </div>`);
+  }
+  stepsHtml.push(`
+    <div class="deposit-step">
+      <div class="deposit-step-dot ${canDeposit ? 'deposit-step-dot--ok' : 'deposit-step-dot--lock'}">${canDeposit ? '✓' : '🔒'}</div>
+      Dépôt ${deposits + 1} — ${canDeposit ? 'débloqué' : 'verrouillé'}
+    </div>`);
+
+  const histLine = deposits > 0
+    ? `<div style="font-size:0.7rem;color:var(--color-text-muted);margin-top:6px;">${deposits} dépôt${deposits > 1 ? 's' : ''} effectué${deposits > 1 ? 's' : ''} ce mois</div>`
+    : '';
+
   if (!canDeposit) {
-    const stateName = count === 0 ? 'locked' : 'half';
-    const icon      = count === 0 ? '🔒' : '🔓';
+    const icon     = progressInCycle >= 1 ? '🔓' : '🔒';
+    const remaining = rpd - progressInCycle;
     /* EDITABLE: titres depuis settings.json → buttons */
-    const btnLabel  = count === 0
+    const btnLabel = progressInCycle === 0
       ? (state.settings?.buttons?.deposit_button_locked_label || 'Dépôt verrouillé 🔒')
-      : (state.settings?.buttons?.deposit_button_half_label   || 'Presque là... (1/2) 🔓');
+      : (state.settings?.buttons?.deposit_button_half_label   || `Encore ${remaining} réponse${remaining > 1 ? 's' : ''} 🔓`);
 
     el.innerHTML = `
-      <div class="deposit-state ${stateName}">
+      <div class="deposit-state ${progressInCycle >= 1 ? 'half' : 'locked'}">
         <div class="deposit-state-icon">${icon}</div>
-        <div class="deposit-state-title">${stateName === 'locked' ? 'Dépôt verrouillé' : 'Encore 1 réponse'}</div>
-        <div class="deposit-state-steps">
-          <div class="deposit-step">
-            <div class="deposit-step-dot ${count >= 1 ? 'deposit-step-dot--ok' : 'deposit-step-dot--lock'}">
-              ${count >= 1 ? '✓' : '○'}
-            </div>
-            Réponse 1 — ${count >= 1 ? 'complétée' : 'en attente'}
-          </div>
-          <div class="deposit-step">
-            <div class="deposit-step-dot ${count >= 2 ? 'deposit-step-dot--ok' : 'deposit-step-dot--lock'}">
-              ${count >= 2 ? '✓' : '○'}
-            </div>
-            Réponse 2 — ${count >= 2 ? 'complétée' : 'en attente'}
-          </div>
-          <div class="deposit-step">
-            <div class="deposit-step-dot deposit-step-dot--lock">🔒</div>
-            Dépôt — verrouillé
-          </div>
-        </div>
-        <input type="text" class="deposit-url-input" disabled placeholder="Verrouillé · Réponds d'abord à 2 questionnaires…" />
+        <div class="deposit-state-title">${deposits > 0 ? `Dépôt ${deposits + 1}` : (progressInCycle >= 1 ? 'Presque là !' : 'Dépôt verrouillé')}</div>
+        <div class="deposit-state-steps">${stepsHtml.join('')}</div>
+        ${histLine}
+        <input type="text" class="deposit-url-input" disabled placeholder="Réponds à ${remaining} questionnaire${remaining > 1 ? 's' : ''} pour débloquer…" />
         <button class="deposit-publish-btn disabled-btn" disabled>${btnLabel}</button>
         <a href="#feed-grid" class="deposit-link">Trouver un questionnaire →</a>
       </div>`;
@@ -812,21 +909,9 @@ function renderDepositPanel(count) {
 
   el.innerHTML = `
     <div class="deposit-state unlocked">
-      <div class="deposit-state-title">✅ Dépôt autorisé ce mois</div>
-      <div class="deposit-state-steps">
-        <div class="deposit-step">
-          <div class="deposit-step-dot deposit-step-dot--ok">✓</div>
-          Réponse 1 — complétée
-        </div>
-        <div class="deposit-step">
-          <div class="deposit-step-dot deposit-step-dot--ok">✓</div>
-          Réponse 2 — complétée
-        </div>
-        <div class="deposit-step">
-          <div class="deposit-step-dot deposit-step-dot--ok">✓</div>
-          Dépôt — débloqué
-        </div>
-      </div>
+      <div class="deposit-state-title">✅ Dépôt ${deposits + 1} autorisé</div>
+      <div class="deposit-state-steps">${stepsHtml.join('')}</div>
+      ${histLine}
       <!-- EDITABLE: validation URL Google Forms avec regex — ne jamais supprimer -->
       <input type="url" class="deposit-url-input" id="deposit-url-input"
              placeholder="https://docs.google.com/forms/d/e/..."
@@ -904,33 +989,41 @@ function renderSuggestions(forms) {
     sub.textContent = parts.join(' · ');
   }
 
-  const recipCount = state.user?.monthly_responses_given || 0;
-  if (grid) grid.innerHTML = forms.map(f => renderSuggestedCard(f, recipCount)).join('');
+  if (grid) grid.innerHTML = forms.map(f => renderSuggestedCard(f, state.user)).join('');
   section.style.display = 'block';
 }
 
 /* EDITABLE: carte suggestion — même style que grande carte + badge "Recommandé" */
-function renderSuggestedCard(form, recipCount) {
+function renderSuggestedCard(form, user) {
   const color        = DOMAIN_COLORS[form.domain] || '#005F54';
   const respondLabel = state.settings?.buttons?.respond_button_label || 'Répondre';
   const score        = form.recommendation_score || 0;
   const timeAgo      = relativeTime(form.created_at);
+  const answered     = !!form.already_responded;
 
-  const recipMsg = recipCount >= 2
+  const rpd             = user?.responses_per_deposit || 2;
+  const deposits        = user?.monthly_deposits || 0;
+  const count           = user?.monthly_responses_given || 0;
+  const progressInCycle = count - (deposits * rpd);
+  const canDeposit      = user?.can_deposit;
+
+  const recipMsg = answered || canDeposit
     ? ''
-    : recipCount === 1
-      ? `<div class="card-recip-row card-recip-row--active">🔓 Répondre ici = 2/2 → dépôt débloqué !</div>`
-      : `<div class="card-recip-row">🔒 Répondre comptabilise 1/2 vers le dépôt</div>`;
+    : progressInCycle >= rpd - 1
+      ? `<div class="card-recip-row card-recip-row--active">🔓 Répondre ici = ${rpd}/${rpd} → dépôt débloqué !</div>`
+      : `<div class="card-recip-row">🔒 Répondre comptabilise ${progressInCycle + 1}/${rpd} vers le dépôt</div>`;
 
   return `
-    <article class="q-card-large q-card-suggested" onclick="openForm('${form.id}')"
-             role="button" tabindex="0" aria-label="${escapeHtml(form.title)}"
-             onkeydown="if(event.key==='Enter')openForm('${form.id}')">
-      <div class="card-stripe" style="background-color:${color}"></div>
+    <article class="q-card-large q-card-suggested${answered ? ' q-card-large--answered' : ''}"
+             onclick="${answered ? '' : `openForm('${form.id}')`}"
+             role="${answered ? 'article' : 'button'}" tabindex="${answered ? '-1' : '0'}"
+             aria-label="${escapeHtml(form.title)}"
+             ${answered ? '' : `onkeydown="if(event.key==='Enter')openForm('${form.id}')"`}>
+      <div class="card-stripe" style="background-color:${color}${answered ? ';opacity:0.5' : ''}"></div>
       <div class="card-large-body">
         <div class="card-row1">
           <div>
-            <span class="card-suggested-pill">✨ Recommandé</span>
+            ${answered ? '<span class="card-answered-pill">✓ Déjà répondu</span>' : '<span class="card-suggested-pill">✨ Recommandé</span>'}
             ${form.school_id ? `<span class="card-school-pill">${escapeHtml(form.school_id)}</span>` : ''}
           </div>
           <span class="card-time">${timeAgo}</span>
@@ -940,20 +1033,23 @@ function renderSuggestedCard(form, recipCount) {
         <div class="card-chips-row">
           ${form.domain ? `<span class="card-chip" style="background-color:${color}20;color:${color}">${escapeHtml(form.domain)}</span>` : ''}
           ${form.target_level ? `<span class="card-chip">${escapeHtml(form.target_level)}</span>` : ''}
-          ${score > 0 ? `<span class="card-score-pill">${score}% correspondance</span>` : ''}
+          ${score > 0 && !answered ? `<span class="card-score-pill">${score}% correspondance</span>` : ''}
         </div>
         ${recipMsg}
       </div>
       <div class="card-large-footer">
         <div class="card-footer-meta">
-          <div class="card-footer-dot" style="background-color:${color}"></div>
+          <div class="card-footer-dot" style="background-color:${color}${answered ? ';opacity:0.5' : ''}"></div>
           ${form.school_id ? `<span>${escapeHtml(form.school_id)}</span>` : ''}
           ${form.response_count ? `<span>· ${form.response_count} réponses</span>` : ''}
         </div>
-        <a href="respond.html?id=${form.id}" class="card-respond-btn"
-           onclick="event.stopPropagation()" aria-label="Répondre à ${escapeHtml(form.title)}">
-          ${respondLabel} +10pts
-        </a>
+        ${answered
+          ? `<span class="card-already-btn">✓ Répondu</span>`
+          : `<a href="respond.html?id=${form.id}" class="card-respond-btn"
+               onclick="event.stopPropagation()" aria-label="Répondre à ${escapeHtml(form.title)}">
+               ${respondLabel} +10pts
+             </a>`
+        }
       </div>
     </article>`;
 }

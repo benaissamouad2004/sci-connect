@@ -161,6 +161,40 @@
       </div>
     </div>
 
+    <!-- STATS STRIP — 4 KPI tiles mis à jour par renderStatsStrip() -->
+    <div class="stats-strip" id="stats-strip" style="display:none">
+      <div class="stat-tile stat-tile--streak" id="stat-tile-streak">
+        <div class="stat-tile-icon-wrap">🔥</div>
+        <div class="stat-tile-body">
+          <span class="stat-tile-val" id="stat-streak">0</span>
+          <span class="stat-tile-label">jours consécutifs</span>
+        </div>
+      </div>
+      <div class="stat-tile stat-tile--points" id="stat-tile-points">
+        <div class="stat-tile-icon-wrap">⭐</div>
+        <div class="stat-tile-body">
+          <span class="stat-tile-val" id="stat-points">0</span>
+          <span class="stat-tile-label">points gagnés</span>
+        </div>
+      </div>
+      <div class="stat-tile stat-tile--responses" id="stat-tile-responses">
+        <div class="stat-tile-top">
+          <span class="stat-tile-val"><span id="stat-responses-count">0</span><span class="stat-tile-denom" id="stat-responses-denom">/2</span></span>
+          <span class="stat-tile-status-pill" id="stat-responses-pill">En cours</span>
+        </div>
+        <span class="stat-tile-label">réponses ce mois</span>
+        <div class="stat-tile-bar"><div class="stat-tile-bar-fill" id="stat-responses-bar" style="width:0%"></div></div>
+      </div>
+      <div class="stat-tile stat-tile--deposit" id="stat-tile-deposit">
+        <div class="stat-tile-icon-wrap" id="stat-deposit-icon">🔒</div>
+        <div class="stat-tile-body">
+          <span class="stat-tile-val" id="stat-deposit-label">Verrouillé</span>
+          <span class="stat-tile-label">dépôt disponible</span>
+        </div>
+        <a href="deposit.html" class="stat-tile-cta" id="stat-deposit-cta" style="display:none">Déposer →</a>
+      </div>
+    </div>
+
     <!-- SMART RECOMMENDATION BANNER -->
     <!-- EDITABLE: chargé depuis GET /api/forms?recommended=true — premier résultat -->
     <div class="reco-banner" id="reco-banner" style="display:none" role="complementary">
@@ -315,6 +349,18 @@
       <div class="panel-card-label">Vérification</div>
       <div id="verify-list"></div>
       <a href="#" class="panel-link">Tableau complet →</a>
+    </div>
+
+    <!-- PANEL DÉPÔT — rendu par renderDepositPanel() -->
+    <div class="panel-card panel-card--deposit" id="panel-deposit">
+      <div class="panel-card-label">PROCHAIN DÉPÔT</div>
+      <div id="deposit-content">
+        <div class="deposit-loading">Chargement...</div>
+      </div>
+      <div class="panel-reset-row">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        <span class="panel-reset-text" id="reset-text"></span>
+      </div>
     </div>
 
     <!-- BADGES MINI -->

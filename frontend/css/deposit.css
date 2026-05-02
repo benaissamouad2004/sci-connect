@@ -768,6 +768,47 @@
 @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
 /* ══════════════════════════════════════════════════════
+   MULTI-DÉPÔT — badges de dépôts effectués ce mois
+   ══════════════════════════════════════════════════════ */
+
+/* Badge "2 dépôts ce mois" dans la carte unlock */
+.dep-deposit-count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  background-color: var(--color-primary-light);
+  border: 1px solid var(--color-primary);
+  border-radius: 100px;
+  padding: 3px 10px;
+}
+
+/* Ligne de progression multi-dépôt (sous la carte unlock) */
+.dep-cycle-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+}
+.dep-cycle-bar {
+  flex: 1;
+  height: 6px;
+  background-color: var(--color-border);
+  border-radius: 100px;
+  overflow: hidden;
+}
+.dep-cycle-bar-fill {
+  height: 100%;
+  background-color: var(--color-primary);
+  border-radius: 100px;
+  transition: width 0.4s ease;
+}
+
+/* ══════════════════════════════════════════════════════
    RESPONSIVE
    ══════════════════════════════════════════════════════ */
 @media (max-width: 1100px) {

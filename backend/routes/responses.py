@@ -1,7 +1,7 @@
 # ROUTE: Routes réponses — Partie 4 complète
 import os
 import json
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from flask import Blueprint, request, jsonify, session
 from backend.models import db, User, Questionnaire, Response
 
@@ -142,6 +142,19 @@ def verify_response():
     )
     db.session.add(resp)
 
+    # Streak — doit être calculé AVANT la mise à jour de last_active
+    today_date = datetime.utcnow().date()
+    if user.last_active:
+        last_date = user.last_active.date()
+        if last_date == today_date:
+            pass  # déjà actif aujourd'hui, streak inchangé
+        elif last_date == today_date - timedelta(days=1):
+            user.streak = (user.streak or 0) + 1  # jour consécutif
+        else:
+            user.streak = 1  # streak brisé, on repart à 1
+    else:
+        user.streak = 1  # première réponse
+
     # Incrémenter les compteurs
     user.monthly_responses_given = (user.monthly_responses_given or 0) + 1
     user.points                  = (user.points or 0) + points_earned
@@ -165,6 +178,7 @@ def verify_response():
         'points_earned':   points_earned,
         'monthly_count':   user.monthly_responses_given,
         'total_points':    user.points,
+        'streak':          user.streak or 1,
         'message':         f'Réponse vérifiée ! +{points_earned} points'
     })
 

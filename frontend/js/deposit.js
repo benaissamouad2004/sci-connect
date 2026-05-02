@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   depState.user = me.user;
   renderSidebarIdentity(me.user);
-  renderSidebarReciprocity(me.user.monthly_responses_given || 0);
+  renderSidebarReciprocity(me.user);
   renderDepositStatus(me.user);
 
   /* Lien profil public dans la nav */
@@ -140,120 +140,157 @@ function renderSidebarIdentity(user) {
   }
 }
 
-/* ─── Widget réciprocité sidebar ─── */
-/* EDITABLE: 3 états selon monthly_responses_given */
-function renderSidebarReciprocity(count) {
+/* ─── Widget réciprocité sidebar — multi-dépôt ─── */
+function renderSidebarReciprocity(user) {
   const el = document.getElementById('sidebar-recip-content');
   if (!el) return;
 
-  if (count >= 2) {
-    el.innerHTML = `
-      <div class="recip-state-card unlocked">
-        <div class="recip-state-header">
-          <span class="recip-state-icon">✅</span>
-          <span class="recip-state-title">Dépôt autorisé ✓</span>
-        </div>
-        <div class="recip-progress-track"><div class="recip-progress-fill unlocked" style="width:100%"></div></div>
-        <div class="recip-steps">
-          <div class="recip-step"><div class="recip-step-dot recip-step-dot--ok">✓</div>Réponse 1 — complétée</div>
-          <div class="recip-step"><div class="recip-step-dot recip-step-dot--ok">✓</div>Réponse 2 — complétée</div>
-          <div class="recip-step"><div class="recip-step-dot recip-step-dot--ok">✓</div>Dépôt — débloqué</div>
-        </div>
-      </div>`;
-  } else if (count === 1) {
-    el.innerHTML = `
-      <div class="recip-state-card half">
-        <div class="recip-state-header">
-          <span class="recip-state-icon">🔓</span>
-          <span class="recip-state-title">Presque là !</span>
-        </div>
-        <div class="recip-progress-track"><div class="recip-progress-fill half" style="width:50%"></div></div>
-        <div class="recip-steps">
-          <div class="recip-step"><div class="recip-step-dot recip-step-dot--ok">✓</div>Réponse 1 — complétée</div>
-          <div class="recip-step"><div class="recip-step-dot recip-step-dot--half"></div>Réponse 2 — en attente</div>
-          <div class="recip-step"><div class="recip-step-dot recip-step-dot--lock">🔒</div>Dépôt — bientôt</div>
-        </div>
-      </div>`;
-  } else {
-    el.innerHTML = `
-      <div class="recip-state-card locked">
-        <div class="recip-state-header">
-          <span class="recip-state-icon">🔒</span>
-          <span class="recip-state-title">Dépôt verrouillé</span>
-        </div>
-        <div class="recip-progress-track"><div class="recip-progress-fill locked" style="width:0%"></div></div>
-        <div class="recip-steps">
-          <div class="recip-step"><div class="recip-step-dot recip-step-dot--lock"></div>Réponse 1 — en attente</div>
-          <div class="recip-step"><div class="recip-step-dot recip-step-dot--lock"></div>Réponse 2 — en attente</div>
-          <div class="recip-step"><div class="recip-step-dot recip-step-dot--lock">🔒</div>Dépôt — verrouillé</div>
-        </div>
-        <a href="dashboard.html#feed-grid" class="recip-link">Répondre maintenant →</a>
-      </div>`;
+  const count           = user.monthly_responses_given || 0;
+  const deposits        = user.monthly_deposits || 0;
+  const rpd             = user.responses_per_deposit || 2;
+  const canDeposit      = user.can_deposit;
+  const progressInCycle = count - (deposits * rpd);
+  const pct             = Math.min(100, Math.round((progressInCycle / rpd) * 100));
+
+  const stateClass = canDeposit ? 'unlocked' : progressInCycle >= 1 ? 'half' : 'locked';
+  const icon = canDeposit ? '✅' : progressInCycle >= 1 ? '🔓' : '🔒';
+  const title = canDeposit
+    ? `Dépôt ${deposits + 1} débloqué !`
+    : `${progressInCycle}/${rpd} réponses`;
+
+  const steps = [];
+  for (let i = 1; i <= rpd; i++) {
+    const done = progressInCycle >= i;
+    steps.push(`
+      <div class="recip-step">
+        <div class="recip-step-dot ${done ? 'recip-step-dot--ok' : 'recip-step-dot--lock'}">${done ? '✓' : ''}</div>
+        Réponse ${deposits * rpd + i} — ${done ? 'complétée' : 'en attente'}
+      </div>`);
   }
+  steps.push(`
+    <div class="recip-step">
+      <div class="recip-step-dot ${canDeposit ? 'recip-step-dot--ok' : 'recip-step-dot--lock'}">${canDeposit ? '✓' : '🔒'}</div>
+      Dépôt ${deposits + 1} — ${canDeposit ? 'débloqué' : 'verrouillé'}
+    </div>`);
+
+  const histLine = deposits > 0
+    ? `<div style="font-size:0.7rem;color:var(--color-text-muted);margin-top:6px;padding-top:6px;border-top:1px solid var(--color-border)">${deposits} dépôt${deposits > 1 ? 's' : ''} ce mois</div>`
+    : '';
+
+  el.innerHTML = `
+    <div class="recip-state-card ${stateClass}">
+      <div class="recip-state-header">
+        <span class="recip-state-icon">${icon}</span>
+        <span class="recip-state-title">${title}</span>
+      </div>
+      <div class="recip-progress-track">
+        <div class="recip-progress-fill ${stateClass}" style="width:${pct}%"></div>
+      </div>
+      ${steps.join('')}
+      ${histLine}
+      ${!canDeposit ? `<a href="dashboard.html#feed-grid" class="recip-link">Répondre maintenant →</a>` : ''}
+    </div>`;
 }
 
-/* ─── État de dépôt (header badge + cartes unlock/locked) ─── */
+/* ─── État de dépôt (header badge + cartes unlock/locked) — multi-dépôt ─── */
 function renderDepositStatus(user) {
-  const count      = user.monthly_responses_given || 0;
-  const isFounder  = user.is_founder;
+  const count           = user.monthly_responses_given || 0;
+  const deposits        = user.monthly_deposits || 0;
+  const rpd             = user.responses_per_deposit || 2;
+  const canDeposit      = user.can_deposit;
+  const progressInCycle = count - (deposits * rpd);
+  const remaining       = rpd - progressInCycle;
+
   const statusBadge = document.getElementById('dep-status-badge');
   const statusText  = document.getElementById('dep-status-text');
   const unlockCard  = document.getElementById('dep-unlock-card');
   const lockedCard  = document.getElementById('dep-locked-card');
   const publishBtn  = document.getElementById('dep-publish-btn');
 
-  const canDeposit = count >= 2 || isFounder;
-
   /* Badge état */
   if (statusBadge && statusText) {
     if (canDeposit) {
       statusBadge.className = 'dep-status-badge unlocked';
-      statusText.textContent = 'Dépôt autorisé ✓';
-    } else if (count === 1) {
+      statusText.textContent = deposits > 0 ? `Dépôt ${deposits + 1} autorisé ✓` : 'Dépôt autorisé ✓';
+    } else if (progressInCycle >= 1) {
       statusBadge.className = 'dep-status-badge half';
-      statusText.textContent = '1/2 réponses';
+      statusText.textContent = `${progressInCycle}/${rpd} réponses`;
     } else {
       statusBadge.className = 'dep-status-badge locked';
-      statusText.textContent = 'Dépôt verrouillé 🔒';
+      statusText.textContent = deposits > 0 ? `Dépôt ${deposits + 1} verrouillé 🔒` : 'Dépôt verrouillé 🔒';
     }
   }
 
   if (canDeposit) {
+    /* Carte unlock : afficher le numéro de dépôt et l'historique */
     if (unlockCard) {
       unlockCard.style.display = 'flex';
-      const sub   = document.getElementById('dep-unlock-sub');
-      const right = document.getElementById('dep-unlock-right');
-      const mois  = ['janvier','février','mars','avril','mai','juin',
-                     'juillet','août','septembre','octobre','novembre','décembre'];
-      const next  = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1);
-      /* EDITABLE: message unlock — calcul du reset */
-      if (sub)   sub.textContent   = `Tu peux déposer 1 questionnaire ce mois. Renouvellement le 1er ${mois[next.getMonth()]}.`;
-      if (right) right.textContent = isFounder && count < 2 ? '⭐ Fondateur — 1 dépôt gratuit' : '';
+      const sub      = document.getElementById('dep-unlock-sub');
+      const right    = document.getElementById('dep-unlock-right');
+      const cycleRow = document.getElementById('dep-cycle-progress');
+      const barFill  = document.getElementById('dep-cycle-bar-fill');
+      const cycleLabel = document.getElementById('dep-cycle-label');
+      const mois = ['janvier','février','mars','avril','mai','juin',
+                    'juillet','août','septembre','octobre','novembre','décembre'];
+      const next = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1);
+
+      if (sub) sub.textContent = deposits > 0
+        ? `Dépôt ${deposits + 1} débloqué ce mois · Renouvellement le 1er ${mois[next.getMonth()]}.`
+        : `Tu peux déposer 1 questionnaire ce mois. Renouvellement le 1er ${mois[next.getMonth()]}.`;
+
+      if (right) right.textContent = deposits > 0
+        ? `${deposits} dépôt${deposits > 1 ? 's' : ''} effectué${deposits > 1 ? 's' : ''} ce mois`
+        : (user.is_founder && count < rpd ? '⭐ Fondateur — 1 dépôt gratuit' : '');
+
+      /* Barre de progression vers le dépôt suivant (si des dépôts existent déjà) */
+      if (cycleRow && deposits >= 0 && count >= rpd) {
+        const pctNextCycle = Math.min(100, Math.round((progressInCycle / rpd) * 100));
+        cycleRow.style.display = 'flex';
+        if (barFill) barFill.style.width = `${pctNextCycle}%`;
+        if (cycleLabel) cycleLabel.textContent = `${progressInCycle}/${rpd} réponses vers dépôt ${deposits + 2}`;
+      }
     }
     if (lockedCard) lockedCard.style.display = 'none';
   } else {
+    /* Carte locked : message adapté au cycle courant */
     if (lockedCard) {
       lockedCard.style.display = 'flex';
       const titleEl = document.getElementById('dep-locked-title');
       const subEl   = document.getElementById('dep-locked-sub');
-      /* EDITABLE: messages locked depuis content.json */
-      if (titleEl) titleEl.textContent = count === 1
-        ? (depState.content?.dashboard?.deposit_half_message || 'Encore 1 réponse avant de déposer !')
-        : (depState.content?.dashboard?.deposit_locked_message || 'Dépôt verrouillé');
-      if (subEl) subEl.textContent = count === 1
-        ? '1 réponse donnée sur 2 requises.'
-        : 'Réponds à 2 questionnaires pour débloquer.';
+      if (titleEl) titleEl.textContent = progressInCycle >= 1
+        ? `Encore ${remaining} réponse${remaining > 1 ? 's' : ''} pour débloquer`
+        : (deposits > 0 ? `Dépôt ${deposits + 1} verrouillé` : (depState.content?.dashboard?.deposit_locked_message || 'Dépôt verrouillé'));
+      if (subEl) subEl.textContent = deposits > 0
+        ? `${progressInCycle}/${rpd} réponses depuis ton dernier dépôt.`
+        : (progressInCycle >= 1 ? `${progressInCycle} réponse donnée sur ${rpd} requises.` : `Réponds à ${rpd} questionnaires pour débloquer.`);
     }
     if (unlockCard) unlockCard.style.display = 'none';
-    /* Désactiver le bouton publier si dépôt interdit */
+    /* Désactiver le bouton publier et tous les champs */
     if (publishBtn) {
       publishBtn.disabled = true;
       const labelEl = document.getElementById('dep-publish-label');
-      if (labelEl) labelEl.textContent = count === 1
-        ? (depState.settings?.buttons?.deposit_button_half_label   || 'Presque là... (1/2) 🔓')
+      if (labelEl) labelEl.textContent = progressInCycle >= 1
+        ? (depState.settings?.buttons?.deposit_button_half_label || `Encore ${remaining} réponse${remaining > 1 ? 's' : ''} 🔓`)
         : (depState.settings?.buttons?.deposit_button_locked_label || 'Dépôt verrouillé 🔒');
     }
+    _disableDepositForm(true);
   }
+}
+
+/* ─── Désactivation complète de tous les champs du formulaire ─── */
+function _disableDepositForm(disabled) {
+  const ids = [
+    'dep-url-input', 'dep-title', 'dep-desc', 'dep-domain',
+    'dep-duration', 'dep-questions', 'dep-tags-input',
+    'dep-target-count', 'dep-deadline',
+  ];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = disabled;
+  });
+  document.querySelectorAll('.dep-chip, .dep-target-card input[type="radio"]').forEach(el => {
+    el.disabled = disabled;
+  });
 }
 
 /* ─── Validation URL Google Forms ─── */
@@ -437,6 +474,19 @@ function updatePreview() {
 async function publishForm() {
   const user = depState.user;
   if (!user) { window.location.href = 'login.html'; return; }
+
+  /* Vérification stricte de l'éligibilité — indépendante de l'état du bouton */
+  if (!user.can_deposit) {
+    const rpd             = user.responses_per_deposit || 2;
+    const deposits        = user.monthly_deposits || 0;
+    const progressInCycle = (user.monthly_responses_given || 0) - (deposits * rpd);
+    const remaining       = rpd - progressInCycle;
+    const errorEl         = document.getElementById('dep-form-error');
+    showError(errorEl,
+      `Dépôt bloqué : réponds à ${remaining} questionnaire${remaining > 1 ? 's' : ''} supplémentaire${remaining > 1 ? 's' : ''} pour déposer le questionnaire ${deposits + 1}.`
+    );
+    return;
+  }
 
   const url       = document.getElementById('dep-url-input')?.value?.trim() || '';
   const title     = document.getElementById('dep-title')?.value?.trim() || '';

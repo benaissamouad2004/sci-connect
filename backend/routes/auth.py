@@ -201,7 +201,36 @@ def get_me():
         session.clear()
         return jsonify({'authenticated': False}), 200
 
-    return jsonify({'authenticated': True, 'user': user.to_dict()})
+    user_dict = user.to_dict()
+
+    # Calculer le nombre de dépôts effectués ce mois-ci
+    from backend.models import Questionnaire
+    now = datetime.utcnow()
+    first_of_month = datetime(now.year, now.month, 1)
+    monthly_deposits = Questionnaire.query.filter(
+        Questionnaire.author_id == user_id,
+        Questionnaire.created_at >= first_of_month
+    ).count()
+
+    # Nombre de réponses requises pour le prochain dépôt
+    try:
+        content_path = os.path.join(ADMIN_DIR, 'content.json')
+        with open(content_path, 'r', encoding='utf-8') as f:
+            content = json.load(f)
+        responses_per_deposit = content.get('rules', {}).get('responses_required', 2)
+    except Exception:
+        responses_per_deposit = 2
+
+    responses_needed = (monthly_deposits + 1) * responses_per_deposit
+    is_founder_first = user.is_founder and Questionnaire.query.filter_by(author_id=user_id).count() == 0
+    can_deposit = user.monthly_responses_given >= responses_needed or is_founder_first
+
+    user_dict['monthly_deposits']                = monthly_deposits
+    user_dict['responses_needed_for_next_deposit'] = responses_needed
+    user_dict['responses_per_deposit']           = responses_per_deposit
+    user_dict['can_deposit']                     = can_deposit
+
+    return jsonify({'authenticated': True, 'user': user_dict})
 
 
 # ROUTE: POST /api/auth/logout

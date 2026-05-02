@@ -163,7 +163,35 @@ def check_and_send_milestone_email(questionnaire, author):
     )
 
 
-# ═══ EMAIL 4 — SUGGESTIONS HEBDOMADAIRES ═══
+# ═══ EMAIL 4 — NOTIFICATION NOUVEAU QUESTIONNAIRE MÊME DOMAINE ═══
+def send_new_questionnaire_domain_notification(questionnaire, author, matching_users, points_per_response=10):
+    """
+    Envoyé à tous les utilisateurs dont le domaine correspond au nouveau questionnaire.
+    Déclenché dans POST /api/forms après création Questionnaire.
+    Exclut l'auteur. Limite à 200 destinataires pour éviter le spam.
+    EDITABLE: modifier backend/templates/emails/new_questionnaire.html
+    """
+    author_school = get_school_name(author.school_id) if author else ''
+    respond_url   = f'{_app_url()}/respond.html?id={questionnaire.id}'
+    dashboard_url = f'{_app_url()}/dashboard.html'
+
+    for user in (matching_users or [])[:200]:
+        if not user.email or user.id == (author.id if author else None):
+            continue
+        send_email(
+            subject       = f"Nouveau questionnaire en {questionnaire.domain or 'ton domaine'} · SciConnect",
+            recipients    = [user.email],
+            template      = 'emails/new_questionnaire.html',
+            user          = user,
+            questionnaire = questionnaire,
+            author_school = author_school,
+            points_per_response = points_per_response,
+            respond_url   = respond_url,
+            dashboard_url = dashboard_url,
+        )
+
+
+# ═══ EMAIL 5 — SUGGESTIONS HEBDOMADAIRES ═══
 def send_suggestion_email(user, suggested_forms):
     """
     Envoyé chaque lundi matin à 9h aux utilisateurs inactifs depuis 7 jours.
