@@ -1,0 +1,222 @@
+' ══════════════════════════════════════════
+' SCICONNECT — DIAGRAMMES DE CAS D'UTILISATION
+' Acteurs humains uniquement
+' ══════════════════════════════════════════
+
+
+' ┌──────────────────────────────────────────┐
+' │  1. USE CASE — VISITEUR PUBLIC           │
+' └──────────────────────────────────────────┘
+
+@startuml UC_Visiteur
+!theme plain
+skinparam actorStyle awesome
+skinparam usecase {
+  BackgroundColor #F0EDE6
+  BorderColor #57564F
+  ArrowColor #57564F
+  FontSize 13
+}
+skinparam actor {
+  BorderColor #57564F
+}
+left to right direction
+
+title Diagramme de Cas d'Utilisation\n**Visiteur Public**
+
+actor "Visiteur\npublic" as VIS #F0EDE6
+
+rectangle "SciConnect" {
+
+  usecase "Consulter la\nlanding page" as UC1
+  usecase "Découvrir le\nfonctionnement\nde la plateforme" as UC2
+  usecase "Voir les universités\net écoles partenaires" as UC3
+  usecase "Répondre à un\nquestionnaire\nvia lien partagé" as UC4
+  usecase "Consulter le profil\npublic d'un étudiant" as UC5
+  usecase "S'inscrire avec\nson compte Google" as UC6
+}
+
+VIS --> UC1
+VIS --> UC2
+VIS --> UC3
+VIS --> UC4
+VIS --> UC5
+VIS --> UC6
+
+note right of UC4
+  Le visiteur peut répondre
+  sans créer de compte.
+  Sa réponse est enregistrée
+  comme "publique".
+end note
+
+note right of UC6
+  Seuls les emails
+  académiques sont
+  acceptés (@*.ac.ma).
+end note
+
+@enduml
+
+
+' ┌──────────────────────────────────────────┐
+' │  2. USE CASE — ÉTUDIANT AUTHENTIFIÉ      │
+' └──────────────────────────────────────────┘
+
+@startuml UC_Etudiant
+!theme plain
+skinparam actorStyle awesome
+skinparam usecase {
+  BackgroundColor #E8F5F3
+  BorderColor #005F54
+  ArrowColor #005F54
+  FontSize 13
+}
+skinparam actor {
+  BorderColor #005F54
+}
+left to right direction
+
+title Diagramme de Cas d'Utilisation\n**Étudiant Authentifié**
+
+actor "Étudiant" as ETU #E8F5F3
+
+rectangle "SciConnect" {
+
+  package "Compte" {
+    usecase "Se connecter\navec Google" as UC_LOGIN
+    usecase "Compléter son\nprofil (onboarding)" as UC_ONBOARD
+    usecase "Consulter\nson profil" as UC_PROFIL
+    usecase "Se déconnecter" as UC_LOGOUT
+  }
+
+  package "Questionnaires" {
+    usecase "Parcourir les\nquestionnaires\ndisponibles" as UC_FEED
+    usecase "Filtrer par université,\nécole ou domaine" as UC_FILTER
+    usecase "Voir les suggestions\npersonnalisées" as UC_RECO
+    usecase "Répondre à un\nquestionnaire" as UC_RESPOND
+  }
+
+  package "Dépôt" {
+    usecase "Déposer son propre\nquestionnaire" as UC_DEPOSIT
+    usecase "Choisir le public\ncible (université,\nécole, tous)" as UC_TARGET
+  }
+
+  package "Suivi" {
+    usecase "Consulter les\nstatistiques de\nson questionnaire" as UC_STATS
+    usecase "Valider ou ignorer\nles réponses reçues" as UC_VALIGN
+    usecase "Exporter les données\nen fichier Excel" as UC_EXPORT
+  }
+
+  package "Progression" {
+    usecase "Gagner des points\nen répondant" as UC_POINTS
+    usecase "Suivre son streak\njournalier" as UC_STREAK
+    usecase "Voir ses badges\net le classement" as UC_BADGES
+  }
+}
+
+ETU --> UC_LOGIN
+ETU --> UC_ONBOARD
+ETU --> UC_PROFIL
+ETU --> UC_LOGOUT
+
+ETU --> UC_FEED
+ETU --> UC_FILTER
+ETU --> UC_RECO
+ETU --> UC_RESPOND
+
+ETU --> UC_DEPOSIT
+ETU --> UC_TARGET
+
+ETU --> UC_STATS
+ETU --> UC_VALIGN
+ETU --> UC_EXPORT
+
+ETU --> UC_POINTS
+ETU --> UC_STREAK
+ETU --> UC_BADGES
+
+UC_LOGIN ..> UC_ONBOARD : <<extend>>\n[nouvel utilisateur]
+UC_RESPOND ..> UC_POINTS : <<include>>
+UC_DEPOSIT ..> UC_TARGET : <<include>>
+
+note bottom of UC_DEPOSIT
+  **Règle des 2** :
+  Il faut répondre à
+  2 questionnaires avant
+  de pouvoir déposer le sien.
+end note
+
+@enduml
+
+
+' ┌──────────────────────────────────────────┐
+' │  3. USE CASE — ADMINISTRATEUR            │
+' └──────────────────────────────────────────┘
+
+@startuml UC_Admin
+!theme plain
+skinparam actorStyle awesome
+skinparam usecase {
+  BackgroundColor #FDF8EC
+  BorderColor #C9A84C
+  ArrowColor #C9A84C
+  FontSize 13
+}
+skinparam actor {
+  BorderColor #C9A84C
+}
+left to right direction
+
+title Diagramme de Cas d'Utilisation\n**Administrateur (Fondateur)**
+
+actor "Administrateur" as ADM #FDF8EC
+actor "Étudiant" as ETU #E8F5F3
+
+rectangle "SciConnect" {
+
+  package "Gestion du contenu" {
+    usecase "Modifier les textes\nde la plateforme\n(titres, slogan, stats)" as UC_TEXTS
+    usecase "Modifier les règles\n(nombre de réponses\nrequises, points)" as UC_RULES
+  }
+
+  package "Gestion des paramètres" {
+    usecase "Modifier les labels\ndes boutons" as UC_BTNS
+    usecase "Activer ou désactiver\ndes fonctionnalités" as UC_FLAGS
+  }
+
+  package "Gestion des écoles" {
+    usecase "Ajouter ou modifier\nune université" as UC_UNIV
+    usecase "Ajouter ou modifier\nune école" as UC_SCHOOL
+  }
+
+  package "Supervision" {
+    usecase "Gérer les formulaires\nde démonstration" as UC_DEMO
+    usecase "Vérifier l'état\ndu serveur" as UC_STATUS
+  }
+}
+
+ADM --|> ETU : hérite de toutes\nles fonctions étudiant
+
+ADM --> UC_TEXTS
+ADM --> UC_RULES
+ADM --> UC_BTNS
+ADM --> UC_FLAGS
+ADM --> UC_UNIV
+ADM --> UC_SCHOOL
+ADM --> UC_DEMO
+ADM --> UC_STATUS
+
+note right of ADM
+  L'administrateur est
+  l'un des 50 premiers
+  inscrits (Fondateur).
+end note
+
+note bottom of UC_TEXTS
+  Toutes les modifications
+  sont visibles immédiatement
+  sans redémarrer le serveur.
+end note
+
+@enduml

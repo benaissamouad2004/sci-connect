@@ -147,21 +147,16 @@ DEMO_QUESTIONNAIRES = [
 
 
 def seed_demo_questionnaires(db, User, Questionnaire):
-    """
-    Les questionnaires de démonstration sont désactivés — is_active=False.
-    Si des demos actifs existent en base, ils sont désactivés.
-    """
-    # Désactiver les demos existants
+    """Crée ou réactive les questionnaires de démonstration."""
     existing_demos = Questionnaire.query.filter_by(author_id=DEMO_AUTHOR_ID).all()
-    updated = False
-    for demo in existing_demos:
-        if demo.is_active:
-            demo.is_active = False
-            updated = True
-    if updated:
+
+    if existing_demos:
+        # Réactiver les demos désactivés
+        for demo in existing_demos:
+            demo.is_active = True
         db.session.commit()
-        print(f'[SciConnect] {len(existing_demos)} questionnaires de démonstration désactivés.')
-    return  # Ne plus insérer de nouveaux demos
+        print(f'[SciConnect] {len(existing_demos)} questionnaires de démonstration réactivés.')
+        return
 
     system_user = User.query.filter_by(id=DEMO_AUTHOR_ID).first()
     if not system_user:

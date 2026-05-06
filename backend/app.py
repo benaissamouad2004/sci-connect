@@ -1,5 +1,3 @@
-
-
 # ROUTE: Flask app — point d'entrée principal SciConnect
 # Lance avec : python backend/app.py (depuis la racine du projet)
 # Port : 5000
@@ -15,7 +13,8 @@ from flask_cors import CORS
 
 from backend.config import Config, FRONTEND_DIR
 from backend.models import db, User, Questionnaire
-from backend.data.demo_forms import seed_demo_questionnaires
+# Demo questionnaires désactivés à la demande de l'utilisateur
+# from backend.data.demo_forms import seed_demo_questionnaires
 
 # ─── Flask-Mail ───
 from backend.services.email_service import mail
@@ -25,6 +24,15 @@ app.config.from_object(Config)
 CORS(app, supports_credentials=True)
 db.init_app(app)
 mail.init_app(app)
+
+# ─── Remember-me : rendre toutes les sessions permanentes (30 jours) ───
+from datetime import timedelta
+app.permanent_session_lifetime = timedelta(days=30)
+
+@app.before_request
+def make_session_permanent():
+    from flask import session
+    session.permanent = True
 
 # ─── Blueprints ───
 from backend.routes.admin    import admin_bp
@@ -140,10 +148,29 @@ with app.app_context():
             if 'streak' not in u_cols:
                 conn.execute(text('ALTER TABLE users ADD COLUMN streak INTEGER DEFAULT 0'))
                 conn.commit()
+            # V3 migrations
+            if 'last_login_date' not in u_cols:
+                conn.execute(text('ALTER TABLE users ADD COLUMN last_login_date DATE'))
+                conn.commit()
+            if 'total_responses_given' not in u_cols:
+                conn.execute(text('ALTER TABLE users ADD COLUMN total_responses_given INTEGER DEFAULT 0'))
+                conn.commit()
+            if 'total_forms_posted' not in u_cols:
+                conn.execute(text('ALTER TABLE users ADD COLUMN total_forms_posted INTEGER DEFAULT 0'))
+                conn.commit()
+        # V3: colonnes Response
+        r_cols = [c['name'] for c in sa_inspect(db.engine).get_columns('responses')]
+        with db.engine.connect() as conn:
+            if 'duration_seconds' not in r_cols:
+                conn.execute(text('ALTER TABLE responses ADD COLUMN duration_seconds INTEGER'))
+                conn.commit()
+            if 'is_suspect' not in r_cols:
+                conn.execute(text('ALTER TABLE responses ADD COLUMN is_suspect BOOLEAN DEFAULT 0'))
+                conn.commit()
     except Exception:
         pass
 
-    seed_demo_questionnaires(db, User, Questionnaire)
+    # seed_demo_questionnaires(db, User, Questionnaire)  # désactivé
 
 if __name__ == '__main__':
     _start_scheduler()

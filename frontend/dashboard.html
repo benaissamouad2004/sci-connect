@@ -1,396 +1,378 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard — SciConnect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/dashboard.css" />
-  <link rel="stylesheet" href="css/components.css" />
 </head>
+
 <body>
 
-<div class="dash-shell">
-
-  <!-- ═══════════════════════════════════════════════════════
-       SIDEBAR GAUCHE 280px
-       ═══════════════════════════════════════════════════════ -->
-  <aside class="sidebar" role="navigation" aria-label="Navigation principale">
-
-    <!-- Logo -->
-    <div class="sidebar-logo">
-      <a href="index.html" class="sidebar-logo-link">SciConnect</a>
+  <!-- ═══════════════════════════════════════════════════
+     POPUP CONNEXION QUOTIDIENNE
+     ═══════════════════════════════════════════════════ -->
+  <div class="daily-overlay" id="daily-overlay" hidden>
+    <div class="daily-popup" id="daily-popup">
+      <div class="daily-star" id="daily-star">⭐</div>
+      <!-- EDITABLE: points affichés depuis l'API auth -->
+      <div class="daily-pts" id="daily-pts">+5 pts gagnés aujourd'hui !</div>
+      <div class="daily-streak" id="daily-streak" hidden>🔥 Streak de <span id="streak-num">7</span> jours ! Bonus +25
+        pts</div>
+      <div class="daily-total" id="daily-total">Tu as maintenant <strong id="daily-total-pts">0</strong> pts</div>
+      <button class="btn-primary daily-btn" id="daily-close">C'est parti !</button>
     </div>
+  </div>
 
-    <!-- ── CARTE IDENTITÉ UTILISATEUR ── -->
-    <div class="sidebar-identity-card" id="sidebar-identity-card">
-      <div class="identity-top-row">
-        <div class="identity-avatar-wrap">
-          <!-- EDITABLE: photo Google chargée dynamiquement par renderIdentityCard() -->
-          <div class="identity-avatar" id="identity-avatar">?</div>
-          <!-- EDITABLE: badge vérifié — visible si l'utilisateur a un email académique -->
-          <div class="identity-verified-badge">✓ Étudiant vérifié</div>
-        </div>
-        <!-- CIRCULAR PROGRESS RING SVG — animé selon le badge_level -->
-        <div class="identity-ring-wrap">
-          <svg class="identity-ring" width="56" height="56" viewBox="0 0 56 56" aria-hidden="true">
-            <circle class="ring-track" cx="28" cy="28" r="22" fill="none" stroke-width="3"/>
-            <circle class="ring-fill" id="ring-fill" cx="28" cy="28" r="22" fill="none" stroke-width="3"
-              stroke-dasharray="138.2" stroke-dashoffset="138.2"
-              stroke-linecap="round" transform="rotate(-90 28 28)"/>
-            <text class="ring-label" x="28" y="32" text-anchor="middle" id="ring-badge-text">⭐</text>
+  <!-- ═══════════════════════════════════════════════════
+     APP SHELL : RAIL + SIDEBAR + MAIN
+     ═══════════════════════════════════════════════════ -->
+  <div class="app-shell">
+
+    <!-- ── RAIL 68px (toujours visible) ── -->
+    <nav class="rail" id="rail" aria-label="Rail de navigation">
+
+      <!-- Logo — clic vers landing page -->
+      <a href="index.html" class="rail-logo" title="SciConnect — Accueil">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="9" fill="var(--color-primary)" />
+          <circle cx="12" cy="16" r="5" fill="none" stroke="white" stroke-width="1.8" />
+          <circle cx="20" cy="16" r="5" fill="none" stroke="white" stroke-width="1.8" />
+          <circle cx="16" cy="16" r="3" fill="#C9A84C" />
+        </svg>
+      </a>
+
+      <div class="rail-sep"></div>
+
+      <!-- Navigation principale -->
+      <div class="rail-nav">
+        <button class="rail-btn active" data-page="feed" aria-label="Mon feed">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"
+            stroke-linecap="round">
+            <path d="M3 9L9 3L15 9V15H11V11H7V15H3V9Z" />
           </svg>
-          <!-- EDITABLE: pts depuis user.points -->
-          <div class="identity-pts-pill" id="identity-pts">★ 0 pts</div>
-        </div>
+          <span>Feed</span>
+        </button>
+        <button class="rail-btn" data-page="explorer" aria-label="Explorer"
+          onclick="window.location='dashboard.html?filter=recent'">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"
+            stroke-linecap="round">
+            <circle cx="9" cy="9" r="6" />
+            <circle cx="9" cy="9" r="2" />
+            <path d="M9 3V1M9 17v-2M3 9H1M17 9h-2" />
+          </svg>
+          <span>Explorer</span>
+        </button>
+        <button class="rail-btn" data-page="notifs" id="rail-notif-btn" aria-label="Notifications"
+          onclick="window.location='notifications.html'">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"
+            stroke-linecap="round">
+            <path d="M9 2a5 5 0 0 1 5 5v3l1.5 2H2.5L4 10V7a5 5 0 0 1 5-5z" />
+            <path d="M7 14a2 2 0 0 0 4 0" />
+          </svg>
+          <span class="rail-badge" id="rail-notif-badge" hidden>0</span>
+          <span>Notifs</span>
+        </button>
+        <button class="rail-btn" data-page="deposer" onclick="window.location='deposit.html'" aria-label="Déposer">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"
+            stroke-linecap="round">
+            <rect x="2" y="2" width="14" height="14" rx="3" />
+            <path d="M9 6v6M6 9h6" />
+          </svg>
+          <span>Déposer</span>
+        </button>
+        <button class="rail-btn" data-page="mes-qst" onclick="window.location='stats.html'"
+          aria-label="Mes questionnaires">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"
+            stroke-linecap="round">
+            <path d="M3 14V8M7 14V5M11 14V9M15 14V3" />
+          </svg>
+          <span>Mes QST</span>
+        </button>
+        <button class="rail-btn" data-page="classement" onclick="window.location='leaderboard.html'"
+          aria-label="Classement">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"
+            stroke-linecap="round">
+            <path d="M9 14V6M5 14V9M13 14V3" />
+          </svg>
+          <span>Classement</span>
+        </button>
       </div>
-      <!-- EDITABLE: nom et meta depuis user -->
-      <div class="identity-name" id="identity-name">Chargement...</div>
-      <div class="identity-meta" id="identity-meta"></div>
-    </div>
 
-    <!-- ── STREAK WIDGET ── -->
-    <div class="streak-widget" id="streak-widget">
-      <div class="streak-header">
-        <span class="streak-title">🔥 Streak · <span id="streak-days-count">0</span> jours</span>
-      </div>
-      <!-- EDITABLE: 7 cercles Lun→Dim, remplis teal si complétés -->
-      <div class="streak-days" id="streak-days-row">
-        <div class="streak-day-wrap"><div class="streak-day" data-label="L"></div><span>L</span></div>
-        <div class="streak-day-wrap"><div class="streak-day" data-label="M"></div><span>M</span></div>
-        <div class="streak-day-wrap"><div class="streak-day" data-label="M"></div><span>M</span></div>
-        <div class="streak-day-wrap"><div class="streak-day" data-label="J"></div><span>J</span></div>
-        <div class="streak-day-wrap"><div class="streak-day" data-label="V"></div><span>V</span></div>
-        <div class="streak-day-wrap"><div class="streak-day" data-label="S"></div><span>S</span></div>
-        <div class="streak-day-wrap"><div class="streak-day" data-label="D"></div><span>D</span></div>
-      </div>
-      <div class="streak-bonus" id="streak-bonus" style="display:none">Bonus ×2 pts aujourd'hui !</div>
-    </div>
+      <div class="rail-spacer"></div>
 
-    <!-- ── WIDGET RÉCIPROCITÉ SIDEBAR ── -->
-    <!-- EDITABLE: 3 états selon user.monthly_responses_given -->
-    <div class="sidebar-reciprocity" id="sidebar-reciprocity">
-      <div class="sidebar-recip-label">STATUT DE DÉPÔT</div>
-      <!-- Rendu dynamiquement par renderSidebarReciprocity() -->
-      <div id="sidebar-recip-content"></div>
-    </div>
-
-    <!-- ── NAVIGATION ── -->
-    <nav class="sidebar-nav">
-
-      <!-- Section PRINCIPAL -->
-      <div class="nav-section-title">PRINCIPAL</div>
-      <a href="dashboard.html" class="sidebar-nav-item active" aria-current="page">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        Mon feed
-        <div class="nav-active-bar"></div>
-      </a>
-      <a href="#" class="sidebar-nav-item">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-        Explorer
-      </a>
-      <a href="#" class="sidebar-nav-item">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
-        Notifications
-        <span class="nav-badge" id="nav-notif-badge" style="display:none">0</span>
-      </a>
-
-      <!-- Section MES QUESTIONNAIRES -->
-      <div class="nav-section-title" style="margin-top:10px">MES QUESTIONNAIRES</div>
-      <a href="deposit.html" class="sidebar-nav-item" id="nav-deposit">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        Déposer un formulaire
-        <span class="nav-lock-icon" id="nav-deposit-lock">🔒</span>
-      </a>
-      <a href="stats.html" class="sidebar-nav-item" id="nav-stats">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-        Mes questionnaires
-        <span class="nav-pill-teal" id="nav-my-forms-count" style="display:none">0 actifs</span>
-      </a>
-      <a href="profile.html" class="sidebar-nav-item" id="nav-profile">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        Mon profil public
-      </a>
-
-      <!-- Section PROGRESSION -->
-      <div class="nav-section-title" style="margin-top:10px">PROGRESSION</div>
-      <a href="leaderboard.html" class="sidebar-nav-item">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6l4-4 4 4m-4-4v14"/><path d="M4 18h16"/></svg>
-        Classement
-      </a>
-
-      <!-- Section COMPTE -->
-      <div class="nav-section-title" style="margin-top:10px">COMPTE</div>
-      <a href="#" class="sidebar-nav-item">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-        Paramètres
-      </a>
-      <button class="sidebar-nav-item sidebar-nav-btn" onclick="logout()">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-        Déconnexion
+      <!-- Avatar utilisateur en bas -->
+      <button class="rail-avatar-btn" id="rail-profile-btn" aria-label="Mon profil">
+        <div class="rail-avatar" id="rail-avatar-img">?</div>
+        <span>Profil</span>
       </button>
 
     </nav>
-  </aside>
 
-  <!-- ═══════════════════════════════════════════════════════
-       CONTENU PRINCIPAL
-       ═══════════════════════════════════════════════════════ -->
-  <main class="dash-main" role="main">
+    <!-- ── SIDEBAR 252px (cachée par défaut) ── -->
+    <aside class="sidebar" id="sidebar" aria-label="Menu latéral" aria-hidden="true">
 
-    <!-- TOP BAR -->
-    <div class="dash-topbar">
-      <div class="topbar-left">
-        <!-- EDITABLE: message de bienvenue depuis content.json → dashboard.welcome_message -->
+      <div class="sidebar-header">
+        <span class="sidebar-brand">
+          <span style="color:var(--color-primary);font-family:var(--font-display);font-weight:700">Sci</span><span
+            style="color:var(--color-accent);font-family:var(--font-display);font-weight:700">Connect</span>
+        </span>
+        <button class="sidebar-close" id="close-sidebar" aria-label="Fermer">✕</button>
+      </div>
+
+      <!-- Carte identité -->
+      <div class="identity-card" id="sb-identity">
+        <div class="identity-avatar-wrap">
+          <div class="identity-avatar" id="sb-avatar">?</div>
+          <div class="identity-badge">✓ Étudiant vérifié</div>
+        </div>
+        <div class="identity-info">
+          <div class="identity-name" id="sb-name">Chargement...</div>
+          <div class="identity-meta" id="sb-meta"></div>
+        </div>
+      </div>
+
+      <!-- Widget points -->
+      <div class="points-widget" id="sb-points-widget">
+        <div class="points-row">
+          <span class="points-value" id="sb-pts">0</span>
+          <span class="points-label">pts</span>
+        </div>
+        <div class="points-bar-track">
+          <div class="points-bar-fill" id="sb-pts-bar" style="width:0%"></div>
+        </div>
+        <div class="points-status" id="sb-pts-status">Il te manque 20 pts</div>
+      </div>
+
+      <!-- Widget streak -->
+      <div class="streak-widget" id="sb-streak-widget">
+        <div class="streak-header">
+          <span>🔥</span>
+          <span class="streak-label">Streak <strong id="sb-streak-num">0</strong> jours</span>
+        </div>
+        <div class="streak-dots" id="sb-streak-dots">
+          <span class="streak-dot" data-day="L">L</span>
+          <span class="streak-dot" data-day="M">M</span>
+          <span class="streak-dot" data-day="M">M</span>
+          <span class="streak-dot" data-day="J">J</span>
+          <span class="streak-dot" data-day="V">V</span>
+          <span class="streak-dot" data-day="S">S</span>
+          <span class="streak-dot" data-day="D">D</span>
+        </div>
+        <div class="streak-bonus" id="sb-streak-bonus" hidden>×2 pts aujourd'hui !</div>
+      </div>
+
+      <!-- Navigation sidebar -->
+      <nav class="sidebar-nav">
+
+        <div class="sidebar-nav-section">COMPTE</div>
+        <a href="#" class="sidebar-nav-item" id="sb-profile-link">
+          <svg width="15" height="15" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7"
+            stroke-linecap="round">
+            <circle cx="9" cy="7" r="3" />
+            <path d="M3 17c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+          </svg>
+          Mon profil public
+        </a>
+        <a href="#" class="sidebar-nav-item logout-link" id="sb-logout">
+          <svg width="15" height="15" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7"
+            stroke-linecap="round">
+            <path d="M11 5l5 4-5 4M16 9H7M3 3v12" />
+          </svg>
+          Déconnexion
+        </a>
+      </nav>
+
+    </aside>
+
+    <!-- Overlay fond sidebar -->
+    <div class="sidebar-overlay" id="sidebar-overlay" hidden></div>
+
+    <!-- ── CONTENU PRINCIPAL ── -->
+    <main class="main-content" id="main-content">
+
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <button class="topbar-toggle" id="topbar-toggle" aria-label="Menu">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round">
+            <path d="M2 4h12M2 8h12M2 12h12" />
+          </svg>
+        </button>
+        <!-- EDITABLE: salutation depuis user.name -->
         <h1 class="topbar-greeting" id="topbar-greeting">Bonjour 👋</h1>
-        <span class="topbar-date" id="topbar-date"></span>
-      </div>
-      <div class="topbar-right">
-        <!-- Barre de recherche -->
-        <div class="topbar-search-wrap" role="search">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-          <input type="search" class="topbar-search-input" placeholder="Rechercher..."
-                 oninput="onSearch(this.value)" aria-label="Rechercher" />
-        </div>
-        <!-- Compteur actifs en direct -->
-        <!-- EDITABLE: chiffre fluctue via setInterval entre 28–41 toutes les 4s -->
-        <div class="topbar-live">
-          <div class="topbar-live-dot" aria-hidden="true"></div>
-          <span><strong id="topbar-live-count">34</strong> étudiants actifs maintenant</span>
-        </div>
-      </div>
-    </div>
 
-    <!-- STATS STRIP — 4 KPI tiles mis à jour par renderStatsStrip() -->
-    <div class="stats-strip" id="stats-strip" style="display:none">
-      <div class="stat-tile stat-tile--streak" id="stat-tile-streak">
-        <div class="stat-tile-icon-wrap">🔥</div>
-        <div class="stat-tile-body">
-          <span class="stat-tile-val" id="stat-streak">0</span>
-          <span class="stat-tile-label">jours consécutifs</span>
+        <div class="topbar-search">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="var(--color-text-muted)"
+            stroke-width="1.6" stroke-linecap="round">
+            <circle cx="6" cy="6" r="4" />
+            <path d="M10 10l2.5 2.5" />
+          </svg>
+          <input type="search" placeholder="Rechercher un questionnaire..." id="search-input" autocomplete="off">
         </div>
-      </div>
-      <div class="stat-tile stat-tile--points" id="stat-tile-points">
-        <div class="stat-tile-icon-wrap">⭐</div>
-        <div class="stat-tile-body">
-          <span class="stat-tile-val" id="stat-points">0</span>
-          <span class="stat-tile-label">points gagnés</span>
-        </div>
-      </div>
-      <div class="stat-tile stat-tile--responses" id="stat-tile-responses">
-        <div class="stat-tile-top">
-          <span class="stat-tile-val"><span id="stat-responses-count">0</span><span class="stat-tile-denom" id="stat-responses-denom">/2</span></span>
-          <span class="stat-tile-status-pill" id="stat-responses-pill">En cours</span>
-        </div>
-        <span class="stat-tile-label">réponses ce mois</span>
-        <div class="stat-tile-bar"><div class="stat-tile-bar-fill" id="stat-responses-bar" style="width:0%"></div></div>
-      </div>
-      <div class="stat-tile stat-tile--deposit" id="stat-tile-deposit">
-        <div class="stat-tile-icon-wrap" id="stat-deposit-icon">🔒</div>
-        <div class="stat-tile-body">
-          <span class="stat-tile-val" id="stat-deposit-label">Verrouillé</span>
-          <span class="stat-tile-label">dépôt disponible</span>
-        </div>
-        <a href="deposit.html" class="stat-tile-cta" id="stat-deposit-cta" style="display:none">Déposer →</a>
-      </div>
-    </div>
 
-    <!-- SMART RECOMMENDATION BANNER -->
-    <!-- EDITABLE: chargé depuis GET /api/forms?recommended=true — premier résultat -->
-    <div class="reco-banner" id="reco-banner" style="display:none" role="complementary">
-      <div class="reco-banner-left">
-        <div class="reco-pill">⭐ Recommandé pour toi</div>
-        <h2 class="reco-title" id="reco-title"></h2>
-        <p class="reco-sub" id="reco-sub"></p>
-      </div>
-      <div class="reco-banner-right">
-        <a href="#" class="reco-btn" id="reco-btn">Répondre maintenant → +10 pts</a>
-        <div class="reco-tags" id="reco-tags"></div>
-      </div>
-    </div>
-
-    <!-- BANNIÈRE RÉCIPROCITÉ -->
-    <!-- EDITABLE: 3 états — masquée si 2/2, visible si 0/2 ou 1/2 -->
-    <div class="recip-banner" id="recip-banner" role="alert" aria-live="polite" style="display:none">
-      <div class="recip-banner-left">
-        <span class="recip-banner-icon" id="recip-banner-icon" aria-hidden="true">🔒</span>
-        <div>
-          <div class="recip-banner-title" id="recip-banner-title"></div>
-          <!-- EDITABLE: depuis content.json → dashboard.deposit_locked_message -->
-          <div class="recip-tracker" id="recip-tracker"></div>
-        </div>
-      </div>
-      <a href="#feed-grid" class="recip-btn" id="recip-banner-btn">Voir les questionnaires →</a>
-    </div>
-
-    <!-- SUGGESTIONS POUR TOI -->
-    <!-- EDITABLE: chargé depuis GET /api/forms/recommended — visible si nouveau (<5 réponses) ou en section séparée -->
-    <div class="suggestions-section" id="suggestions-section" style="display:none" aria-label="Formulaires recommandés">
-      <div class="suggestions-header">
-        <div class="suggestions-header-left">
-          <!-- EDITABLE: titre de la section suggestions -->
-          <span class="suggestions-title">💡 Suggestions basées sur ton profil</span>
-          <span class="suggestions-sub" id="suggestions-sub"></span>
-        </div>
-        <a href="#feed-grid" class="suggestions-view-all">Voir tout →</a>
-      </div>
-      <!-- EDITABLE: rendu par renderSuggestions() depuis GET /api/forms/recommended -->
-      <div class="suggestions-grid" id="suggestions-grid"></div>
-    </div>
-
-    <!-- FILTER ROW -->
-    <div class="filter-row">
-      <div class="filter-dropdowns">
-        <!-- EDITABLE: universités et écoles chargées depuis admin/schools.json -->
-        <select class="filter-select" id="filter-university" onchange="applyFilter('university_id', this.value)" aria-label="Université">
-          <option value="">Université : Toutes</option>
-        </select>
-        <select class="filter-select" id="filter-school" onchange="applyFilter('school_id', this.value)" aria-label="École">
-          <option value="">École : Toutes</option>
-        </select>
-        <select class="filter-select" id="filter-domain" onchange="applyFilter('domain', this.value)" aria-label="Domaine">
-          <option value="">Domaine : Tous</option>
-          <option value="Économie & Gestion">Économie & Gestion</option>
-          <option value="Informatique & IA">Informatique & IA</option>
-          <option value="Sciences & Ingénierie">Sciences & Ingénierie</option>
-          <option value="Médecine & Santé">Médecine & Santé</option>
-          <option value="Droit & Sciences Politiques">Droit & Sciences Politiques</option>
-          <option value="Lettres & Sciences Humaines">Lettres & Sciences Humaines</option>
-          <option value="Marketing & Communication">Marketing & Communication</option>
-          <option value="Finance & Comptabilité">Finance & Comptabilité</option>
-        </select>
-      </div>
-      <div class="filter-chips" id="filter-chips">
-        <!-- EDITABLE: chips de filtre rapide -->
-        <button class="filter-chip filter-chip--active" onclick="setChip('recent', this)">Récents</button>
-        <button class="filter-chip" onclick="setChip('flash', this)">Flash &lt; 2 min</button>
-        <button class="filter-chip" onclick="setChip('popular', this)">Populaires</button>
-        <button class="filter-chip" onclick="setChip('domain', this)">Mon domaine</button>
-        <button class="filter-chip" onclick="setChip('saved', this)">Sauvegardés ♡</button>
-      </div>
-      <span class="filter-count" id="filter-count"></span>
-    </div>
-
-    <!-- FEED QUESTIONNAIRES — grille 2 colonnes asymétrique 65/35 -->
-    <!-- EDITABLE: rempli par renderFeed() depuis GET /api/forms -->
-    <div class="feed-grid" id="feed-grid">
-      <div class="feed-col-main" id="feed-col-main"></div>
-      <div class="feed-col-side" id="feed-col-side"></div>
-    </div>
-
-  </main>
-
-  <!-- ═══════════════════════════════════════════════════════
-       PANEL DROIT STICKY 320px
-       ═══════════════════════════════════════════════════════ -->
-  <aside class="dash-panel" aria-label="Suivi et dépôt">
-
-    <!-- LIVE TRACKER -->
-    <div class="panel-card panel-card--tracker" id="panel-tracker" style="display:none">
-      <div class="panel-card-label">Mon questionnaire actif</div>
-      <div class="tracker-title" id="tracker-title">—</div>
-      <div class="tracker-published" id="tracker-published"></div>
-
-      <!-- Réponses en temps réel -->
-      <div class="sparkline-wrap">
-        <div class="sparkline-header">
-          <span class="sparkline-label">RÉPONSES EN TEMPS RÉEL</span>
-        </div>
-        <div class="sparkline-count-row">
-          <span class="sparkline-count" id="sparkline-count">0</span>
-          <span class="sparkline-goal" id="sparkline-goal">/100 souhaitées</span>
-        </div>
-        <div class="sparkline-progress-track">
-          <div class="sparkline-progress-fill" id="sparkline-progress-fill" style="width:0%"></div>
-        </div>
-        <div class="activity-grid" id="activity-grid">
-          <div class="activity-row">
-            <span class="activity-label">Aujourd'hui</span>
-            <span class="activity-val" id="activity-today">—</span>
+        <div class="topbar-right">
+          <div class="active-pill">
+            <span class="pulse-dot green"></span>
+            <span id="active-count">34</span> actifs
           </div>
-          <div class="activity-row">
-            <span class="activity-label">Hier</span>
-            <span class="activity-val" id="activity-yesterday">—</span>
+
+          <button class="topbar-icon-btn" id="notif-btn" aria-label="Notifications">
+            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7"
+              stroke-linecap="round">
+              <path d="M9 2a5 5 0 0 1 5 5v3l1.5 2H2.5L4 10V7a5 5 0 0 1 5-5z" />
+              <path d="M7 14a2 2 0 0 0 4 0" />
+            </svg>
+            <span class="topbar-badge" id="notif-badge" hidden>0</span>
+          </button>
+
+          <button class="topbar-profile-pill" id="profile-btn">
+            <div class="topbar-avatar" id="topbar-avatar">?</div>
+            <span id="topbar-name">...</span>
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M2 3.5L5 6.5 8 3.5" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- PANNEAU NOTIFICATIONS -->
+      <div class="dropdown-panel" id="notif-panel" hidden>
+        <div class="panel-header">
+          <span>Notifications</span>
+          <button class="mark-all-read" id="mark-all-read">Tout marquer comme lu</button>
+        </div>
+        <div class="panel-body" id="notif-list">
+          <div class="notif-item unread">
+            <span class="notif-dot"></span>
+            <div class="notif-text">🔥 Streak de 3 jours ! Continuez comme ça.</div>
+            <div class="notif-time">Il y a 2h</div>
           </div>
-          <div class="activity-row">
-            <span class="activity-label">7 derniers jours</span>
-            <span class="activity-val" id="activity-week">—</span>
+          <div class="notif-item unread">
+            <span class="notif-dot"></span>
+            <div class="notif-text">Nouvelle réponse à votre questionnaire.</div>
+            <div class="notif-time">Il y a 4h</div>
+          </div>
+          <div class="notif-item">
+            <span class="notif-dot read"></span>
+            <div class="notif-text">Bienvenue sur SciConnect !</div>
+            <div class="notif-time">Hier</div>
           </div>
         </div>
-        <div class="sparkline-update">
-          <div class="live-dot" aria-hidden="true"></div>
-          <span id="sparkline-update-text">Mis à jour à l'instant</span>
+      </div>
+
+      <!-- PANNEAU PROFIL -->
+      <div class="dropdown-panel profile-dropdown" id="profile-panel" hidden>
+        <div class="profile-panel-top">
+          <div class="pp-avatar" id="pp-avatar">?</div>
+          <div class="pp-info">
+            <div class="pp-name" id="pp-name">...</div>
+            <div class="pp-meta" id="pp-meta"></div>
+            <div class="pp-badge">✓ Étudiant vérifié</div>
+            <div class="pp-pts" id="pp-pts">0 pts</div>
+          </div>
         </div>
+        <div class="pp-stats">
+          <div class="pp-stat">
+            <div class="pp-stat-val" id="pp-responses">0</div>
+            <div class="pp-stat-label">réponses</div>
+          </div>
+          <div class="pp-stat">
+            <div class="pp-stat-val" id="pp-forms">0</div>
+            <div class="pp-stat-label">formulaires</div>
+          </div>
+          <div class="pp-stat">
+            <div class="pp-stat-val" id="pp-streak">0🔥</div>
+            <div class="pp-stat-label">streak</div>
+          </div>
+        </div>
+        <div class="pp-actions">
+          <a href="#" class="btn-primary btn-sm" id="pp-profile-link">Voir mon profil public</a>
+          <a href="deposit.html" class="btn-outline btn-sm">Déposer</a>
+        </div>
+        <button class="pp-logout" id="pp-logout">Déconnexion</button>
       </div>
-    </div>
 
-    <!-- BREAKDOWN RÉPONDANTS -->
-    <div class="panel-card" id="panel-breakdown" style="display:none">
-      <div class="panel-card-label">Profils répondants</div>
-      <div class="breakdown-row">
-        <span class="breakdown-dot breakdown-dot--teal" aria-hidden="true"></span>
-        <span class="breakdown-text" id="breakdown-verified">0 étudiants vérifiés ✓</span>
-        <span class="breakdown-pct" id="breakdown-verified-pct">0%</span>
-      </div>
-      <div class="breakdown-row">
-        <span class="breakdown-dot breakdown-dot--gold" aria-hidden="true"></span>
-        <span class="breakdown-text" id="breakdown-public">0 public général</span>
-        <span class="breakdown-pct" id="breakdown-public-pct">0%</span>
-      </div>
-      <div class="breakdown-row">
-        <span class="breakdown-dot breakdown-dot--grey" aria-hidden="true"></span>
-        <span class="breakdown-text" id="breakdown-anon">0 non vérifiés</span>
-        <span class="breakdown-pct" id="breakdown-anon-pct">0%</span>
-      </div>
-    </div>
+      <!-- FEED CONTENT -->
+      <div class="feed-content" id="feed-content">
 
-    <!-- VÉRIFICATION -->
-    <div class="panel-card" id="panel-verify" style="display:none">
-      <div class="panel-card-label">Vérification</div>
-      <div id="verify-list"></div>
-      <a href="#" class="panel-link">Tableau complet →</a>
-    </div>
+        <!-- Banner recommandation (redesigned) -->
+        <div class="rec-banner" id="rec-banner" hidden>
+          <div class="rec-banner-left">
+            <div class="rec-icon-wrap">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#C9A84C" stroke-width="1.8">
+                <polygon points="10,2 12,8 18,8.5 13.5,12 15,17 10,14 5,17 6.5,12 2,8.5 8,8" />
+              </svg>
+            </div>
+            <div>
+              <div class="rec-label">Recommandé pour toi</div>
+              <div class="rec-title" id="rec-title">Chargement...</div>
+              <div class="rec-sub" id="rec-sub"></div>
+            </div>
+          </div>
+          <div class="rec-banner-right">
+            <span class="rec-pts-pill">+10 pts</span>
+            <a href="#" class="rec-btn" id="rec-btn">Répondre →</a>
+          </div>
+        </div>
 
-    <!-- PANEL DÉPÔT — rendu par renderDepositPanel() -->
-    <div class="panel-card panel-card--deposit" id="panel-deposit">
-      <div class="panel-card-label">PROCHAIN DÉPÔT</div>
-      <div id="deposit-content">
-        <div class="deposit-loading">Chargement...</div>
-      </div>
-      <div class="panel-reset-row">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-        <span class="panel-reset-text" id="reset-text"></span>
-      </div>
-    </div>
+        <!-- Banner état points -->
+        <div class="points-banner" id="points-banner" hidden>
+          <div class="pb-left">
+            <span class="pb-icon" id="pb-icon">🔒</span>
+            <div>
+              <div class="pb-msg" id="pb-msg">Réponds à des questionnaires pour gagner des points</div>
+              <div class="pb-tracker" id="pb-tracker">
+                <span class="tracker-step pending">○ Réponse 1</span>
+                <span class="tracker-step pending">○ Réponse 2</span>
+                <span class="tracker-step locked">🔒 Dépôt</span>
+              </div>
+            </div>
+          </div>
+          <a href="deposit.html" class="pb-btn" id="pb-btn">Voir les questionnaires →</a>
+        </div>
 
-    <!-- BADGES MINI -->
-    <div class="panel-card">
-      <div class="panel-card-label">Progression</div>
-      <div class="badge-mini-row">
-        <svg class="badge-mini-icon badge-mini-icon--teal" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-        <span class="badge-mini-name">Contributeur</span>
-        <div class="badge-mini-track"><div class="badge-mini-fill badge-mini-fill--teal" id="badge-fill-contrib" style="width:40%"></div></div>
-        <span class="badge-mini-val" id="badge-val-contrib">8/20</span>
-      </div>
-      <div class="badge-mini-row">
-        <svg class="badge-mini-icon badge-mini-icon--gold" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2C6 2 2 7 2 7l10 15L22 7s-4-5-10-5z"/></svg>
-        <span class="badge-mini-name">Streak</span>
-        <div class="badge-mini-track"><div class="badge-mini-fill badge-mini-fill--gold" id="badge-fill-streak" style="width:100%"></div></div>
-        <span class="badge-mini-val" id="badge-val-streak">7/7 🔥</span>
-      </div>
-      <div class="badge-mini-row">
-        <svg class="badge-mini-icon badge-mini-icon--grey" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-        <span class="badge-mini-name">Expert</span>
-        <div class="badge-mini-track"><div class="badge-mini-fill" style="width:0%"></div></div>
-        <span class="badge-mini-val">50 rép. requis</span>
-      </div>
-    </div>
+        <!-- Filtres chips -->
+        <div class="filter-row">
+          <div class="filter-chips" id="filter-chips">
+            <button class="chip active" data-filter="">Tous</button>
+            <button class="chip" data-filter="domain">Mon domaine</button>
+            <button class="chip" data-filter="recent">Récents</button>
+            <button class="chip" data-filter="flash">Flash &lt; 2min</button>
+            <button class="chip" data-filter="popular">Populaires</button>
+            <button class="chip" data-filter="saved">Sauvegardés ♡</button>
+          </div>
+          <div class="filter-count" id="filter-count"></div>
+        </div>
 
-  </aside>
+        <!-- Grille masonry 3 colonnes -->
+        <div class="feed-grid" id="feed-grid">
+          <!-- Cartes chargées dynamiquement -->
+          <div class="feed-loading" id="feed-loading">
+            <div class="spinner"></div>
+            <span>Chargement des questionnaires...</span>
+          </div>
+        </div>
 
-</div>
+      </div>
+      <!-- /feed-content -->
 
-<script src="js/main.js"></script>
-<script src="js/dashboard.js"></script>
+    </main>
+    <!-- /main-content -->
+
+  </div>
+  <!-- /app-shell -->
+
+  <script src="js/main.js"></script>
+  <script src="js/animations.js"></script>
+  <script src="js/dashboard.js"></script>
 </body>
+
 </html>

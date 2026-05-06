@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animations Demo — SciConnect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #F7F6F2; min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 20px; padding: 40px;
+    }
+    h1 {
+      font-family: 'Fraunces', serif; font-size: 1.5rem; font-weight: 700;
+      color: #181816; margin-bottom: 8px;
+    }
+    p { font-size: 0.85rem; color: #9A9890; margin-bottom: 24px; }
+    .demo-grid { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
+    .demo-btn {
+      padding: 14px 28px; border-radius: 12px; border: none;
+      font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; transition: transform 150ms, box-shadow 150ms;
+    }
+    .demo-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .demo-btn--teal { background: #005F54; color: white; }
+    .demo-btn--gold { background: #C9A84C; color: white; }
+    .demo-btn--outline { background: white; color: #005F54; border: 2px solid #005F54; }
+  </style>
+</head>
+<body>
+  <h1>SciConnect Animations Demo</h1>
+  <p>Teste les micro-animations premium du systeme de points et streaks.</p>
+  <div class="demo-grid">
+    <button class="demo-btn demo-btn--teal"
+            onclick="SciConnectAnimations.showPointsAnimation(10, 250, false)">
+      Tester +10 pts
+    </button>
+    <button class="demo-btn demo-btn--gold"
+            onclick="SciConnectAnimations.showStreakAnimation(7, 25)">
+      Tester Streak 7 jours
+    </button>
+    <button class="demo-btn demo-btn--outline"
+            onclick="SciConnectAnimations.showPointsAnimation(15, 275, true)">
+      Tester +15 pts avec streak bonus
+    </button>
+  </div>
+  <script src="js/animations.js"></script>
+</body>
+</html>

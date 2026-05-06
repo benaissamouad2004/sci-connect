@@ -1,0 +1,305 @@
+' ══════════════════════════════════════════
+' SCICONNECT — DIAGRAMMES D'ÉTATS
+' Simplifiés, sans détails techniques
+' ══════════════════════════════════════════
+
+
+' ┌──────────────────────────────────────────┐
+' │  1. ÉTATS — COMPTE UTILISATEUR           │
+' └──────────────────────────────────────────┘
+
+@startuml STATE_Utilisateur
+!theme plain
+skinparam state {
+  BackgroundColor #E8F5F3
+  BorderColor #005F54
+  ArrowColor #005F54
+  FontSize 13
+}
+skinparam note {
+  BackgroundColor #FDF8EC
+  BorderColor #C9A84C
+}
+
+title Diagramme d'États\n**Compte Utilisateur**
+
+[*] --> Visiteur
+
+state "Visiteur" as S1 #F0EDE6 {
+  S1 : Pas de compte
+  S1 : Accès limité en lecture
+  S1 : Peut répondre en tant que "public"
+}
+
+state "Inscription" as S2 #FDF8EC {
+  S2 : Connexion via Google
+  S2 : Email académique vérifié
+  S2 : Compte créé
+}
+
+state "Onboarding" as S3 #FFF8EC {
+  S3 : Quiz de 5 questions
+  S3 : Choix de l'université et école
+  S3 : Configuration du profil
+}
+
+state "Étudiant actif" as S4 #E8F5F3 {
+  S4 : Peut répondre aux questionnaires
+  S4 : Peut déposer (après 2 réponses)
+  S4 : Gagne des points et badges
+  S4 : Profil public visible
+}
+
+state "Fondateur" as S5 #FDF8EC {
+  S5 : Parmi les 50 premiers inscrits
+  S5 : Badge Fondateur ★
+  S5 : 1er dépôt gratuit
+  S5 : Accès à l'administration
+}
+
+state "Inactif" as S6 #F0EDE6 {
+  S6 : Aucune activité depuis 7 jours
+  S6 : Reçoit des suggestions par email
+}
+
+state "Déconnecté" as S7 #F0EDE6 {
+  S7 : Session terminée
+}
+
+Visiteur --> S2 : Clic "Continuer\navec Google"
+S2 --> Visiteur : Email non académique\n(refusé)
+S2 --> S3 : Nouvel utilisateur
+S2 --> S4 : Utilisateur existant\n(connexion)
+S3 --> S4 : Profil complété
+S4 --> S5 : Si parmi les 50\npremiers inscrits
+S4 --> S6 : 7 jours sans activité
+S6 --> S4 : Retour sur\nla plateforme
+S4 --> S7 : Déconnexion
+S5 --> S7 : Déconnexion
+S7 --> Visiteur : Session terminée
+
+@enduml
+
+
+' ┌──────────────────────────────────────────┐
+' │  2. ÉTATS — COMPTEUR DE RÉCIPROCITÉ      │
+' └──────────────────────────────────────────┘
+
+@startuml STATE_Reciprocite
+!theme plain
+skinparam state {
+  BackgroundColor #E8F5F3
+  BorderColor #005F54
+  ArrowColor #005F54
+  FontSize 13
+}
+skinparam note {
+  BackgroundColor #FDF8EC
+  BorderColor #C9A84C
+}
+
+title Diagramme d'États\n**Compteur de Réciprocité**\n(La règle des 2)
+
+[*] --> Verrouille
+
+state "Verrouillé (0/2)" as Verrouille #FEF3F2 {
+  Verrouille : 🔒 Dépôt interdit
+  Verrouille : Aucune réponse ce mois
+  Verrouille : ─────────────────
+  Verrouille : [○] Réponse 1 — en attente
+  Verrouille : [○] Réponse 2 — en attente
+  Verrouille : [🔒] Dépôt — verrouillé
+}
+
+state "À moitié (1/2)" as Moitie #FFF8EC {
+  Moitie : 🔓 Presque débloqué
+  Moitie : 1 réponse donnée
+  Moitie : ─────────────────
+  Moitie : [✓] Réponse 1 — faite
+  Moitie : [○] Réponse 2 — en attente
+  Moitie : [🔒] Dépôt — bientôt
+}
+
+state "Déverrouillé (2/2)" as Deverrouille #E8F5F3 {
+  Deverrouille : ✓ Dépôt autorisé
+  Deverrouille : 2 réponses données
+  Deverrouille : ─────────────────
+  Deverrouille : [✓] Réponse 1 — faite
+  Deverrouille : [✓] Réponse 2 — faite
+  Deverrouille : [✓] Dépôt — débloqué
+}
+
+state "Questionnaire déposé" as Depose #E8F5F3 {
+  Depose : Questionnaire publié !
+  Depose : ─────────────────
+  Depose : Pour déposer à nouveau :
+  Depose : 2 réponses supplémentaires
+  Depose : nécessaires
+}
+
+state "Début de mois" as Reset #F0EDE6 {
+  Reset : Le 1er du mois :
+  Reset : compteur remis à zéro
+}
+
+Verrouille --> Moitie : Répond à un\n1er questionnaire\n(+10 points)
+Moitie --> Deverrouille : Répond à un\n2ème questionnaire\n(+10 points)
+Deverrouille --> Depose : Publie son\nquestionnaire
+
+Depose --> Verrouille : Veut déposer\nà nouveau
+
+Verrouille --> Reset : 1er du mois
+Moitie --> Reset : 1er du mois
+Deverrouille --> Reset : 1er du mois
+Depose --> Reset : 1er du mois
+Reset --> Verrouille : Compteur\nremis à 0/2
+
+note right of Deverrouille
+  **Exception Fondateur** :
+  Le 1er dépôt est gratuit
+  (pas besoin des 2 réponses).
+end note
+
+@enduml
+
+
+' ┌──────────────────────────────────────────┐
+' │  3. ÉTATS — QUESTIONNAIRE                │
+' └──────────────────────────────────────────┘
+
+@startuml STATE_Questionnaire
+!theme plain
+skinparam state {
+  BackgroundColor #E8F5F3
+  BorderColor #005F54
+  ArrowColor #005F54
+  FontSize 13
+}
+skinparam note {
+  BackgroundColor #FDF8EC
+  BorderColor #C9A84C
+}
+
+title Diagramme d'États\n**Cycle de vie d'un questionnaire**
+
+[*] --> Brouillon
+
+state "Brouillon" as Brouillon #FDF8EC {
+  Brouillon : L'étudiant prépare son dépôt
+  Brouillon : Colle le lien Google Forms
+  Brouillon : Ajoute titre et description
+  Brouillon : Choisit le domaine et le ciblage
+}
+
+state "Publié" as Publie #E8F5F3 {
+  Publie : Visible dans le feed
+  Publie : Reçoit des réponses
+  Publie : Statistiques en temps réel
+
+  state "En attente\nde réponses" as EnAttente {
+    EnAttente : Objectif non encore atteint
+    EnAttente : Réponses arrivent
+  }
+
+  state "Jalon atteint\n🎉" as Jalon #FDF8EC {
+    Jalon : 10, 25, 50, 75 ou 100 réponses
+    Jalon : Email de félicitations envoyé
+  }
+
+  EnAttente --> Jalon : Atteint 10, 25, 50,\n75 ou 100 réponses
+  Jalon --> EnAttente : Continue à recevoir\ndes réponses
+}
+
+state "Objectif atteint" as Objectif #E8F5F3 {
+  Objectif : 100% de l'objectif
+  Objectif : Peut encore recevoir des réponses
+  Objectif : Export Excel complet disponible
+}
+
+state "Désactivé" as Desactive #F0EDE6 {
+  Desactive : Retiré du feed
+  Desactive : Ne reçoit plus de réponses
+  Desactive : Données et stats conservées
+}
+
+Brouillon --> Publie : L'étudiant publie\nson questionnaire
+Publie --> Objectif : Nombre de réponses\n≥ objectif fixé
+Objectif --> Objectif : Continue à recevoir\ndes réponses
+Publie --> Desactive : L'administrateur\nou l'auteur désactive
+Objectif --> Desactive : L'auteur décide\nde le retirer
+
+@enduml
+
+
+' ┌──────────────────────────────────────────┐
+' │  4. ÉTATS — RÉPONSE                      │
+' └──────────────────────────────────────────┘
+
+@startuml STATE_Reponse
+!theme plain
+skinparam state {
+  BackgroundColor #E8F5F3
+  BorderColor #005F54
+  ArrowColor #005F54
+  FontSize 13
+}
+skinparam note {
+  BackgroundColor #FDF8EC
+  BorderColor #C9A84C
+}
+
+title Diagramme d'États\n**Cycle de vie d'une réponse**
+
+[*] --> Soumise
+
+state "Soumise" as Soumise #FDF8EC {
+  Soumise : Le répondant a rempli
+  Soumise : et soumis le formulaire
+  Soumise : Google Forms
+}
+
+state "Vérifiée ✓" as Verifiee #E8F5F3 {
+  Verifiee : Réponse confirmée
+  Verifiee : Étudiant identifié
+  Verifiee : +10 points attribués
+  Verifiee : Compteur mensuel +1
+  Verifiee : Badge "Étudiant vérifié ✓"
+}
+
+state "Non trouvée" as NonTrouvee #FEF3F2 {
+  NonTrouvee : Réponse pas encore
+  NonTrouvee : détectée dans le formulaire
+  NonTrouvee : Le répondant peut réessayer
+}
+
+state "Publique" as Publique #FDF8EC {
+  Publique : Réponse d'un visiteur
+  Publique : sans compte
+  Publique : Pas de points attribués
+  Publique : Badge "Public général"
+}
+
+state "Validée par l'auteur" as Validee #E8F5F3 {
+  Validee : L'auteur du questionnaire
+  Validee : confirme cette réponse
+  Validee : Incluse dans l'export Excel
+}
+
+state "Ignorée par l'auteur" as Ignoree #F0EDE6 {
+  Ignoree : L'auteur juge cette
+  Ignoree : réponse non pertinente
+  Ignoree : Exclue des statistiques
+}
+
+Soumise --> Verifiee : Étudiant connecté\nRéponse complète
+Soumise --> NonTrouvee : Réponse pas encore\ndétectée
+Soumise --> Publique : Visiteur sans compte
+
+NonTrouvee --> Verifiee : Nouvelle tentative\nde vérification
+
+Verifiee --> Validee : L'auteur clic "Valider"
+Verifiee --> Ignoree : L'auteur clic "Ignorer"
+Ignoree --> Validee : L'auteur change d'avis
+Validee --> Ignoree : L'auteur change d'avis
+
+@enduml

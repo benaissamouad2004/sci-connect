@@ -1,10 +1,11 @@
-# ROUTE: Routes questionnaires
+# ROUTE: Routes questionnaires — V3
 import re
 import json
 import os
 from datetime import datetime
 from flask import Blueprint, request, jsonify, session
 from backend.models import db, User, Questionnaire, Response
+from backend.config import Config
 
 forms_bp = Blueprint('forms', __name__)
 
@@ -34,6 +35,7 @@ def list_forms():
     school_id     = request.args.get('school_id')
     domain        = request.args.get('domain')
     level         = request.args.get('level')
+    sort          = request.args.get('sort', 'recent')
     limit         = min(int(request.args.get('limit', 20)), 50)
     offset        = int(request.args.get('offset', 0))
 
@@ -57,7 +59,10 @@ def list_forms():
         }
 
     total = q.count()
-    items = q.order_by(Questionnaire.created_at.desc()).offset(offset).limit(limit).all()
+    if sort == 'popular':
+        items = q.order_by(Questionnaire.response_count.desc()).offset(offset).limit(limit).all()
+    else:
+        items = q.order_by(Questionnaire.created_at.desc()).offset(offset).limit(limit).all()
 
     results = []
     for item in items:
@@ -66,8 +71,10 @@ def list_forms():
         author = User.query.filter_by(id=item.author_id).first()
         if author:
             d['author_name']   = author.name
+            d['author_avatar'] = author.avatar_url
             d['author_school'] = author.school_id
             d['author_level']  = author.level
+            d['author_slug']   = author.slug
         results.append(d)
 
     # Tri : questionnaires non répondus en premier
@@ -89,33 +96,22 @@ def create_form():
     if not user:
         return jsonify({'error': 'utilisateur introuvable'}), 404
 
-    # Vérifier la règle multi-dépôt : chaque dépôt nécessite 2 réponses supplémentaires
+    # V3: vérification basée sur les points (>= 20 pts requis)
     try:
         content = _get_content()
-        responses_per_deposit = content.get('rules', {}).get('responses_required', 2)
     except Exception:
-        responses_per_deposit = 2
+        content = {}
 
-    # Compter les dépôts effectués ce mois-ci
-    now = datetime.utcnow()
-    first_of_month = datetime(now.year, now.month, 1)
-    monthly_deposits = Questionnaire.query.filter(
-        Questionnaire.author_id == user_id,
-        Questionnaire.created_at >= first_of_month
-    ).count()
-
-    # Réponses requises = (dépôts_ce_mois + 1) × responses_per_deposit
-    required = (monthly_deposits + 1) * responses_per_deposit
     is_founder_first = user.is_founder and Questionnaire.query.filter_by(author_id=user_id).count() == 0
-
-    can_deposit = user.monthly_responses_given >= required or is_founder_first
+    can_deposit      = (user.points or 0) >= Config.POINTS_MIN_DEPOT or is_founder_first
 
     if not can_deposit:
+        points_needed = Config.POINTS_MIN_DEPOT - (user.points or 0)
         return jsonify({
-            'error': 'règle des 2 non remplie',
-            'monthly_responses_given': user.monthly_responses_given,
-            'required': required,
-            'monthly_deposits': monthly_deposits,
+            'error':         'Points insuffisants',
+            'points_needed': points_needed,
+            'current_points': user.points or 0,
+            'points_min':    Config.POINTS_MIN_DEPOT,
         }), 403
 
     data = request.get_json()
@@ -150,6 +146,12 @@ def create_form():
         image_url        = image_url,
     )
     db.session.add(q)
+
+    # V3: déduire les points après dépôt
+    if not is_founder_first:
+        user.points = max(0, (user.points or 0) - Config.POINTS_DEPOSER)
+    user.total_forms_posted = (user.total_forms_posted or 0) + 1
+
     db.session.commit()
 
     # EMAIL 1 : confirmation à l'auteur
@@ -233,6 +235,28 @@ def get_form(form_id):
 
     author = User.query.filter_by(id=q.author_id).first()
     return jsonify(q.to_dict(author=author))
+
+
+# ROUTE: DELETE /api/forms/:id
+# OBJECTIF: Supprimer un questionnaire (soft delete) — auteur uniquement
+@forms_bp.route('/api/forms/<string:form_id>', methods=['DELETE'])
+def delete_form(form_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'non authentifié'}), 401
+
+    q = Questionnaire.query.filter_by(id=form_id).first()
+    if not q:
+        return jsonify({'error': 'questionnaire introuvable'}), 404
+
+    if q.author_id != user_id:
+        return jsonify({'error': 'tu ne peux supprimer que tes propres questionnaires'}), 403
+
+    # Soft delete — désactiver le questionnaire
+    q.is_active = False
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': 'Questionnaire supprimé'})
 
 
 # ROUTE: GET /api/schools

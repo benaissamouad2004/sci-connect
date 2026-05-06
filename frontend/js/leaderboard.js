@@ -1,11 +1,10 @@
 /* ═══════════════════════════════════════════════════════════
-   SCICONNECT — Classement (Leaderboard)
+   SCICONNECT — Classement (Leaderboard) V4
+   Mini-rail layout, no sidebar identity
    ═══════════════════════════════════════════════════════════ */
 
-/* EDITABLE: couleurs des badges */
 const BADGE_ICONS = { novice: '⭐', contributor: '🎯', expert: '🏆', master: '👑' };
 
-/* EDITABLE: couleurs par domaine */
 const DOMAIN_COLORS = {
   'Économie & Gestion':          '#2D7A5E',
   'Informatique & IA':           '#2563EB',
@@ -29,20 +28,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (me?.authenticated) {
     lbState.user = me.user;
-    renderSidebarIdentity(me.user);
-
     const navProfile = document.getElementById('nav-profile');
     if (navProfile && me.user.slug) {
-      navProfile.href = `/profil/${me.user.slug}`;
+      navProfile.href = `profile.html?slug=${me.user.slug}`;
     }
-  } else {
-    const nameEl = document.getElementById('identity-name');
-    const metaEl = document.getElementById('identity-meta');
-    if (nameEl) nameEl.textContent = 'Visiteur public';
-    if (metaEl) metaEl.textContent = 'Non connecté';
   }
 
-  /* EDITABLE: chargement depuis admin/schools.json pour les noms d'écoles */
   const schoolsData = await loadSchools();
   if (schoolsData) {
     lbState.schools = schoolsData.universities;
@@ -50,33 +41,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   await loadLeaderboard();
 });
-
-/* ─── Sidebar identité ─── */
-function renderSidebarIdentity(user) {
-  const avatarEl = document.getElementById('identity-avatar');
-  const nameEl   = document.getElementById('identity-name');
-  const metaEl   = document.getElementById('identity-meta');
-  const ptsEl    = document.getElementById('identity-pts');
-  const fill     = document.getElementById('ring-fill');
-  const badgeTxt = document.getElementById('ring-badge-text');
-
-  if (avatarEl) {
-    avatarEl.innerHTML = user.avatar_url
-      ? `<img src="${esc(user.avatar_url)}" alt="${esc(user.name || '')}" loading="lazy">`
-      : (user.name || 'U')[0].toUpperCase();
-  }
-  if (nameEl) nameEl.textContent = user.name || user.email || '';
-  if (metaEl) metaEl.textContent = [user.school_id, user.level].filter(Boolean).join(' · ');
-  if (ptsEl)  ptsEl.textContent  = `★ ${user.points || 0} pts`;
-
-  const badgePct = { novice: 20, contributor: 40, expert: 70, master: 100 };
-  const pct      = badgePct[user.badge_level] || 20;
-  if (fill) {
-    const circ   = 2 * Math.PI * 22;
-    fill.style.strokeDashoffset = circ * (1 - pct / 100);
-  }
-  if (badgeTxt) badgeTxt.textContent = BADGE_ICONS[user.badge_level] || '⭐';
-}
 
 /* ─── Chargement classement ─── */
 async function loadLeaderboard() {
@@ -101,7 +65,7 @@ async function loadLeaderboard() {
     if (body) body.innerHTML = `
       <div style="text-align:center;padding:40px;color:var(--color-text-muted)">
         <div style="font-size:1.5rem;margin-bottom:8px">⚠️</div>
-        <div>Impossible de charger le classement. Vérifiez que le serveur est démarré.</div>
+        <div>Impossible de charger le classement.</div>
       </div>`;
   }
 }
@@ -122,11 +86,11 @@ function renderMyRankCard(myRank) {
     if (subEl) subEl.textContent = `${lbState.user.points || 0} points · badge ${(lbState.user.badge_level || 'novice')}`;
   } else {
     if (posEl) posEl.textContent = '—';
-    if (subEl) subEl.textContent = 'Réponds à des questionnaires pour apparaître dans le classement';
+    if (subEl) subEl.textContent = 'Réponds à des questionnaires pour apparaître';
   }
 
   if (linkEl && lbState.user.slug) {
-    linkEl.href = `/profil/${lbState.user.slug}`;
+    linkEl.href = `profile.html?slug=${lbState.user.slug}`;
   }
 }
 
@@ -135,7 +99,6 @@ function renderPodium(top3) {
   const el = document.getElementById('lb-podium');
   if (!el || !top3.length) return;
 
-  /* Ordre d'affichage : 2e, 1er, 3e */
   const order = [
     top3[1] ? { ...top3[1], podiumRank: 2 } : null,
     top3[0] ? { ...top3[0], podiumRank: 1 } : null,
@@ -152,7 +115,7 @@ function renderPodium(top3) {
     const isMe     = lbState.user && u.id === lbState.user.id;
     const meLabel  = isMe ? ' (moi)' : '';
     const badge    = BADGE_ICONS[u.badge_level] || '⭐';
-    const profileLink = u.slug ? `/profil/${u.slug}` : '#';
+    const profileLink = u.slug ? `profile.html?slug=${u.slug}` : '#';
 
     return `
       <div class="lb-podium-item lb-podium-item--${u.podiumRank}">
@@ -193,7 +156,7 @@ function renderTable(items) {
 
     const schoolName = getSchoolName(u.school_id);
     const badge      = BADGE_ICONS[u.badge_level] || '⭐';
-    const profileLink = u.slug ? `/profil/${u.slug}` : '#';
+    const profileLink = u.slug ? `profile.html?slug=${u.slug}` : '#';
 
     return `
       <div class="lb-row ${isMe ? 'lb-row--me' : ''}" role="listitem">
@@ -210,11 +173,11 @@ function renderTable(items) {
             <div class="lb-row-badge">${badge} ${u.badge_level || 'novice'}</div>
           </div>
         </div>
-        <div class="lb-row-school">${escHtml(schoolName || '—')}</div>
-        <div class="lb-row-domain">${escHtml(u.domain || '—')}</div>
+        <div class="lb-row-school">${escHtml(schoolName || '\u2014')}</div>
+        <div class="lb-row-domain">${escHtml(u.domain || '\u2014')}</div>
         <div class="lb-row-pts">${u.points}</div>
         <div class="lb-row-stats">
-          <span>${u.total_responses || 0} rép.</span>
+          <span>${u.total_responses || 0} r\u00e9p.</span>
           <span>${u.total_forms || 0} form.</span>
         </div>
       </div>`;

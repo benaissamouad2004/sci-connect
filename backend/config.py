@@ -32,6 +32,7 @@ class Config:
     MAIL_SERVER   = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
     MAIL_PORT     = int(os.getenv('MAIL_PORT', 587))
     MAIL_USE_TLS  = True
+    MAIL_USE_SSL  = False
     MAIL_USERNAME = os.getenv('MAIL_USERNAME')
     MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
     MAIL_DEFAULT_SENDER = ('SciConnect', os.getenv('MAIL_USERNAME', 'noreply@sciconnect.ma'))
@@ -44,3 +45,13 @@ class Config:
         MAIL_USE_TLS  = False
         MAIL_USERNAME = os.getenv('MAILTRAP_USERNAME')
         MAIL_PASSWORD = os.getenv('MAILTRAP_PASSWORD')
+
+    # ═══ SYSTÈME DE POINTS V3 ═══
+    # EDITABLE: modifier les valeurs ici pour ajuster le système
+    POINTS_REPONDRE_COURT   = 10   # questionnaire < 5 min
+    POINTS_REPONDRE_LONG    = 15   # questionnaire > 5 min
+    POINTS_LOGIN_QUOTIDIEN  = 5    # connexion chaque jour
+    POINTS_STREAK_7_JOURS   = 25   # bonus 7 jours consécutifs
+    POINTS_50_REPONSES      = 20   # jalon 50 réponses reçues
+    POINTS_MIN_DEPOT        = 20   # minimum requis pour déposer
+    POINTS_DEPOSER          = 20   # coût d'un dépôt (soustrait)

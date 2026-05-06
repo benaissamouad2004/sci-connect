@@ -1,4 +1,4 @@
-# ROUTE: Modèles SQLAlchemy — Partie 3 : User + Questionnaire + Response
+# ROUTE: Modèles SQLAlchemy — SciConnect V3
 from datetime import datetime
 import uuid
 from flask_sqlalchemy import SQLAlchemy
@@ -22,15 +22,20 @@ class User(db.Model):
     respond_domains         = db.Column(db.JSON)
     points                  = db.Column(db.Integer, default=0)
     badge_level             = db.Column(db.String(20), default='novice')
+    # V3: système de points — monthly_responses_given conservé pour migration
     monthly_responses_given = db.Column(db.Integer, default=0)
     monthly_reset_date      = db.Column(db.Date)
+    # V3: nouveau système points
+    streak                  = db.Column(db.Integer, default=0)
+    last_login_date         = db.Column(db.Date, nullable=True)
+    total_responses_given   = db.Column(db.Integer, default=0)
+    total_forms_posted      = db.Column(db.Integer, default=0)
     is_founder              = db.Column(db.Boolean, default=False)
     onboarding_complete     = db.Column(db.Boolean, default=False)
     created_at              = db.Column(db.DateTime, default=datetime.utcnow)
     last_active             = db.Column(db.DateTime)
     # EDITABLE: slug URL du profil public — généré depuis le nom à la création
     slug                    = db.Column(db.String(100), unique=True, nullable=True)
-    streak                  = db.Column(db.Integer, default=0)
 
     questionnaires = db.relationship('Questionnaire', backref='author', lazy=True)
 
@@ -44,13 +49,16 @@ class User(db.Model):
             'university_id':           self.university_id,
             'level':                   self.level,
             'domains':                 self.domains,
-            'points':                  self.points,
+            'points':                  self.points or 0,
             'badge_level':             self.badge_level,
-            'monthly_responses_given': self.monthly_responses_given,
+            'monthly_responses_given': self.monthly_responses_given or 0,
+            'total_responses_given':   self.total_responses_given or 0,
+            'total_forms_posted':      self.total_forms_posted or 0,
             'is_founder':              self.is_founder,
             'onboarding_complete':     self.onboarding_complete,
             'slug':                    self.slug,
             'streak':                  self.streak or 0,
+            'last_login_date':         self.last_login_date.isoformat() if self.last_login_date else None,
         }
 
 
@@ -88,7 +96,9 @@ class Questionnaire(db.Model):
             'target_count':     self.target_count,
             'author_id':        self.author_id,
             'author_name':      author.name if author else None,
+            'author_avatar':    author.avatar_url if author else None,
             'author_school':    author.school_id if author else None,
+            'author_slug':      author.slug if author else None,
             'school_id':        self.school_id,
             'university_id':    self.university_id,
             'response_count':   self.response_count,
@@ -113,6 +123,9 @@ class Response(db.Model):
     completion_percentage = db.Column(db.Float, default=0.0)
     validated_by_emitter  = db.Column(db.Boolean, default=True)
     ignored_by_emitter    = db.Column(db.Boolean, default=False)
+    # V3: durée et détection suspects
+    duration_seconds      = db.Column(db.Integer, nullable=True)
+    is_suspect            = db.Column(db.Boolean, default=False)
     created_at            = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
@@ -125,5 +138,21 @@ class Response(db.Model):
             'completion_percentage': self.completion_percentage,
             'validated_by_emitter':  self.validated_by_emitter,
             'ignored_by_emitter':    self.ignored_by_emitter,
+            'duration_seconds':      self.duration_seconds,
+            'is_suspect':            self.is_suspect or False,
             'created_at':            self.created_at.isoformat() if self.created_at else None,
         }
+
+
+# V3: Abonnements entre utilisateurs
+class Subscription(db.Model):
+    __tablename__ = 'subscriptions'
+
+    id            = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    subscriber_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
+    publisher_id  = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
+    notify_email  = db.Column(db.Boolean, default=True)
+    notify_inapp  = db.Column(db.Boolean, default=True)
+    created_at    = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (db.UniqueConstraint('subscriber_id', 'publisher_id', name='uq_subscription'),)

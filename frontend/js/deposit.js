@@ -56,20 +56,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     .then(r => r.json()).catch(() => null);
 
   if (!me || !me.authenticated) {
-    window.location.href = 'login.html';
+    window.location.replace('login.html');
     return;
   }
 
   depState.user = me.user;
-  renderSidebarIdentity(me.user);
-  renderSidebarReciprocity(me.user);
-  renderDepositStatus(me.user);
 
-  /* Lien profil public dans la nav */
-  const navProfile = document.getElementById('nav-profile');
-  if (navProfile && me.user.slug) {
-    navProfile.href = `/profil/${me.user.slug}`;
-  }
+  /* Populate topbar user info */
+  renderTopbarUser(me.user);
+  renderDepositStatus(me.user);
 
   /* Pré-remplir depuis l'URL si fournie (depuis deposit-url-input du dashboard) */
   const params = new URLSearchParams(window.location.search);
@@ -82,6 +77,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   /* Initialiser la preview */
   updatePreview();
 });
+
+/* ─── Topbar user rendering ─── */
+function renderTopbarUser(user) {
+  const avatarEl = document.getElementById('dep-topbar-avatar');
+  const nameEl   = document.getElementById('dep-topbar-name');
+
+  if (avatarEl) {
+    if (user.avatar_url) {
+      avatarEl.innerHTML = `<img src="${escapeAttr(user.avatar_url)}" alt="${escapeAttr(user.name || '')}" loading="lazy">`;
+    } else {
+      avatarEl.textContent = (user.name || 'U')[0].toUpperCase();
+    }
+  }
+  if (nameEl) nameEl.textContent = user.name || user.email || '';
+}
+
+/* ─── Déconnexion ─── */
+function logout() {
+  fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
+  localStorage.removeItem('sc_user_cache');
+  window.location.href = 'login.html';
+}
 
 /* ─── Labels depuis settings.json ─── */
 function applySettingsLabels() {

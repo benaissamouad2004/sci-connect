@@ -4,353 +4,888 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Connexion — SciConnect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/main.css" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
+    /* ═══ LOGIN V3 — carte centrée ═══ */
+    * { box-sizing: border-box; }
+
     body {
       min-height: 100vh;
+      background: var(--color-bg);
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+      font-family: var(--font-ui);
+    }
+
+    /* Navbar minimale */
+    .login-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 28px;
+      border-bottom: 1px solid var(--color-border);
+      background: var(--color-surface);
+    }
+    .login-nav-brand {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+    .login-nav-brand span { color: var(--color-accent); }
+    .login-nav-back {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border: 1px solid var(--color-border);
+      border-radius: 7px;
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      transition: background 150ms, border-color 150ms;
+    }
+    .login-nav-back:hover { background: var(--color-surface-2); border-color: var(--color-primary); }
+
+    /* Contenu centré */
+    .login-body {
+      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background-color: var(--color-bg);
-      padding: 24px;
-      gap: 14px;
+      padding: 32px 16px;
+      gap: 20px;
     }
 
-    /* ─── Card ─── */
-    .auth-card {
-      background-color: var(--color-surface);
-      border-radius: var(--radius-xl);
-      box-shadow: var(--shadow-lg);
-      width: 100%;
-      max-width: 460px;
-      border-top: 3px solid var(--color-primary);
-      padding: 32px 36px 36px;
-    }
-
-    .auth-logo {
+    /* Tagline */
+    .login-tagline {
       font-family: var(--font-display);
-      font-size: 1.6rem;
-      font-weight: 700;
+      font-style: italic;
+      font-size: 18px;
       color: var(--color-primary);
       text-align: center;
-      margin-bottom: 24px;
+      animation: fadeIn 400ms 100ms both;
     }
+    .login-tagline-underline {
+      display: block;
+      width: 44px;
+      height: 3px;
+      background: var(--color-accent);
+      margin: 6px auto 0;
+      border-radius: 2px;
+      animation: expandLine 600ms 300ms both cubic-bezier(0.32,0.72,0,1);
+    }
+    @keyframes expandLine { from { width:0; } to { width:44px; } }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
 
-    /* ─── Stepper ─── */
+    /* ═══ CARTE CENTRALE ═══
+       Changer --color-surface pour modifier le fond */
+    .auth-card {
+      background: var(--color-surface);
+      border: 0.5px solid var(--color-border);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 420px;
+      overflow: hidden;
+      animation: cardSpring 400ms cubic-bezier(0.32,0.72,0,1);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+    }
+    @keyframes cardSpring { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+
+    /* Stripe teal 6px */
+    .card-top-stripe { height: 6px; background: var(--color-primary); }
+
+    .card-inner { padding: 28px 32px 32px; }
+
+    /* Logo */
+    .auth-logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .auth-logo-box {
+      width: 48px; height: 48px;
+      background: var(--color-primary);
+      border-radius: 13px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .auth-logo-name {
+      font-family: var(--font-display);
+      font-size: 22px; font-weight: 700;
+      color: var(--color-primary);
+    }
+    .auth-logo-name span { color: var(--color-accent); }
+    .auth-logo-sub { font-size: 12px; color: var(--color-text-muted); text-align: center; }
+
+    /* Stepper 3 étapes */
     .auth-stepper {
       display: flex;
-      align-items: flex-start;
-      margin-bottom: 28px;
+      align-items: center;
+      gap: 0;
+      background: var(--color-bg);
+      border-radius: 10px;
+      padding: 10px 16px;
+      margin-bottom: 20px;
+    }
+    .step-circle {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 600;
+      flex-shrink: 0;
+    }
+    .step-circle.done { background: var(--color-primary); color: white; }
+    .step-circle.current {
+      background: var(--color-primary-light);
+      border: 1.5px solid var(--color-primary);
+      color: var(--color-primary);
+    }
+    .step-circle.pending {
+      background: var(--color-surface-2);
+      color: var(--color-text-muted);
+      border: 1.5px solid var(--color-border);
+    }
+    .step-label { font-size: 9px; color: var(--color-text-muted); margin-top: 3px; }
+    .step-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .step-line { flex:1; height: 1.5px; background: var(--color-border); margin: 0 6px; margin-bottom: 10px; }
+    .step-line.done { background: var(--color-primary); }
+
+    /* Tabs Google / Email */
+    .auth-tabs {
+      display: flex;
+      background: var(--color-bg);
+      border-radius: 10px;
+      padding: 3px;
+      margin-bottom: 20px;
+    }
+    .auth-tab {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      background: none;
+      border-radius: 8px;
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      transition: background 200ms, color 200ms;
+    }
+    .auth-tab.active {
+      background: var(--color-primary);
+      color: white;
+      font-weight: 500;
     }
 
-    .auth-step {
+    /* ─── Onglet Google ─── */
+    .google-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      height: 50px;
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 0 18px;
+      font-family: var(--font-ui);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 150ms, transform 150ms;
+      margin-bottom: 14px;
+    }
+    .google-btn:hover { background: var(--color-primary-hover); transform: translateY(-2px); }
+    .google-btn:active { transform: scale(0.99) translateY(0); }
+    .google-btn-left { display: flex; align-items: center; gap: 12px; }
+    .google-btn-arrow { opacity: 0.5; font-size: 16px; }
+
+    .privacy-box {
+      background: var(--color-bg);
+      border-radius: 10px;
+      padding: 10px 12px;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 5px;
-      flex-shrink: 0;
+      gap: 6px;
+      margin-bottom: 14px;
     }
-
-    .auth-step-circle {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      border: 2px solid var(--color-border);
+    .privacy-row {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: var(--color-text-muted);
-      background-color: var(--color-surface);
-    }
-
-    .auth-step--done .auth-step-circle {
-      background-color: var(--color-primary);
-      border-color: var(--color-primary);
-      color: var(--color-surface);
-    }
-
-    .auth-step--active .auth-step-circle {
-      border-color: var(--color-primary);
-      color: var(--color-primary);
-    }
-
-    .auth-step-name {
-      font-size: 0.7rem;
-      font-weight: 500;
-      color: var(--color-text-muted);
-      white-space: nowrap;
-    }
-
-    .auth-step--active .auth-step-name {
-      color: var(--color-primary);
-      font-weight: 700;
-    }
-
-    .auth-step-line {
-      flex: 1;
-      height: 2px;
-      background-color: var(--color-border);
-      margin-top: 15px;
-    }
-
-    /* ─── Form content ─── */
-    .auth-title {
-      font-family: var(--font-display);
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--color-text);
-      text-align: center;
-      margin-bottom: 6px;
-    }
-
-    .auth-subtitle {
-      font-size: 0.85rem;
-      color: var(--color-text-secondary);
-      text-align: center;
-      line-height: 1.6;
-      margin-bottom: 28px;
-    }
-
-    .login-error {
-      display: none;
-      padding: 12px 16px;
-      background-color: var(--color-locked-bg);
-      border: 1px solid var(--color-locked-border);
-      border-radius: var(--radius-md);
-      color: var(--color-locked-text);
-      font-size: 0.85rem;
-      margin-bottom: 16px;
-    }
-    .login-error.visible { display: block; }
-
-    .founder-info {
-      display: none;
-      padding: 10px 14px;
-      background-color: var(--color-accent-light);
-      border: 1px solid var(--color-accent);
-      border-radius: var(--radius-md);
-      font-size: 0.82rem;
-      color: var(--color-warning);
-      margin-bottom: 16px;
-      text-align: center;
-    }
-    .founder-info.visible { display: block; }
-
-    /* ─── Google button ─── */
-    .google-btn {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      padding: 14px 24px;
-      background-color: var(--color-primary);
-      color: var(--color-surface);
-      border: none;
-      border-radius: var(--radius-md);
-      font-family: var(--font-ui);
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all var(--transition);
-    }
-    .google-btn:hover:not(:disabled) {
-      background-color: var(--color-primary-hover);
-      transform: translateY(-1px);
-    }
-    .google-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
-    .google-icon { width: 20px; height: 20px; flex-shrink: 0; }
-
-    .spinner {
-      width: 18px; height: 18px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: var(--color-surface);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      display: inline-block;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .auth-note {
-      font-size: 0.78rem;
-      color: var(--color-text-muted);
-      text-align: center;
-      line-height: 1.6;
-      margin-top: 14px;
-    }
-
-    .auth-divider {
-      border: none;
-      border-top: 1px solid var(--color-border);
-      margin: 22px 0;
-    }
-
-    .auth-guest-link {
-      font-size: 0.88rem;
-      color: var(--color-text-secondary);
-      text-align: center;
-    }
-    .auth-guest-link a {
-      color: var(--color-primary);
-      font-weight: 600;
-      text-decoration: none;
-    }
-    .auth-guest-link a:hover { text-decoration: underline; }
-
-    /* ─── Security note (outside card) ─── */
-    .auth-security {
-      width: 100%;
-      max-width: 460px;
-      background-color: var(--color-surface);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-lg);
-      padding: 14px 18px;
-      display: flex;
-      gap: 12px;
       align-items: flex-start;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      line-height: 1.4;
+    }
+    .privacy-icon { flex-shrink: 0; margin-top: 1px; }
+
+    .auth-sep {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--color-text-muted);
+      margin: 4px 0 10px;
+    }
+    .auth-sep::before, .auth-sep::after {
+      content: ''; flex:1; height:1px; background: var(--color-border);
     }
 
-    .auth-security-icon {
-      width: 34px;
-      height: 34px;
-      background-color: var(--color-primary);
-      border-radius: var(--radius-sm);
+    .non-student-link {
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      text-align: center;
+      display: block;
+      text-decoration: none;
+    }
+    .non-student-link:hover { color: var(--color-primary); text-decoration: underline; }
+
+    /* ─── Onglet Email ─── */
+    .email-pane { display: none; }
+    .email-pane.active { display: block; }
+    .google-pane { display: block; }
+    .google-pane.hidden-pane { display: none; }
+
+    .email-desc { font-size: 12px; color: var(--color-text-muted); margin-bottom: 12px; }
+
+    .email-input-wrap {
+      position: relative;
+      margin-bottom: 10px;
+    }
+    .email-input-icon {
+      position: absolute;
+      left: 12px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--color-text-muted);
+    }
+    .email-input {
+      width: 100%;
+      height: 42px;
+      padding: 0 12px 0 36px;
+      border: 1.5px solid var(--color-border);
+      border-radius: 9px;
+      font-family: var(--font-ui);
+      font-size: 14px;
+      color: var(--color-text);
+      background: var(--color-surface);
+      outline: none;
+      transition: border-color 200ms, box-shadow 200ms;
+    }
+    .email-input:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(0,95,84,0.08);
+    }
+
+    /* Détection domaine */
+    .domain-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 10px;
+    }
+    .domain-pill.uca     { background: #FDF5F0; color: #C0392B; }
+    .domain-pill.hassan  { background: #EBF0FB; color: #2C3E87; }
+    .domain-pill.unknown { background: #FFF8EC; color: #BA6A1A; }
+    .domain-pill.invalid { background: #FEF3F2; color: #C0392B; }
+
+    .send-code-btn {
+      width: 100%;
+      height: 44px;
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-family: var(--font-ui);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 150ms, opacity 150ms;
+      margin-bottom: 8px;
+    }
+    .send-code-btn:hover { background: var(--color-primary-hover); }
+    .send-code-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* ─── Écran code 6 chiffres ─── */
+    .code-screen { display: none; animation: fadeIn 300ms both; }
+    .code-screen.active { display: block; }
+    .code-sent-msg { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+    .code-spam-hint { font-size: 11px; color: var(--color-text-muted); font-style: italic; margin-bottom: 16px; }
+
+    .code-inputs {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .code-input {
+      width: 46px; height: 58px;
+      border: 1.5px solid var(--color-border);
+      border-radius: 10px;
+      text-align: center;
+      font-size: 24px;
+      font-family: var(--font-mono), monospace;
+      font-weight: 600;
+      color: var(--color-primary);
+      outline: none;
+      transition: border-color 200ms, box-shadow 200ms, background 200ms;
+      background: var(--color-surface);
+    }
+    .code-input:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(0,95,84,0.08);
+    }
+    .code-input.filled {
+      border-color: var(--color-primary);
+      background: var(--color-primary-light);
+    }
+
+    .code-countdown {
+      text-align: center;
+      font-size: 12px;
+      color: var(--color-accent);
+      font-weight: 500;
+      margin-bottom: 14px;
+    }
+    .resend-link { cursor: pointer; text-decoration: underline; color: var(--color-primary); }
+
+    .confirm-btn {
+      width: 100%;
+      height: 44px;
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-family: var(--font-ui);
+      font-size: 14px; font-weight: 500;
+      cursor: pointer;
+      transition: background 150ms, opacity 150ms;
+      margin-bottom: 8px;
+    }
+    .confirm-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .confirm-btn:not(:disabled):hover { background: var(--color-primary-hover); }
+
+    .code-security {
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-shrink: 0;
-    }
-    .auth-security-icon svg { width: 18px; height: 18px; stroke: var(--color-surface); }
-
-    .auth-security-title {
-      font-size: 0.83rem;
-      font-weight: 700;
-      color: var(--color-text);
-      margin-bottom: 3px;
-    }
-
-    .auth-security-desc {
-      font-size: 0.75rem;
+      gap: 5px;
+      font-size: 10px;
       color: var(--color-text-muted);
-      line-height: 1.55;
     }
-    .auth-security-desc .link-primary { color: var(--color-primary); }
-    .auth-security-desc .link-accent  { color: var(--color-warning); }
 
-    .auth-back {
-      font-size: 0.83rem;
-      color: var(--color-text-muted);
-      text-decoration: none;
+    /* ─── Social proof ─── */
+    .social-proof {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: fadeIn 400ms 300ms both;
     }
-    .auth-back:hover { color: var(--color-text); }
+    .avatars-stack { display: flex; }
+    .avatar-stub {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      border: 2px solid var(--color-surface);
+      margin-left: -8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; color: white; font-weight: 700;
+    }
+    .avatar-stub:first-child { margin-left: 0; }
+    .social-text { font-size: 12px; color: var(--color-text-secondary); }
+
+    /* Erreur */
+    .error-msg {
+      background: #FEF3F2;
+      border: 1px solid #E8A9A0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: var(--color-danger);
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
 
+<!-- Navbar minimale -->
+<nav class="login-nav">
+  <a href="index.html" class="login-nav-brand">Sci<span>Connect</span></a>
+  <a href="index.html" class="login-nav-back">← Retour à l'accueil</a>
+</nav>
+
+<div class="login-body">
+
+  <!-- Tagline -->
+  <div class="login-tagline">
+    "Tu es à quelques pts d'avoir des données pour ton mémoire."
+    <span class="login-tagline-underline"></span>
+  </div>
+
+  <!-- ═══ CARTE CENTRALE ═══ -->
   <div class="auth-card">
+    <div class="card-top-stripe"></div>
+    <div class="card-inner">
 
-    <div class="auth-logo">SciConnect</div>
+      <!-- Logo -->
+      <div class="auth-logo">
+        <div class="auth-logo-box">
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+            <circle cx="12" cy="16" r="7" fill="none" stroke="white" stroke-width="2"/>
+            <circle cx="20" cy="16" r="7" fill="none" stroke="white" stroke-width="2"/>
+            <circle cx="16" cy="16" r="4" fill="#C9A84C"/>
+          </svg>
+        </div>
+        <div class="auth-logo-name">Sci<span>Connect</span></div>
+        <div class="auth-logo-sub">Plateforme académique marocaine · UCA · Hassan II</div>
+      </div>
 
-    <!-- Stepper 3 étapes — step 1 actif -->
-    <div class="auth-stepper" role="list" aria-label="Étapes d'inscription">
-      <div class="auth-step auth-step--active" role="listitem">
-        <div class="auth-step-circle">1</div>
-        <span class="auth-step-name">Connexion</span>
+      <!-- Stepper -->
+      <div class="auth-stepper">
+        <div class="step-item">
+          <div class="step-circle done">✓</div>
+          <div class="step-label">Connexion</div>
+        </div>
+        <div class="step-line done"></div>
+        <div class="step-item">
+          <div class="step-circle current">2</div>
+          <div class="step-label">Profil</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item">
+          <div class="step-circle pending">3</div>
+          <div class="step-label">Feed</div>
+        </div>
       </div>
-      <div class="auth-step-line"></div>
-      <div class="auth-step" role="listitem">
-        <div class="auth-step-circle">2</div>
-        <span class="auth-step-name">Profil</span>
+
+      <!-- Message erreur global -->
+      <div class="error-msg" id="global-error" hidden></div>
+
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-google" onclick="switchTab('google')">🔵 Google</button>
+        <button class="auth-tab" id="tab-email" onclick="switchTab('email')">📧 Email académique</button>
       </div>
-      <div class="auth-step-line"></div>
-      <div class="auth-step" role="listitem">
-        <div class="auth-step-circle">3</div>
-        <span class="auth-step-name">Découvrir</span>
+
+      <!-- ─── ONGLET GOOGLE ─── -->
+      <div class="google-pane" id="google-pane">
+        <!-- Bouton Google SVG multicolore -->
+        <button class="google-btn" id="google-btn" onclick="triggerGoogleLogin()">
+          <div class="google-btn-left">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M19.6 10.23c0-.68-.06-1.36-.18-2H10v3.77h5.38a4.6 4.6 0 0 1-2 3.02v2.51h3.23c1.89-1.74 2.99-4.3 2.99-7.3z" fill="#4285F4"/>
+              <path d="M10 20c2.7 0 4.96-.9 6.62-2.43l-3.23-2.51c-.9.6-2.04.96-3.39.96-2.6 0-4.8-1.76-5.6-4.12H1.07v2.6A10 10 0 0 0 10 20z" fill="#34A853"/>
+              <path d="M4.4 11.9A5.97 5.97 0 0 1 4.09 10c0-.66.12-1.3.31-1.9V5.5H1.07A10 10 0 0 0 0 10c0 1.61.38 3.14 1.07 4.5l3.33-2.6z" fill="#FBBC05"/>
+              <path d="M10 3.97c1.47 0 2.79.5 3.82 1.5l2.86-2.86A9.98 9.98 0 0 0 10 0C6.1 0 2.75 2.25 1.07 5.5L4.4 8.1C5.2 5.74 7.4 3.97 10 3.97z" fill="#EA4335"/>
+            </svg>
+            Continuer avec Google
+          </div>
+          <span class="google-btn-arrow">→</span>
+        </button>
+
+        <!-- GIS div caché -->
+        <div id="g_id_onload" hidden
+             data-auto_prompt="false">
+        </div>
+        <div id="gsi-button-container" style="display:none"></div>
+
+        <div class="privacy-box">
+          <div class="privacy-row">
+            <span class="privacy-icon">🛡</span>
+            <span>Uniquement ton nom et email · aucun accès à Gmail ou Drive.</span>
+          </div>
+          <div class="privacy-row">
+            <span class="privacy-icon">🔒</span>
+            <span>Connexion sécurisée OAuth 2.0.</span>
+          </div>
+        </div>
+
+        <div class="auth-sep">ou</div>
+        <a href="#" class="non-student-link" onclick="switchTab('email')">
+          Tu n'es pas étudiant ? Accède directement via un lien →
+        </a>
       </div>
+
+      <!-- ─── ONGLET EMAIL ─── -->
+      <div class="email-pane" id="email-pane">
+
+        <!-- Formulaire email -->
+        <div id="email-form-screen">
+          <p class="email-desc">Pour les étudiants dont Google ne fonctionne pas.</p>
+
+          <div class="email-input-wrap">
+            <span class="email-input-icon">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="3" width="12" height="9" rx="1.5"/><path d="M1 3.5l6 4 6-4"/></svg>
+            </span>
+            <input type="email" class="email-input" id="email-input"
+                   placeholder="prenom.nom@uca.ac.ma" autocomplete="email">
+          </div>
+
+          <!-- EDITABLE: détection domaine en temps réel -->
+          <div id="domain-pill-wrap"></div>
+
+          <button class="send-code-btn" id="send-code-btn" disabled onclick="sendVerifCode()">
+            Recevoir le code →
+          </button>
+        </div>
+
+        <!-- Écran code 6 chiffres -->
+        <div class="code-screen" id="code-screen">
+          <div class="code-sent-msg" id="code-sent-msg">Code envoyé à <strong id="code-email-display"></strong></div>
+          <div class="code-spam-hint">Vérifie tes spams si tu ne le vois pas.</div>
+
+          <div class="code-inputs" id="code-inputs">
+            <input class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+          </div>
+
+          <div class="code-countdown" id="code-countdown">Renvoyer dans 00:45</div>
+
+          <button class="confirm-btn" id="confirm-btn" disabled onclick="verifyCode()">
+            Confirmer →
+          </button>
+          <div class="code-security">
+            <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="6" width="8" height="7" rx="1"/><path d="M5 6V4a2 2 0 0 1 4 0v2"/></svg>
+            Code à usage unique · 10 minutes
+          </div>
+        </div>
+
+      </div>
+      <!-- /email-pane -->
+
     </div>
+  </div>
+  <!-- /auth-card -->
 
-    <h1 class="auth-title">Connecte-toi à SciConnect</h1>
-    <p class="auth-subtitle">
-      Utilise ton <strong>email académique institutionnel</strong> Google.<br>
-      Ex : <span style="color:var(--color-primary);font-weight:600">prenom.nom@uca.ac.ma</span>
-    </p>
-
-    <div class="login-error" id="login-error" role="alert" aria-live="polite"></div>
-
-    <div class="founder-info" id="founder-info">
-      ✦ Places Fondateur disponibles — rejoins maintenant pour déposer sans restriction !
+  <!-- Social proof -->
+  <div class="social-proof">
+    <div class="avatars-stack">
+      <div class="avatar-stub">Y</div>
+      <div class="avatar-stub">A</div>
+      <div class="avatar-stub">M</div>
+      <div class="avatar-stub">H</div>
+      <div class="avatar-stub">+</div>
     </div>
-
-    <button class="google-btn" id="google-btn" onclick="initiateGoogleSignIn()" aria-label="Se connecter avec Google">
-      <!-- Google G icon (blanc sur fond vert) -->
-      <svg class="google-icon" viewBox="0 0 24 24" aria-hidden="true">
-        <path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-        <path fill="rgba(255,255,255,0.85)" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-        <path fill="rgba(255,255,255,0.7)" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-        <path fill="rgba(255,255,255,0.9)" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-      </svg>
-      <!-- EDITABLE: chargé depuis admin/settings.json → buttons.google_signin_label -->
-      <span id="google-btn-text" data-setting="buttons.google_signin_label">Continuer avec Google</span>
-    </button>
-
-    <p class="auth-note">
-      En continuant, tu acceptes les conditions d'utilisation de SciConnect.
-    </p>
-
-    <hr class="auth-divider" />
-
-    <p class="auth-guest-link">
-      Pas de compte Google ? <a href="dashboard.html">Explorer en visiteur →</a>
-    </p>
-
+    <div class="social-text">1 247 étudiants · 20 établissements · UCA + Hassan II</div>
   </div>
 
-  <!-- Note sécurité (hors card) -->
-  <div class="auth-security" role="note" aria-label="Information de sécurité">
-    <div class="auth-security-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-      </svg>
-    </div>
-    <div>
-      <div class="auth-security-title">Sécurité de vos données</div>
-      <p class="auth-security-desc">
-        Vos réponses sont cryptées et utilisées uniquement pour
-        <span class="link-primary">améliorer votre expérience académique</span>.
-        Nous ne partageons jamais vos
-        <span class="link-accent">informations personnelles</span> avec des tiers.
-      </p>
-    </div>
-  </div>
+</div>
+<!-- /login-body -->
 
-  <a href="index.html" class="auth-back">← Retour à l'accueil</a>
+<script>
+/* ── Auto-redirect si déjà connecté (remember-me) ── */
+let googleClientId = '';
+(async () => {
+  try {
+    const r = await fetch('/api/auth/me', { credentials: 'include' });
+    const d = await r.json();
+    if (d.authenticated) {
+      /* Déjà connecté → skip login, aller au dashboard */
+      window.location.replace('dashboard.html');
+      return;
+    }
+  } catch (_) {}
 
-  <!-- Google Identity Services — NE PAS utiliser l'ancienne platform.js -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script src="js/main.js"></script>
-  <script src="js/auth.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      await loadContent();
-      checkFounderStatus();
-      const me = await fetch('/api/auth/me').then(r => r.json()).catch(() => null);
-      if (me && me.authenticated) {
-        window.location.href = me.user.onboarding_complete ? '/dashboard.html' : '/onboarding.html';
+  /* Charger config Google seulement si non connecté */
+  try {
+    const r = await fetch('/api/auth/config');
+    const d = await r.json();
+    googleClientId = d.google_client_id || '';
+    if (googleClientId) initGIS(googleClientId);
+  } catch (_) {}
+})();
+
+function initGIS(clientId) {
+  if (!window.google?.accounts) {
+    window.addEventListener('load', () => {
+      setTimeout(() => initGIS(clientId), 500);
+    });
+    return;
+  }
+  google.accounts.id.initialize({
+    client_id: clientId,
+    callback:  handleGoogleToken,
+    auto_select: false,
+  });
+}
+
+/* ── Déclencher login Google ── */
+function triggerGoogleLogin() {
+  if (!window.google?.accounts) {
+    showError("La bibliothèque Google n'est pas chargée. Vérifie ta connexion.");
+    return;
+  }
+  if (!googleClientId) {
+    showError("Client ID Google non configuré. Configure GOOGLE_CLIENT_ID dans .env");
+    return;
+  }
+  google.accounts.id.prompt(notification => {
+    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+      /* Fallback: afficher bouton standard */
+      google.accounts.id.renderButton(
+        document.getElementById('gsi-button-container'),
+        { theme: 'outline', size: 'large' }
+      );
+      document.getElementById('gsi-button-container').style.display = 'block';
+    }
+  });
+}
+
+/* ── Callback JWT Google → backend ── */
+async function handleGoogleToken(response) {
+  try {
+    const res  = await fetch('/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential: response.credential }),
+      credentials: 'include'
+    });
+    const data = await res.json();
+    if (data.error) {
+      if (data.error === 'email_non_academique') {
+        showError(data.message || "Email non académique. Utilise ton adresse institutionnelle.");
+      } else {
+        showError(data.message || "Erreur de connexion.");
+      }
+      return;
+    }
+    if (data.redirect) window.location.href = data.redirect;
+  } catch (e) {
+    showError("Erreur réseau. Vérifie ta connexion.");
+  }
+}
+
+/* ── Switch tabs ── */
+function switchTab(tab) {
+  const googlePane = document.getElementById('google-pane');
+  const emailPane  = document.getElementById('email-pane');
+  const tabGoogle  = document.getElementById('tab-google');
+  const tabEmail   = document.getElementById('tab-email');
+
+  if (tab === 'google') {
+    googlePane.classList.remove('hidden-pane');
+    emailPane.classList.remove('active');
+    tabGoogle.classList.add('active');
+    tabEmail.classList.remove('active');
+  } else {
+    googlePane.classList.add('hidden-pane');
+    emailPane.classList.add('active');
+    tabGoogle.classList.remove('active');
+    tabEmail.classList.add('active');
+    setTimeout(() => document.getElementById('email-input').focus(), 100);
+  }
+}
+
+/* ── Détection domaine email en temps réel ── */
+const ACADEMIC_DOMAINS = {
+  'uca.ac.ma':            { label: 'UCA Cadi Ayyad détectée', cls: 'uca' },
+  'encg-marrakech.ac.ma': { label: 'UCA Cadi Ayyad détectée', cls: 'uca' },
+  'univh2c.ma':           { label: 'Hassan II détectée',       cls: 'hassan' },
+  'um5.ac.ma':            { label: 'Mohammed V détectée',      cls: 'hassan' },
+  'ump.ac.ma':            { label: 'Mohammed Premier détectée', cls: 'hassan' },
+};
+
+let detectTimer;
+document.getElementById('email-input').addEventListener('input', function() {
+  clearTimeout(detectTimer);
+  detectTimer = setTimeout(() => detectEmailDomain(this.value.trim()), 300);
+});
+
+function detectEmailDomain(email) {
+  const wrap = document.getElementById('domain-pill-wrap');
+  const btn  = document.getElementById('send-code-btn');
+  wrap.innerHTML = '';
+
+  if (!email || !email.includes('@')) {
+    btn.disabled = true;
+    return;
+  }
+
+  const domain = email.split('@')[1]?.toLowerCase() || '';
+
+  /* Correspondance exacte */
+  const knownDomain = ACADEMIC_DOMAINS[domain];
+  if (knownDomain) {
+    wrap.innerHTML = `<div class="domain-pill ${knownDomain.cls}">✓ ${knownDomain.label}</div>`;
+    btn.disabled = false;
+    return;
+  }
+
+  /* Domaine .ac.ma inconnu */
+  if (domain.endsWith('.ac.ma') || domain.endsWith('.edu.ma')) {
+    wrap.innerHTML = `<div class="domain-pill unknown">⚠ Domaine non répertorié — nous vérifierons</div>`;
+    btn.disabled = false;
+    return;
+  }
+
+  /* Email non académique */
+  wrap.innerHTML = `<div class="domain-pill invalid">✗ Email non académique reconnu</div>`;
+  btn.disabled = true;
+}
+
+/* ── Envoi code ── */
+let codeEmail = '';
+async function sendVerifCode() {
+  codeEmail = document.getElementById('email-input').value.trim();
+  const btn = document.getElementById('send-code-btn');
+  btn.disabled = true;
+  btn.textContent = 'Envoi en cours...';
+  try {
+    const res  = await fetch('/api/auth/email/send-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: codeEmail }),
+      credentials: 'include'
+    });
+    const data = await res.json();
+    if (data.error) { showError(data.error); btn.disabled = false; btn.textContent = 'Recevoir le code →'; return; }
+    showCodeScreen(codeEmail, data.dev_code);
+  } catch (_) {
+    showError('Erreur réseau.');
+    btn.disabled = false;
+    btn.textContent = 'Recevoir le code →';
+  }
+}
+
+function showCodeScreen(email, devCode) {
+  document.getElementById('email-form-screen').style.display = 'none';
+  const codeScr = document.getElementById('code-screen');
+  codeScr.classList.add('active');
+  document.getElementById('code-email-display').textContent = email;
+  setupCodeInputs();
+  startCountdown(45);
+
+  /* Mode dev : pré-remplir les 6 cases automatiquement */
+  if (devCode && devCode.length === 6) {
+    const inputs = document.querySelectorAll('.code-input');
+    devCode.split('').forEach((digit, i) => {
+      if (inputs[i]) { inputs[i].value = digit; inputs[i].classList.add('filled'); }
+    });
+    checkCodeComplete();
+    /* Afficher un bandeau discret */
+    const hint = document.createElement('div');
+    hint.style.cssText = 'background:#E8F5F3;border:1px solid #005F54;border-radius:8px;padding:8px 12px;font-size:11px;color:#005F54;margin-top:8px;text-align:center;';
+    hint.textContent = `[DEV] Code pré-rempli : ${devCode} — configurez MAIL_USERNAME dans .env pour de vrais emails.`;
+    codeScr.appendChild(hint);
+  }
+}
+
+/* ── Inputs code 6 chiffres ── */
+function setupCodeInputs() {
+  const inputs = document.querySelectorAll('.code-input');
+  inputs.forEach((input, i) => {
+    input.value = '';
+    input.classList.remove('filled');
+    input.addEventListener('input', e => {
+      const val = e.target.value.replace(/\D/g,'');
+      e.target.value = val ? val[0] : '';
+      e.target.classList.toggle('filled', !!val);
+      if (val && i < inputs.length - 1) inputs[i+1].focus();
+      checkCodeComplete();
+    });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !input.value && i > 0) {
+        inputs[i-1].focus();
+        inputs[i-1].value = '';
+        inputs[i-1].classList.remove('filled');
       }
     });
+    input.addEventListener('paste', e => {
+      e.preventDefault();
+      const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
+      inputs.forEach((inp, j) => {
+        inp.value = pasted[j] || '';
+        inp.classList.toggle('filled', !!pasted[j]);
+      });
+      checkCodeComplete();
+    });
+  });
+  inputs[0].focus();
+}
 
-    async function checkFounderStatus() {
-      try {
-        const resp = await fetch('/admin/content');
-        if (!resp.ok) return;
-        document.getElementById('founder-info').classList.add('visible');
-      } catch (e) { /* silencieux */ }
+function checkCodeComplete() {
+  const inputs  = document.querySelectorAll('.code-input');
+  const allFull = Array.from(inputs).every(inp => inp.value.length === 1);
+  document.getElementById('confirm-btn').disabled = !allFull;
+}
+
+function getCode() {
+  return Array.from(document.querySelectorAll('.code-input')).map(i => i.value).join('');
+}
+
+/* ── Countdown ── */
+let countdownTimer;
+function startCountdown(seconds) {
+  let remaining = seconds;
+  const el      = document.getElementById('code-countdown');
+  clearInterval(countdownTimer);
+  countdownTimer = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(countdownTimer);
+      el.innerHTML = `<span class="resend-link" onclick="sendVerifCode()">Renvoyer le code</span>`;
+    } else {
+      const m = Math.floor(remaining / 60).toString().padStart(2,'0');
+      const s = (remaining % 60).toString().padStart(2,'0');
+      el.textContent = `Renvoyer dans ${m}:${s}`;
     }
-  </script>
+  }, 1000);
+}
+
+/* ── Vérification code ── */
+async function verifyCode() {
+  const code = getCode();
+  if (code.length !== 6) return;
+  try {
+    const res  = await fetch('/api/auth/email/verify-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: codeEmail, code }),
+      credentials: 'include'
+    });
+    const data = await res.json();
+    if (data.error) { showError(data.error); return; }
+    if (data.redirect) window.location.href = data.redirect;
+  } catch (_) {
+    showError('Erreur réseau.');
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('global-error');
+  el.textContent = msg;
+  el.hidden = false;
+  setTimeout(() => { el.hidden = true; }, 5000);
+}
+
+/* ── Auto-redirect si déjà connecté (#2 session persistence) ── */
+(async function checkAlreadyLoggedIn() {
+  try {
+    const res = await fetch('/api/auth/me', { credentials: 'include' });
+    const data = await res.json();
+    if (data.authenticated) {
+      window.location.replace('dashboard.html');
+    }
+  } catch (_) { /* pas connecté, rester sur login */ }
+})();
+</script>
 
 </body>
 </html>

@@ -1,9 +1,10 @@
-# ROUTE: Routes réponses — Partie 4 complète
+# ROUTE: Routes réponses — V3
 import os
 import json
 from datetime import datetime, date, timedelta
 from flask import Blueprint, request, jsonify, session
 from backend.models import db, User, Questionnaire, Response
+from backend.config import Config
 
 responses_bp = Blueprint('responses', __name__)
 
@@ -26,6 +27,120 @@ def _check_monthly_reset(user):
         user.monthly_reset_date      = today.replace(day=1)
         return True
     return False
+
+
+# ROUTE: POST /api/responses — V3: soumission auto-approuvée avec durée
+@responses_bp.route('/api/responses', methods=['POST'])
+def submit_response():
+    """V3: Soumission directe — auto-approuvée, points selon durée."""
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'données manquantes'}), 400
+
+    form_id    = data.get('form_id')
+    start_time = data.get('start_time')  # timestamp ms
+    end_time   = data.get('end_time')    # timestamp ms
+
+    if not form_id:
+        return jsonify({'error': 'form_id manquant'}), 400
+
+    questionnaire = Questionnaire.query.filter_by(id=form_id, is_active=True).first()
+    if not questionnaire:
+        return jsonify({'error': 'questionnaire introuvable'}), 404
+
+    user_id = session.get('user_id')
+
+    # ─── Visiteur public ───
+    if not user_id:
+        resp = Response(
+            questionnaire_id      = form_id,
+            respondent_type       = 'public',
+            is_complete           = True,
+            completion_percentage = 100.0,
+            validated_by_emitter  = True,
+        )
+        db.session.add(resp)
+        questionnaire.response_count = (questionnaire.response_count or 0) + 1
+        db.session.commit()
+        return jsonify({'verified': True, 'respondent_type': 'public', 'points_earned': 0})
+
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        return jsonify({'error': 'utilisateur introuvable'}), 404
+
+    if questionnaire.author_id == user_id:
+        return jsonify({'error': 'tu ne peux pas répondre à ton propre questionnaire'}), 403
+
+    already = Response.query.filter_by(questionnaire_id=form_id, respondent_id=user_id).first()
+    if already:
+        return jsonify({'error': 'déjà répondu', 'already_responded': True}), 409
+
+    # Calculer durée
+    duration_seconds = None
+    is_suspect       = False
+    if start_time and end_time:
+        try:
+            duration_seconds = int((int(end_time) - int(start_time)) / 1000)
+            is_suspect       = duration_seconds < 30
+        except (ValueError, TypeError):
+            pass
+
+    # Points selon durée — EDITABLE dans config.py
+    if duration_seconds is not None and duration_seconds >= 300:
+        points_earned = Config.POINTS_REPONDRE_LONG
+    else:
+        points_earned = Config.POINTS_REPONDRE_COURT
+
+    resp = Response(
+        questionnaire_id      = form_id,
+        respondent_id         = user_id,
+        respondent_google_id  = user.google_id,
+        respondent_email      = user.email,
+        respondent_type       = 'verified',
+        is_complete           = True,
+        completion_percentage = 100.0,
+        validated_by_emitter  = True,
+        duration_seconds      = duration_seconds,
+        is_suspect            = is_suspect,
+    )
+    db.session.add(resp)
+
+    # Mise à jour streak
+    today_date = datetime.utcnow().date()
+    if user.last_active:
+        last_date = user.last_active.date()
+        if last_date == today_date - timedelta(days=1):
+            user.streak = (user.streak or 0) + 1
+        elif last_date != today_date:
+            user.streak = 1
+    else:
+        user.streak = 1
+
+    user.points                = (user.points or 0) + points_earned
+    user.total_responses_given = (user.total_responses_given or 0) + 1
+    user.monthly_responses_given = (user.monthly_responses_given or 0) + 1
+    user.last_active           = datetime.utcnow()
+    questionnaire.response_count = (questionnaire.response_count or 0) + 1
+
+    db.session.commit()
+
+    try:
+        author = User.query.filter_by(id=questionnaire.author_id).first()
+        if author:
+            from backend.services.email_service import check_and_send_milestone_email
+            check_and_send_milestone_email(questionnaire, author)
+    except Exception:
+        pass
+
+    return jsonify({
+        'verified':        True,
+        'respondent_type': 'verified',
+        'points_earned':   points_earned,
+        'total_points':    user.points or 0,
+        'streak':          user.streak or 1,
+        'is_suspect':      is_suspect,
+        'message':         f'+{points_earned} pts !'
+    })
 
 
 # ROUTE: POST /api/responses/verify

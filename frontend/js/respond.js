@@ -1,470 +1,280 @@
 /* ═══════════════════════════════════════════════════════════
-   SCICONNECT — Page de réponse
+   SCICONNECT — respond.js (Redesigned)
+   Embed Google Forms iframe + real completion tracking
    ═══════════════════════════════════════════════════════════ */
 
-const respondState = {
-  formId:        null,
-  questionnaire: null,
-  user:          null,
-  isPublic:      false,
-  submitted:     false,
-  verifying:     false,
+const DOMAIN_COLORS = {
+  'Économie & Gestion':          '#2D7A5E',
+  'Informatique & IA':           '#2563EB',
+  'Sciences & Ingénierie':       '#D97706',
+  'Médecine & Santé':            '#DC2626',
+  'Droit & Sciences Politiques': '#4B5563',
+  'Lettres & Sciences Humaines': '#7C3AED',
+  'Marketing & Communication':   '#BE185D',
+  'Finance & Comptabilité':      '#0891B2',
+  'Autre':                       '#6B7280',
 };
 
-/* Timer d'activité sur le formulaire */
-let _timerElapsed  = 0;
-let _timerInterval = null;
-let _minRespondSec = 90; /* EDITABLE: settings.json → features.min_respond_seconds */
+/* EDITABLE: minimum time (seconds) before confirm button activates */
+const MIN_TIME_SECONDS = 30;
 
-/* ─── Initialisation ─── */
+const rsp = {
+  formId:     null,
+  form:       null,
+  user:       null,
+  subscribed: false,
+  startTime:  null,
+  timerInterval: null,
+  confirmed:  false,
+};
+
+/* ─── Boot ─── */
 document.addEventListener('DOMContentLoaded', async () => {
-  const loaded = await loadContent();
-  if (loaded?.settings?.features?.min_respond_seconds) {
-    _minRespondSec = loaded.settings.features.min_respond_seconds;
-  }
-
   const params = new URLSearchParams(window.location.search);
-  respondState.formId = params.get('id');
+  rsp.formId = params.get('id');
 
-  if (!respondState.formId) {
-    showError('Lien invalide. Aucun questionnaire spécifié.');
+  if (!rsp.formId) {
+    showError('Lien invalide \u2014 aucun questionnaire sp\u00e9cifi\u00e9.');
     return;
   }
 
   const me = await fetch('/api/auth/me', { credentials: 'include' })
-                    .then(r => r.json()).catch(() => null);
-  if (me && me.authenticated) {
-    respondState.user     = me.user;
-    respondState.isPublic = false;
-  } else {
-    respondState.isPublic = true;
-  }
+                   .then(r => r.json()).catch(() => null);
+  if (me && me.authenticated) rsp.user = me.user;
 
-  await loadQuestionnaire();
+  await loadForm();
 });
 
-/* ─── Chargement du questionnaire ─── */
-async function loadQuestionnaire() {
+/* ─── Load form from API ─── */
+async function loadForm() {
   try {
-    const resp = await fetch(`/api/forms/${respondState.formId}`, { credentials: 'include' });
-    if (!resp.ok) {
-      showError('Questionnaire introuvable ou désactivé.');
-      return;
-    }
-    const q = await resp.json();
-    respondState.questionnaire = q;
-    renderQuestionnaire(q);
-  } catch (err) {
-    showError('Erreur réseau. Vérifie que le serveur est démarré.');
-  }
-}
-
-/* ─── Rendu de la page questionnaire ─── */
-function renderQuestionnaire(q) {
-  const pct    = q.target_count > 0
-    ? Math.min((q.response_count / q.target_count) * 100, 100)
-    : 0;
-  const pctStr = Math.round(pct) + '%';
-
-  /* Titre dans la navbar */
-  const navTitle = document.getElementById('nav-title');
-  if (navTitle) navTitle.textContent = q.title || 'Questionnaire';
-
-  /* Badge domaine */
-  const tagEl = document.getElementById('rp-domain-tag');
-  if (tagEl) tagEl.textContent = q.domain || 'Questionnaire';
-
-  /* Infos principales */
-  const titleEl = document.getElementById('q-title');
-  const descEl  = document.getElementById('q-desc');
-  const metaEl  = document.getElementById('q-meta');
-
-  if (titleEl) titleEl.textContent = q.title || 'Questionnaire';
-  if (descEl && q.description) {
-    descEl.textContent   = q.description;
-    descEl.style.display = 'block';
-  }
-  if (metaEl) {
-    const parts = [];
-    if (q.target_level) parts.push(q.target_level);
-    if (q.author_name)  parts.push(`par ${q.author_name}`);
-    if (q.school_id)    parts.push(q.school_id);
-    metaEl.textContent = parts.join(' · ');
-  }
-
-  /* Progression collective */
-  const fillEl  = document.getElementById('q-progress-fill');
-  const lblEl   = document.getElementById('q-progress-label');
-  const pctEl   = document.getElementById('q-progress-pct');
-  const ifrFill = document.getElementById('iframe-progress-fill');
-
-  if (fillEl)  fillEl.style.width  = pctStr;
-  if (lblEl)   lblEl.textContent   = `${q.response_count} / ${q.target_count}`;
-  if (pctEl)   pctEl.textContent   = pctStr;
-  if (ifrFill) ifrFill.style.width = pctStr;
-
-  /* Vérifier si déjà répondu (utilisateur connecté) */
-  if (!respondState.isPublic && respondState.user) {
-    checkAlreadyResponded();
-  }
-
-  /* Visiteur public */
-  if (respondState.isPublic) {
-    renderPublicBanner();
+    const resp = await fetch(`/api/forms/${rsp.formId}`, { credentials: 'include' });
+    if (!resp.ok) throw new Error(resp.status);
+    rsp.form = await resp.json();
+  } catch {
+    showError('Impossible de charger le questionnaire. V\u00e9rifie le lien.');
     return;
   }
 
-  /* Charger le contenu du formulaire */
-  if (q.is_demo) {
-    renderDemoPlaceholder(q);
+  rsp.startTime = Date.now();
+
+  /* Hide loading, show content */
+  document.getElementById('rsp-loading').style.display = 'none';
+  document.getElementById('rsp-content').style.display = 'block';
+
+  renderInfoCard();
+  embedGoogleForm();
+  startTimer();
+  checkAlreadyResponded();
+}
+
+/* ─── Info card ─── */
+function renderInfoCard() {
+  const f = rsp.form;
+
+  /* Author avatar */
+  const avatarEl = document.getElementById('rsp-info-avatar');
+  if (f.author_avatar) {
+    avatarEl.innerHTML = `<img src="${escapeAttr(f.author_avatar)}" alt="${escapeAttr(f.author_name || '')}">`;
   } else {
-    loadIframe(q.google_forms_url);
-  }
-}
-
-/* ─── Placeholder questionnaire de démonstration ─── */
-function renderDemoPlaceholder(q) {
-  const container = document.getElementById('iframe-container');
-  const loader    = document.getElementById('iframe-loader');
-
-  if (loader)    loader.style.display = 'none';
-  if (container) {
-    container.innerHTML = `
-      <div class="demo-placeholder">
-        <div class="demo-placeholder-icon">📋</div>
-        <div class="demo-placeholder-title">Questionnaire de démonstration</div>
-        <p class="demo-placeholder-desc">
-          Ce questionnaire fait partie des données de démonstration SciConnect.<br>
-          Il te permet de tester la plateforme et de débloquer ton droit de dépôt.
-        </p>
-      </div>
-    `;
+    avatarEl.textContent = (f.author_name || '?')[0].toUpperCase();
   }
 
-  /* Timer widget → mode démo */
-  const timerEl  = document.getElementById('rp-timer');
-  const labelEl  = document.getElementById('rp-timer-label');
-  const statusEl = document.getElementById('rp-timer-status');
-  const fillEl   = document.getElementById('rp-timer-fill');
-  const elapsedEl = document.getElementById('rp-timer-elapsed');
+  document.getElementById('rsp-info-author-name').textContent = f.author_name || 'Anonyme';
+  document.getElementById('rsp-info-school').textContent = f.school_id || f.author_school || '';
+  document.getElementById('rsp-info-title').textContent = f.title || 'Sans titre';
+  document.getElementById('rsp-info-desc').textContent = f.description || '';
 
-  if (labelEl)   labelEl.textContent  = 'Mode démonstration';
-  if (statusEl)  statusEl.textContent = 'Validation automatique — pas de formulaire à remplir.';
-  if (fillEl)    fillEl.style.width   = '100%';
-  if (elapsedEl) elapsedEl.textContent = '—';
-  if (timerEl)   timerEl.classList.add('ready');
+  /* Stripe color */
+  const color = DOMAIN_COLORS[f.domain] || 'var(--color-primary)';
+  document.getElementById('rsp-info-stripe').style.background = color;
 
-  enableSubmitButton(true);
-}
+  /* Chips */
+  const chips = [
+    f.domain,
+    f.target_level,
+    f.response_count !== undefined ? `${f.response_count} r\u00e9ponses` : null,
+  ].filter(Boolean);
+  document.getElementById('rsp-info-chips').innerHTML =
+    chips.map(c => `<span class="rsp-chip">${c}</span>`).join('');
 
-/* ─── Chargement de l'iframe ─── */
-function loadIframe(formUrl) {
-  const container = document.getElementById('iframe-container');
-  if (!container || !formUrl) return;
-
-  /* EDITABLE: ne jamais supprimer embedded=true — requis pour l'iframe Google Forms */
-  const embedUrl = formUrl.includes('?')
-    ? formUrl + '&embedded=true'
-    : formUrl + '?embedded=true';
-
-  container.innerHTML = `
-    <iframe
-      src="${escapeAttr(embedUrl)}"
-      id="forms-iframe"
-      title="Questionnaire Google Forms"
-      frameborder="0"
-      marginheight="0"
-      marginwidth="0"
-      style="width:100%;height:100%;border:none;display:block;"
-      onload="onIframeLoad()"
-      aria-label="Formulaire Google Forms"
-    >Chargement…</iframe>
-  `;
-}
-
-function onIframeLoad() {
-  const loader = document.getElementById('iframe-loader');
-  if (loader) loader.style.display = 'none';
-
-  /* Démarrer le timer uniquement pour les utilisateurs connectés, formulaires réels */
-  if (!respondState.isPublic && !respondState.questionnaire?.is_demo) {
-    startFormTimer();
+  /* Publisher profile link */
+  if (f.author_slug) {
+    const link = document.getElementById('rsp-publisher-link');
+    link.href = `profile.html?slug=${f.author_slug}`;
+    link.textContent = `Voir le profil de ${f.author_name || 'le publieur'} \u2192`;
   }
+
+  /* Points pill */
+  document.getElementById('rsp-pts-text').textContent = '+10 pts';
 }
 
-/* ─── Système de timer ─── */
-function startFormTimer() {
-  if (_timerInterval) return;
-  _timerElapsed = 0;
-  updateTimerDisplay();
+/* ─── Embed Google Forms iframe ─── */
+function embedGoogleForm() {
+  const url = rsp.form.google_forms_url;
+  if (!url) {
+    showError('Ce questionnaire n\'a pas de lien Google Forms.');
+    return;
+  }
 
-  _timerInterval = setInterval(() => {
-    _timerElapsed++;
-    updateTimerDisplay();
-    if (_timerElapsed >= _minRespondSec) {
-      clearInterval(_timerInterval);
-      _timerInterval = null;
-      enableSubmitButton(false);
+  /* Convert viewform URL to embedded format */
+  let embedUrl = url;
+  if (url.includes('docs.google.com/forms')) {
+    /* Ensure URL ends with /viewform?embedded=true */
+    embedUrl = url.replace(/\/viewform.*$/, '').replace(/\/$/, '');
+    embedUrl += '/viewform?embedded=true';
+  }
+
+  const iframe = document.getElementById('rsp-iframe');
+  iframe.src = embedUrl;
+}
+
+/* ─── Timer + button activation ─── */
+function startTimer() {
+  const elapsedEl = document.getElementById('rsp-elapsed');
+  const confirmBtn = document.getElementById('rsp-confirm-btn');
+  const confirmLabel = document.getElementById('rsp-confirm-label');
+  const confirmNote = document.getElementById('rsp-confirm-note');
+
+  rsp.timerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - rsp.startTime) / 1000);
+    const mins = Math.floor(elapsed / 60);
+    const secs = elapsed % 60;
+    elapsedEl.textContent = `${mins}:${secs.toString().padStart(2, '0')} \u00e9coul\u00e9`;
+
+    if (elapsed >= MIN_TIME_SECONDS && !rsp.confirmed) {
+      confirmBtn.disabled = false;
+      confirmLabel.textContent = "J'ai termin\u00e9 \u2014 valider ma r\u00e9ponse \u2713";
+      confirmNote.textContent = "En cliquant, tu confirmes avoir rempli le formulaire.";
+    } else if (!rsp.confirmed) {
+      const remaining = MIN_TIME_SECONDS - elapsed;
+      confirmLabel.textContent = `Patiente encore ${remaining}s...`;
     }
   }, 1000);
 }
 
-function updateTimerDisplay() {
-  const elapsedEl = document.getElementById('rp-timer-elapsed');
-  const fillEl    = document.getElementById('rp-timer-fill');
-  const statusEl  = document.getElementById('rp-timer-status');
+/* ─── Check if already responded ─── */
+function checkAlreadyResponded() {
+  if (!rsp.form.already_responded) return;
 
-  const pct     = Math.min((_timerElapsed / _minRespondSec) * 100, 100);
-  const secs    = _timerElapsed % 60;
-  const mins    = Math.floor(_timerElapsed / 60);
-  const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${_timerElapsed}s`;
-
-  if (elapsedEl) elapsedEl.textContent = timeStr;
-  if (fillEl)    fillEl.style.width    = pct + '%';
-
-  if (statusEl) {
-    const remaining = Math.max(_minRespondSec - _timerElapsed, 0);
-    if (remaining > 0) {
-      const remStr = remaining >= 60
-        ? `${Math.ceil(remaining / 60)}min`
-        : `${remaining}s`;
-      statusEl.textContent = `Encore ${remStr} sur le formulaire pour valider`;
-    } else {
-      statusEl.textContent = 'Temps minimum atteint — tu peux maintenant vérifier';
-    }
-  }
+  /* Show a banner */
+  const banner = document.createElement('div');
+  banner.className = 'rsp-already-banner';
+  banner.innerHTML = `
+    <span style="font-size:1.2rem">&#x2705;</span>
+    <div>
+      <strong>Tu as d\u00e9j\u00e0 r\u00e9pondu \u00e0 ce questionnaire.</strong><br>
+      Tu peux r\u00e9pondre \u00e0 nouveau mais les points ne seront pas compt\u00e9s une seconde fois.
+    </div>
+  `;
+  const content = document.getElementById('rsp-content');
+  content.insertBefore(banner, content.querySelector('.rsp-instructions'));
 }
 
-function enableSubmitButton(isDemo) {
-  const btn      = document.getElementById('submit-btn');
-  const btnText  = document.getElementById('submit-btn-text');
-  const timerEl  = document.getElementById('rp-timer');
-  const labelEl  = document.getElementById('rp-timer-label');
-  const statusEl = document.getElementById('rp-timer-status');
+/* ─── Confirm response ─── */
+async function confirmResponse() {
+  if (rsp.confirmed) return;
+  rsp.confirmed = true;
 
-  if (btn) {
-    btn.disabled = false;
-    const iconSpan = btn.querySelector('span:first-child');
-    if (iconSpan) iconSpan.textContent = '✓';
-  }
-  if (btnText) {
-    btnText.textContent = isDemo
-      ? 'Valider (démonstration)'
-      : 'J\'ai répondu — Vérifier ma réponse';
-  }
-  if (!isDemo && timerEl) {
-    timerEl.classList.add('ready');
-    if (labelEl)  labelEl.textContent  = 'Temps minimum atteint ✓';
-    if (statusEl) statusEl.textContent = 'Tu peux maintenant vérifier ta réponse.';
-  }
-}
+  const confirmBtn = document.getElementById('rsp-confirm-btn');
+  confirmBtn.disabled = true;
+  confirmBtn.querySelector('#rsp-confirm-label').textContent = 'Envoi en cours...';
 
-/* ─── Vérification déjà répondu ─── */
-async function checkAlreadyResponded() {
-  try {
-    const resp = await fetch(`/api/forms/${respondState.formId}/responses`, { credentials: 'include' });
-    if (!resp.ok) return;
-    const data = await resp.json();
-    const mine = (data.items || []).find(r =>
-      r.respondent_email === respondState.user?.email && r.respondent_type === 'verified'
-    );
-    if (mine) showAlreadyResponded();
-  } catch (err) { /* silencieux */ }
-}
+  clearInterval(rsp.timerInterval);
 
-function showAlreadyResponded() {
-  const banner  = document.getElementById('already-responded-banner');
-  const btn     = document.getElementById('submit-btn');
-  const btnText = document.getElementById('submit-btn-text');
-
-  if (banner)  banner.style.display = 'flex';
-  if (btn)     btn.disabled         = true;
-  if (btnText) btnText.textContent  = 'Déjà répondu ce mois-ci';
-
-  if (_timerInterval) {
-    clearInterval(_timerInterval);
-    _timerInterval = null;
-  }
-}
-
-/* ─── Bannière visiteur public ─── */
-function renderPublicBanner() {
-  const banner = document.getElementById('public-banner');
-  if (banner) banner.style.display = 'flex';
-
-  /* Timer widget → mode public */
-  const timerEl   = document.getElementById('rp-timer');
-  const labelEl   = document.getElementById('rp-timer-label');
-  const statusEl  = document.getElementById('rp-timer-status');
-  const fillEl    = document.getElementById('rp-timer-fill');
-  const elapsedEl = document.getElementById('rp-timer-elapsed');
-
-  if (labelEl)   labelEl.textContent   = 'Visiteur public';
-  if (statusEl)  statusEl.textContent  = 'Connecte-toi pour gagner des points de crédit.';
-  if (fillEl)    fillEl.style.width    = '100%';
-  if (elapsedEl) elapsedEl.textContent = '—';
-  if (timerEl)   timerEl.classList.add('ready');
-
-  enableSubmitButton(true);
-
-  /* Charger tout de même le formulaire */
-  const q = respondState.questionnaire;
-  if (q?.is_demo) {
-    renderDemoPlaceholder(q);
-  } else if (q?.google_forms_url) {
-    loadIframe(q.google_forms_url);
-  }
-}
-
-/* ─── Soumission et vérification ─── */
-async function onSubmitClicked() {
-  if (respondState.submitted || respondState.verifying) return;
-
-  const q      = respondState.questionnaire;
-  const isDemo = q?.is_demo;
-
-  /* Garde : timer non atteint pour les utilisateurs connectés sur formulaire réel */
-  if (!isDemo && !respondState.isPublic && _timerElapsed < _minRespondSec) {
-    showToast('Passe encore un peu de temps sur le formulaire avant de valider.', 'error');
-    return;
-  }
-
-  respondState.verifying = true;
-
-  const btn     = document.getElementById('submit-btn');
-  const btnText = document.getElementById('submit-btn-text');
-
-  if (isDemo) {
-    if (btn)     btn.disabled        = true;
-    if (btnText) btnText.textContent = 'Validation en cours...';
-    showVerifyState('demo_loading');
-    await new Promise(resolve => setTimeout(resolve, 3000));
-  } else {
-    if (btn)     btn.disabled        = true;
-    if (btnText) btnText.textContent = 'Vérification en cours...';
-    showVerifyState('loading');
-  }
+  const endTime = Date.now();
+  let result = null;
 
   try {
-    const resp = await fetch('/api/responses/verify', {
+    const resp = await fetch('/api/responses', {
       method:      'POST',
-      headers:     { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body:        JSON.stringify({ form_id: respondState.formId }),
+      headers:     { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        form_id:    rsp.formId,
+        answers:    {},
+        start_time: rsp.startTime,
+        end_time:   endTime,
+        duration_seconds: Math.floor((endTime - rsp.startTime) / 1000),
+      }),
     });
+    if (resp.ok) result = await resp.json();
+  } catch { /* non-blocking */ }
 
-    const data = await resp.json();
+  showSuccess(result);
+}
 
-    if (!resp.ok) {
-      if (resp.status === 409) {
-        showVerifyState('already');
-      } else if (resp.status === 403) {
-        showVerifyState('author');
-      } else {
-        showVerifyState('error', data.message || data.error || 'Erreur inconnue.');
-      }
-      return;
-    }
+/* ─── Success screen ─── */
+function showSuccess(result) {
+  document.getElementById('rsp-content').style.display = 'none';
 
-    if (data.verified || data.respondent_type === 'public') {
-      respondState.submitted = true;
-      if (data.respondent_type === 'public') {
-        showVerifyState('public_success');
-      } else {
-        showVerifyState('success', data);
-      }
+  const screen = document.getElementById('rsp-success-screen');
+  screen.style.display = 'flex';
+
+  const ptsEarned = result?.points_earned ?? 10;
+  const totalPts  = result?.total_points  ?? (rsp.user?.points ?? 0) + ptsEarned;
+
+  document.getElementById('rsp-pts-earned').textContent = `+${ptsEarned} pts gagn\u00e9s !`;
+  document.getElementById('rsp-total-pts-val').textContent = totalPts;
+
+  /* Trigger points animation if available */
+  if (window.SciConnectAnimations) {
+    const streakBonus = result?.streak_bonus || false;
+    if (streakBonus && result?.streak_days) {
+      window.SciConnectAnimations.showStreakAnimation(result.streak_days, 25);
+      setTimeout(() => {
+        window.SciConnectAnimations.showPointsAnimation(ptsEarned, totalPts, true);
+      }, 4500);
     } else {
-      showVerifyState('not_found', data.message);
+      window.SciConnectAnimations.showPointsAnimation(ptsEarned, totalPts, false);
     }
+  }
 
-  } catch (err) {
-    showVerifyState('error', 'Erreur réseau. Réessaie.');
-  } finally {
-    respondState.verifying = false;
-    if (btn && !respondState.submitted) {
-      btn.disabled = false;
-      if (btnText) btnText.textContent = isDemo
-        ? 'Valider (démonstration)'
-        : 'J\'ai répondu — Vérifier ma réponse';
-    }
+  /* Unlock progress bar */
+  const MIN_DEPOT = 20;
+  const pct = Math.min(100, Math.round((totalPts / MIN_DEPOT) * 100));
+  const unlocked = totalPts >= MIN_DEPOT;
+
+  setTimeout(() => {
+    document.getElementById('rsp-unlock-fill').style.width = pct + '%';
+  }, 200);
+
+  document.getElementById('rsp-unlock-status').textContent =
+    unlocked ? '\u2713 D\u00e9p\u00f4t disponible !' : `${totalPts} / ${MIN_DEPOT} pts`;
+  document.getElementById('rsp-unlock-status').style.color =
+    unlocked ? 'var(--color-primary)' : '';
+  document.getElementById('rsp-unlock-note').textContent =
+    unlocked ? '\uD83D\uDEE1 Tu peux maintenant d\u00e9poser ton questionnaire !'
+             : `Encore ${MIN_DEPOT - totalPts} pts pour d\u00e9verrouiller le d\u00e9p\u00f4t.`;
+
+  if (!unlocked) {
+    const depositBtn = document.getElementById('rsp-deposit-btn');
+    depositBtn.style.opacity = '0.5';
+    depositBtn.style.pointerEvents = 'none';
   }
 }
 
-/* ─── États de vérification ─── */
-function showVerifyState(state, data) {
-  const el = document.getElementById('verify-result');
-  if (!el) return;
-  el.style.display = 'flex';
+/* ─── Subscribe toggle ─── */
+function toggleSubscribe() {
+  if (!rsp.user) { window.location.replace('login.html'); return; }
+  rsp.subscribed = !rsp.subscribed;
+  const btn = document.getElementById('rsp-subscribe-btn');
+  btn.textContent = rsp.subscribed ? "Suivi \u2713" : "S'abonner";
+  btn.classList.toggle('subscribed', rsp.subscribed);
 
-  const states = {
-    loading: {
-      icon: '⏳', cls: 'info',
-      title: 'Vérification en cours…',
-      body: 'On vérifie ta réponse dans Google Forms. Patiente quelques secondes.'
-    },
-    demo_loading: {
-      icon: '🎓', cls: 'info',
-      title: 'Questionnaire de démonstration — validation dans 3 secondes…',
-      body: 'Les questionnaires de démonstration sont validés automatiquement pour te permettre de tester la plateforme.'
-    },
-    success: {
-      icon: '✅', cls: 'success',
-      title: `Réponse vérifiée ! +${data?.points_earned || 10} points`,
-      body: `Tu as maintenant ${data?.monthly_count || 1}/2 réponse${(data?.monthly_count || 1) > 1 ? 's' : ''} ce mois-ci.
-             ${(data?.monthly_count || 0) >= 2 ? '<strong>Le dépôt est maintenant déverrouillé !</strong>' : ''}`
-    },
-    public_success: {
-      icon: '✅', cls: 'success',
-      title: 'Réponse publique enregistrée',
-      body: 'Connecte-toi pour gagner des points et débloquer le dépôt de tes propres questionnaires.'
-    },
-    not_found: {
-      icon: '🔍', cls: 'warning',
-      title: 'Réponse non trouvée',
-      body: (typeof data === 'string' ? data : 'Soumets d\'abord le formulaire Google, puis clique sur Vérifier.') +
-            '<br><small>L\'API Google met parfois 1-2 minutes à enregistrer la réponse.</small>'
-    },
-    already: {
-      icon: '✓', cls: 'success',
-      title: 'Tu as déjà répondu',
-      body: 'Ta réponse à ce questionnaire a déjà été comptabilisée.'
-    },
-    author: {
-      icon: '🚫', cls: 'error',
-      title: 'Réponse impossible',
-      body: 'Tu ne peux pas répondre à ton propre questionnaire.'
-    },
-    error: {
-      icon: '⚠️', cls: 'error',
-      title: 'Erreur',
-      body: typeof data === 'string' ? data : 'Une erreur est survenue.'
-    },
-  };
-
-  const s = states[state] || states.error;
-  el.className = `verify-result verify-result--${s.cls}`;
-  el.innerHTML = `
-    <div class="verify-result-icon">${s.icon}</div>
-    <div class="verify-result-body">
-      <strong class="verify-result-title">${s.title}</strong>
-      <p class="verify-result-desc">${s.body}</p>
-      ${(state === 'success' || state === 'public_success') ? `<a href="dashboard.html" class="btn-primary" style="margin-top:12px;font-size:0.88rem">Retour au dashboard →</a>` : ''}
-    </div>
-  `;
+  const slug = rsp.form?.author_slug;
+  if (!slug) return;
+  const method = rsp.subscribed ? 'POST' : 'DELETE';
+  fetch(`/api/profiles/${slug}/subscribe`, { method, credentials: 'include' }).catch(() => {});
 }
 
-/* ─── Affichage erreur globale ─── */
+/* ─── Error display ─── */
 function showError(msg) {
-  const main = document.getElementById('respond-main');
-  if (main) main.innerHTML = `
-    <div class="empty-state" style="padding:80px 24px;grid-column:1/-1">
-      <span class="empty-state-icon">⚠️</span>
-      <div class="empty-state-title">${msg}</div>
-      <a href="dashboard.html" style="margin-top:16px;display:inline-block">← Retour au dashboard</a>
-    </div>
-  `;
+  document.getElementById('rsp-loading').style.display = 'none';
+  const errEl = document.getElementById('rsp-error');
+  errEl.style.display = 'flex';
+  document.getElementById('rsp-error-msg').textContent = msg;
 }
 
-function escapeAttr(str) {
-  return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
+/* ─── Utility ─── */
+function escapeAttr(s) { return (s || '').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }

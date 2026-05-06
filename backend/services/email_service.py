@@ -76,8 +76,11 @@ def _send_async(app, msg):
     with app.app_context():
         try:
             mail.send(msg)
+            logging.info(f'[Email] ✓ Envoyé : "{msg.subject}" → {msg.recipients}')
+            print(f'[Email] ✓ Envoyé : "{msg.subject}" → {msg.recipients}')
         except Exception as e:
-            logging.warning(f'[Email] Échec envoi "{msg.subject}" : {e}')
+            logging.error(f'[Email] ✗ Échec "{msg.subject}" : {type(e).__name__}: {e}')
+            print(f'[Email] ✗ ERREUR SMTP : {type(e).__name__}: {e}')
 
 
 def send_email(subject, recipients, template, **kwargs):

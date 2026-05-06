@@ -1,0 +1,347 @@
+' ══════════════════════════════════════════
+' SCICONNECT — DIAGRAMMES DE SÉQUENCE
+' Simplifiés, acteurs humains uniquement
+' ══════════════════════════════════════════
+
+
+' ┌──────────────────────────────────────────┐
+' │  1. SÉQUENCE — INSCRIPTION               │
+' └──────────────────────────────────────────┘
+
+@startuml SEQ_Inscription
+!theme plain
+skinparam sequence {
+  ArrowColor #005F54
+  LifeLineBorderColor #005F54
+  LifeLineBackgroundColor #E8F5F3
+  ParticipantBorderColor #005F54
+  ParticipantBackgroundColor #FFFFFF
+  ActorBorderColor #005F54
+}
+skinparam note {
+  BackgroundColor #FDF8EC
+  BorderColor #C9A84C
+}
+
+title Diagramme de Séquence\n**Inscription et Onboarding**
+
+actor "Étudiant" as U
+participant "SciConnect" as SC #E8F5F3
+
+U -> SC : Accède à la landing page
+SC --> U : Affiche la page d'accueil\n(présentation, FAQ, universités)
+
+U -> SC : Clic "Continuer avec Google"
+SC --> U : Affiche le popup Google
+
+U -> SC : Choisit son compte Google\n(email académique)
+
+alt Email non académique
+  SC --> U : Erreur : "Utilise ton\nadresse institutionnelle"
+else Email académique accepté
+  SC --> U : Compte créé avec succès\n+ Email de bienvenue envoyé
+
+  == Onboarding (5 questions) ==
+
+  SC --> U : Question 1 : Quel est\nton niveau d'études ?
+  U -> SC : Sélectionne "Licence 3"
+
+  SC --> U : Question 2 : Quel est\nton domaine principal ?
+  U -> SC : Sélectionne "Marketing"
+
+  SC --> U : Question 3 : Pourquoi\nrejoins-tu SciConnect ?
+  U -> SC : Choisit ses motivations
+
+  SC --> U : Question 4 : Combien de\ntemps peux-tu consacrer ?
+  U -> SC : Sélectionne "15-30 min/semaine"
+
+  SC --> U : Question 5 : Quels domaines\nt'intéressent pour répondre ?
+  U -> SC : Sélectionne jusqu'à 3 domaines
+
+  SC --> U : Choisir ton université\net ton école
+  U -> SC : Sélectionne "UCA"\npuis "ENCG Marrakech"
+
+  U -> SC : Clic "Terminer"
+  SC --> U : Profil enregistré !\nRedirection vers le dashboard
+end
+
+@enduml
+
+
+' ┌──────────────────────────────────────────┐
+' │  2. SÉQUENCE — RÉPONDRE                  │
+' └──────────────────────────────────────────┘
+
+@startuml SEQ_Repondre
+!theme plain
+skinparam sequence {
+  ArrowColor #005F54
+  LifeLineBorderColor #005F54
+  LifeLineBackgroundColor #E8F5F3
+  ParticipantBorderColor #005F54
+  ParticipantBackgroundColor #FFFFFF
+  ActorBorderColor #005F54
+}
+skinparam note {
+  BackgroundColor #FDF8EC
+  BorderColor #C9A84C
+}
+
+title Diagramme de Séquence\n**Répondre à un questionnaire**
+
+actor "Étudiant" as U
+participant "SciConnect" as SC #E8F5F3
+actor "Auteur du\nquestionnaire" as AU
+
+U -> SC : Ouvre le dashboard
+SC --> U : Affiche le feed de\nquestionnaires disponibles\n+ suggestions personnalisées
+
+U -> SC : Filtre par domaine\net université
+SC --> U : Affiche les résultats filtrés
+
+U -> SC : Clic "Répondre" sur\nun questionnaire
+SC --> U : Affiche le formulaire\nGoogle Forms intégré
+
+U -> SC : Remplit et soumet\nle formulaire
+
+SC -> SC : Vérifie que la\nréponse est complète
+
+alt Réponse vérifiée avec succès
+  SC --> U : "Réponse vérifiée !\n+10 points"\nCompteur mensuel : 1/2
+  SC --> AU : Notification : nouvelle\nréponse reçue
+  
+  note right of SC
+    Le compteur de réciprocité
+    passe de 0/2 à 1/2.
+    Après 2 réponses, l'étudiant
+    pourra déposer son propre
+    questionnaire.
+  end note
+
+else Réponse non trouvée
+  SC --> U : "Réponse non trouvée.\nVérifie que tu as bien\nsoumis le formulaire."
+end
+
+@enduml
+
+
+' ┌──────────────────────────────────────────┐
+' │  3. SÉQUENCE — DÉPOSER                   │
+' └──────────────────────────────────────────┘
+
+@startuml SEQ_Deposer
+!theme plain
+skinparam sequence {
+  ArrowColor #005F54
+  LifeLineBorderColor #005F54
+  LifeLineBackgroundColor #E8F5F3
+  ParticipantBorderColor #005F54
+  ParticipantBackgroundColor #FFFFFF
+  ActorBorderColor #005F54
+}
+skinparam note {
+  BackgroundColor #FDF8EC
+  BorderColor #C9A84C
+}
+
+title Diagramme de Séquence\n**Déposer un questionnaire**
+
+actor "Étudiant" as U
+participant "SciConnect" as SC #E8F5F3
+actor "Étudiants du\nmême domaine" as OTHERS
+
+U -> SC : Accède à la page de dépôt
+
+alt N'a pas encore répondu à 2 questionnaires
+  SC --> U : Dépôt verrouillé 🔒\n"Réponds à 2 questionnaires\navant de déposer le tien"
+else A répondu à 2 questionnaires (2/2)
+
+  SC --> U : Dépôt déverrouillé ✓\nFormulaire de dépôt affiché
+
+  == Étape 1 — Lien ==
+
+  U -> SC : Colle le lien de son\nquestionnaire Google Forms
+  SC --> U : "✓ Formulaire Google détecté"
+
+  == Étape 2 — Enrichissement ==
+
+  U -> SC : Saisit le titre de\nsa recherche
+  U -> SC : Ajoute une description
+  U -> SC : Choisit le domaine\net les niveaux cibles
+
+  == Étape 3 — Ciblage ==
+
+  U -> SC : Choisit la visibilité :\n"Mon université" (~680 répondants)
+  U -> SC : Fixe l'objectif : 100 réponses
+
+  == Publication ==
+
+  U -> SC : Clic "Publier mon questionnaire"
+  SC --> U : "Questionnaire publié !\nEmail de confirmation envoyé"
+  SC --> OTHERS : Notification : nouveau\nquestionnaire dans votre domaine
+  SC --> U : Redirection vers la\npage de statistiques
+
+  note right of SC
+    Le questionnaire apparaît
+    dans le feed des étudiants
+    du même domaine et de
+    la même université.
+  end note
+end
+
+@enduml
+
+
+' ┌──────────────────────────────────────────┐
+' │  4. SÉQUENCE — STATISTIQUES & EXPORT     │
+' └──────────────────────────────────────────┘
+
+@startuml SEQ_Stats
+!theme plain
+skinparam sequence {
+  ArrowColor #005F54
+  LifeLineBorderColor #005F54
+  LifeLineBackgroundColor #E8F5F3
+  ParticipantBorderColor #005F54
+  ParticipantBackgroundColor #FFFFFF
+  ActorBorderColor #005F54
+}
+skinparam note {
+  BackgroundColor #FDF8EC
+  BorderColor #C9A84C
+}
+
+title Diagramme de Séquence\n**Suivi des statistiques et export**
+
+actor "Étudiant\n(auteur)" as U
+participant "SciConnect" as SC #E8F5F3
+
+U -> SC : Ouvre la page de statistiques\nde son questionnaire
+
+SC --> U : Affiche les métriques :\n• 47 réponses / 100 objectif\n• 89% taux de complétion\n• 28 étudiants vérifiés\n• 14 réponses publiques
+
+SC --> U : Affiche le graphique\nde complétion par question\n(barres horizontales Q1 à Q8)
+
+SC --> U : Affiche le tableau\ndes répondants avec :\n• nom, université, école\n• type (vérifié / public)\n• statut (validé / en attente)
+
+SC --> U : Affiche le benchmark :\ncomparaison avec la\nmoyenne de la communauté
+
+== Validation des réponses ==
+
+U -> SC : Clic "Valider" sur une\nréponse vérifiée
+SC --> U : Réponse marquée\ncomme validée ✓
+
+U -> SC : Clic "Ignorer" sur une\nréponse suspecte
+SC --> U : Réponse marquée\ncomme ignorée
+
+== Export ==
+
+U -> SC : Clic "Exporter en Excel"
+SC --> U : Télécharge un fichier Excel\navec 4 feuilles :\n• Données brutes\n• Statistiques automatiques\n• Profils démographiques\n• Fiabilité et qualité
+
+U -> SC : Clic "Copier le paragraphe\nméthodologique"
+SC --> U : Texte copié dans\nle presse-papiers\n(prêt pour le mémoire)
+
+@enduml
+
+
+' ┌──────────────────────────────────────────┐
+' │  5. SÉQUENCE — VISITEUR PUBLIC           │
+' └──────────────────────────────────────────┘
+
+@startuml SEQ_Visiteur
+!theme plain
+skinparam sequence {
+  ArrowColor #57564F
+  LifeLineBorderColor #57564F
+  LifeLineBackgroundColor #F0EDE6
+  ParticipantBorderColor #57564F
+  ParticipantBackgroundColor #FFFFFF
+  ActorBorderColor #57564F
+}
+skinparam note {
+  BackgroundColor #FDF8EC
+  BorderColor #C9A84C
+}
+
+title Diagramme de Séquence\n**Parcours du visiteur public**
+
+actor "Visiteur" as V
+participant "SciConnect" as SC #F0EDE6
+
+V -> SC : Reçoit un lien partagé\nvers un questionnaire
+SC --> V : Affiche la page du\nquestionnaire (sans connexion)
+
+V -> SC : Remplit le formulaire\nGoogle Forms intégré
+V -> SC : Soumet le formulaire
+SC --> V : "Réponse enregistrée !\nMerci pour ta contribution."
+
+note right of SC
+  Le visiteur ne gagne
+  pas de points et n'a
+  pas de compteur mensuel.
+  Sa réponse est de type
+  "publique".
+end note
+
+== Parcours alternatif : découverte ==
+
+V -> SC : Accède à la landing page
+SC --> V : Présentation de SciConnect :\n• Comment ça marche\n• La règle des 2\n• Les universités partenaires\n• Témoignages d'étudiants
+
+V -> SC : Consulte un profil\npublic d'étudiant
+SC --> V : Affiche le portfolio,\nles badges et le classement
+
+V -> SC : Clic "S'inscrire avec Google"
+SC --> V : Redirige vers l'inscription
+
+@enduml
+
+
+' ┌──────────────────────────────────────────┐
+' │  6. SÉQUENCE — ADMINISTRATION            │
+' └──────────────────────────────────────────┘
+
+@startuml SEQ_Admin
+!theme plain
+skinparam sequence {
+  ArrowColor #C9A84C
+  LifeLineBorderColor #C9A84C
+  LifeLineBackgroundColor #FDF8EC
+  ParticipantBorderColor #C9A84C
+  ParticipantBackgroundColor #FFFFFF
+  ActorBorderColor #C9A84C
+}
+skinparam note {
+  BackgroundColor #FDF8EC
+  BorderColor #C9A84C
+}
+
+title Diagramme de Séquence\n**Administration de la plateforme**
+
+actor "Administrateur" as A
+participant "SciConnect" as SC #FDF8EC
+
+== Modifier les textes ==
+
+A -> SC : Modifie le slogan de\nla landing page
+SC --> A : Changement enregistré
+A -> SC : Actualise la page
+SC --> A : Nouveau slogan affiché\nimmédiatement
+
+== Modifier les règles ==
+
+A -> SC : Change le nombre de\nréponses requises de 2 à 3
+SC --> A : Règle mise à jour\nAppliquée au prochain\nchargement de page
+
+== Ajouter une école ==
+
+A -> SC : Ajoute une nouvelle école\nà l'Université Cadi Ayyad
+SC --> A : École ajoutée\nVisible dans les filtres\net l'onboarding
+
+== Gérer les formulaires démo ==
+
+A -> SC : Désactive un formulaire\nde démonstration
+SC --> A : Formulaire retiré du feed\nDonnées conservées
+
+@enduml

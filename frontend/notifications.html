@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notifications — SciConnect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    body { background: var(--color-bg); margin: 0; }
+    .notif-page { max-width: 640px; margin: 0 auto; padding: 32px 20px 60px; }
+    .notif-header { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
+    .notif-back {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--color-surface); border: 1px solid var(--color-border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--color-text-muted); text-decoration: none;
+      transition: all 150ms;
+    }
+    .notif-back:hover { background: var(--color-primary-light); color: var(--color-primary); }
+    .notif-title { font-family: var(--font-display); font-size: 1.4rem; font-weight: 700; color: var(--color-text); }
+    .notif-count {
+      font-size: 0.7rem; font-weight: 600; color: #fff;
+      background: var(--color-danger); padding: 2px 8px;
+      border-radius: 100px; margin-left: 8px;
+    }
+    .notif-list { display: flex; flex-direction: column; gap: 8px; }
+    .notif-card {
+      display: flex; gap: 14px; padding: 16px;
+      background: var(--color-surface); border: 1px solid var(--color-border);
+      border-radius: 14px; transition: all 200ms;
+      animation: notifSlideIn 400ms cubic-bezier(0.32,0.72,0,1) both;
+    }
+    .notif-card:hover { border-color: var(--color-primary); transform: translateX(2px); }
+    .notif-card.unread { border-left: 3px solid var(--color-primary); background: rgba(232,245,243,0.3); }
+    .notif-icon {
+      width: 40px; height: 40px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; flex-shrink: 0;
+    }
+    .notif-icon--badge { background: #FDF8EC; }
+    .notif-icon--milestone { background: #E8F5F3; }
+    .notif-icon--response { background: #E8F5F3; }
+    .notif-icon--streak { background: #FFF0E0; }
+    .notif-icon--suggestion { background: #F0EDE6; }
+    .notif-body { flex: 1; min-width: 0; }
+    .notif-card-title { font-size: 0.85rem; font-weight: 600; color: var(--color-text); margin-bottom: 2px; }
+    .notif-card-text { font-size: 0.75rem; color: var(--color-text-muted); line-height: 1.4; }
+    .notif-time { font-size: 0.65rem; color: var(--color-text-muted); margin-top: 4px; }
+    .notif-empty { text-align: center; padding: 60px 20px; color: var(--color-text-muted); }
+    .notif-empty-icon { font-size: 2rem; margin-bottom: 8px; }
+    @keyframes notifSlideIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .notif-card:nth-child(1) { animation-delay: 50ms; }
+    .notif-card:nth-child(2) { animation-delay: 100ms; }
+    .notif-card:nth-child(3) { animation-delay: 150ms; }
+    .notif-card:nth-child(4) { animation-delay: 200ms; }
+    .notif-card:nth-child(5) { animation-delay: 250ms; }
+  </style>
+</head>
+<body>
+  <div class="notif-page">
+    <div class="notif-header">
+      <a href="dashboard.html" class="notif-back" title="Retour">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 2L4 8l6 6"/></svg>
+      </a>
+      <h1 class="notif-title">Notifications</h1>
+      <span class="notif-count" id="notif-unread" hidden></span>
+    </div>
+    <div class="notif-list" id="notif-list">
+      <div class="notif-empty">
+        <div class="notif-empty-icon">🔔</div>
+        <div>Chargement...</div>
+      </div>
+    </div>
+  </div>
+  <script src="js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadContent();
+      try {
+        const resp = await fetch('/api/notifications', { credentials: 'include' });
+        if (!resp.ok) { window.location.href = 'login.html'; return; }
+        const data = await resp.json();
+        renderNotifs(data.items || [], data.unread || 0);
+      } catch {
+        document.getElementById('notif-list').innerHTML =
+          '<div class="notif-empty"><div class="notif-empty-icon">⚠️</div><div>Erreur de chargement</div></div>';
+      }
+    });
+
+    function renderNotifs(items, unread) {
+      const countEl = document.getElementById('notif-unread');
+      if (unread > 0) { countEl.textContent = unread; countEl.hidden = false; }
+
+      const list = document.getElementById('notif-list');
+      if (!items.length) {
+        list.innerHTML = '<div class="notif-empty"><div class="notif-empty-icon">🔔</div><div>Aucune notification pour le moment.</div></div>';
+        return;
+      }
+
+      list.innerHTML = items.map(n => {
+        const timeStr = n.time ? timeAgo(new Date(n.time)) : '';
+        return `
+          <div class="notif-card ${n.read ? '' : 'unread'}">
+            <div class="notif-icon notif-icon--${n.type}">${n.icon}</div>
+            <div class="notif-body">
+              <div class="notif-card-title">${esc(n.title)}</div>
+              <div class="notif-card-text">${esc(n.body)}</div>
+              ${timeStr ? `<div class="notif-time">${timeStr}</div>` : ''}
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function timeAgo(date) {
+      const diff = (Date.now() - date.getTime()) / 1000;
+      if (diff < 60) return "à l'instant";
+      if (diff < 3600) return `il y a ${Math.floor(diff/60)} min`;
+      if (diff < 86400) return `il y a ${Math.floor(diff/3600)}h`;
+      if (diff < 604800) return `il y a ${Math.floor(diff/86400)}j`;
+      return date.toLocaleDateString('fr-FR');
+    }
+
+    function esc(s) { return (s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  </script>
+</body>
+</html>

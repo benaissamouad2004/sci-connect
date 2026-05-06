@@ -1,8 +1,8 @@
 # ROUTE: Profils publics — accessibles sans connexion
 import os
 import json
-from flask import Blueprint, jsonify
-from backend.models import db, User, Questionnaire, Response
+from flask import Blueprint, jsonify, session, request
+from backend.models import db, User, Questionnaire, Response, Subscription
 
 profiles_bp = Blueprint('profiles', __name__)
 
@@ -104,3 +104,60 @@ def get_profile_questionnaires(slug):
     forms = Questionnaire.query.filter_by(author_id=user.id, is_active=True)\
                                .order_by(Questionnaire.created_at.desc()).all()
     return jsonify({'items': [q.to_dict() for q in forms], 'total': len(forms)})
+
+
+# ROUTE: POST /api/profiles/:slug/subscribe
+@profiles_bp.route('/api/profiles/<string:slug>/subscribe', methods=['POST'])
+def subscribe(slug):
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'non authentifié'}), 401
+
+    publisher = _get_user_by_slug(slug)
+    if not publisher:
+        return jsonify({'error': 'profil introuvable'}), 404
+
+    if publisher.id == user_id:
+        return jsonify({'error': 'impossible de s\'abonner à soi-même'}), 400
+
+    existing = Subscription.query.filter_by(subscriber_id=user_id, publisher_id=publisher.id).first()
+    if existing:
+        return jsonify({'success': True, 'already': True})
+
+    sub = Subscription(subscriber_id=user_id, publisher_id=publisher.id)
+    db.session.add(sub)
+    db.session.commit()
+    return jsonify({'success': True})
+
+
+# ROUTE: DELETE /api/profiles/:slug/subscribe
+@profiles_bp.route('/api/profiles/<string:slug>/subscribe', methods=['DELETE'])
+def unsubscribe(slug):
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'non authentifié'}), 401
+
+    publisher = _get_user_by_slug(slug)
+    if not publisher:
+        return jsonify({'error': 'profil introuvable'}), 404
+
+    sub = Subscription.query.filter_by(subscriber_id=user_id, publisher_id=publisher.id).first()
+    if sub:
+        db.session.delete(sub)
+        db.session.commit()
+    return jsonify({'success': True})
+
+
+# ROUTE: GET /api/profiles/:slug/subscription-status
+@profiles_bp.route('/api/profiles/<string:slug>/subscription-status', methods=['GET'])
+def subscription_status(slug):
+    user_id = session.get('user_id')
+    publisher = _get_user_by_slug(slug)
+    if not publisher:
+        return jsonify({'error': 'profil introuvable'}), 404
+
+    if not user_id:
+        return jsonify({'subscribed': False})
+
+    sub = Subscription.query.filter_by(subscriber_id=user_id, publisher_id=publisher.id).first()
+    return jsonify({'subscribed': sub is not None})

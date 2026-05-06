@@ -1,827 +1,342 @@
 /* ═══════════════════════════════════════════════════════════
-   SCICONNECT — deposit.css
-   Page de dépôt de questionnaire
+   SCICONNECT — deposit.css (Redesigned)
+   Page de dépôt de questionnaire — topbar layout
    Toutes les couleurs via variables CSS de main.css
    ═══════════════════════════════════════════════════════════ */
 
-/* ─── Shell : sidebar 280px + contenu fluide ─── */
-.dep-shell {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  min-height: 100vh;
-  background-color: var(--color-bg);
+/* ── TOPBAR ── */
+.dep-topbar {
+  position: sticky; top: 0; z-index: 100;
+  height: 56px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  display: flex; align-items: center;
 }
-
-/* ─── Colonne contenu principal ─── */
-.dep-main {
-  padding: 32px;
-  overflow-y: auto;
+.dep-topbar-inner {
+  max-width: 1200px; width: 100%; margin: 0 auto;
+  padding: 0 24px;
+  display: flex; align-items: center; gap: 16px;
 }
-
-/* ─── Wrapper centré max 1000px ─── */
-.dep-inner {
-  max-width: 1000px;
-  margin: 0 auto;
+.dep-topbar-back {
+  width: 34px; height: 34px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--color-text-secondary); text-decoration: none;
+  transition: background 150ms, color 150ms;
 }
+.dep-topbar-back:hover { background: var(--color-primary-light); color: var(--color-primary); }
+.dep-topbar-logo { text-decoration: none; font-size: 1.1rem; flex-shrink: 0; }
+.dep-topbar-nav { display: flex; gap: 4px; margin-left: 24px; }
+.dep-topbar-link {
+  padding: 6px 14px; border-radius: 8px;
+  font-size: 0.82rem; font-weight: 500;
+  color: var(--color-text-secondary); text-decoration: none;
+  transition: background 150ms, color 150ms;
+}
+.dep-topbar-link:hover { background: var(--color-primary-light); color: var(--color-primary); }
+.dep-topbar-link.active {
+  background: var(--color-primary-light); color: var(--color-primary); font-weight: 600;
+}
+.dep-topbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.dep-topbar-user { display: flex; align-items: center; gap: 8px; }
+.dep-topbar-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--color-primary-light); border: 1.5px solid var(--color-primary);
+  overflow: hidden; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: var(--color-primary);
+}
+.dep-topbar-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.dep-topbar-name { font-size: 0.82rem; font-weight: 500; color: var(--color-text); }
+.dep-topbar-logout {
+  width: 34px; height: 34px; border-radius: 9px; border: none; background: none;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: var(--color-text-muted); transition: background 150ms, color 150ms;
+}
+.dep-topbar-logout:hover { background: #FEF3F2; color: var(--color-danger); }
 
-/* ══════════════════════════════════════════════════════
-   BREADCRUMB
-   ══════════════════════════════════════════════════════ */
-/* ═══ FIL D'ARIANE ═══
-   Changer --color-text-muted pour modifier la couleur du fil d'ariane */
+/* ── MAIN CONTENT ── */
+.dep-main { padding: 32px 24px 64px; min-height: calc(100vh - 56px); }
+.dep-inner { max-width: 1000px; margin: 0 auto; }
+
+/* ── BREADCRUMB ── */
 .dep-breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.78rem;
-  color: var(--color-text-muted);
-  margin-bottom: 20px;
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.78rem; color: var(--color-text-muted); margin-bottom: 20px;
 }
-.dep-breadcrumb-link {
-  color: var(--color-primary);
-  text-decoration: none;
-  font-weight: 500;
-}
+.dep-breadcrumb-link { color: var(--color-primary); text-decoration: none; font-weight: 500; }
 .dep-breadcrumb-link:hover { text-decoration: underline; }
 .dep-breadcrumb-sep { color: var(--color-border); }
-.dep-breadcrumb-current { color: var(--color-text-muted); }
 
-/* ══════════════════════════════════════════════════════
-   HEADER
-   ══════════════════════════════════════════════════════ */
+/* ── HEADER ── */
 .dep-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 20px;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px; margin-bottom: 20px;
 }
-
-/* ═══ TITRE PAGE ═══
-   Changer --font-display et taille pour modifier le titre principal */
 .dep-header-title {
-  font-family: var(--font-display);
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: var(--color-text);
-  margin: 0 0 6px;
-  line-height: 1.2;
+  font-family: var(--font-display); font-size: 1.875rem; font-weight: 700;
+  color: var(--color-text); margin: 0 0 6px; line-height: 1.2;
 }
-.dep-header-sub {
-  font-size: 0.875rem;
-  color: var(--color-text-secondary);
-  margin: 0;
-  max-width: 520px;
-}
+.dep-header-sub { font-size: 0.875rem; color: var(--color-text-secondary); margin: 0; max-width: 520px; }
 
-/* ═══ BADGE ÉTAT DÉPÔT ═══
-   Changer --color-unlocked-* pour modifier les couleurs des états */
+/* ── STATUS BADGE ── */
 .dep-status-badge {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 6px 14px;
-  border-radius: var(--radius-xl);
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  font-size: 0.8rem;
-  font-weight: 600;
-  white-space: nowrap;
-  flex-shrink: 0;
+  display: flex; align-items: center; gap: 7px;
+  padding: 6px 14px; border-radius: var(--radius-xl);
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  font-size: 0.8rem; font-weight: 600; white-space: nowrap; flex-shrink: 0;
 }
-.dep-status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: var(--color-text-muted);
-}
-.dep-status-badge.unlocked { background-color: var(--color-unlocked-bg); border-color: var(--color-unlocked-border); color: var(--color-unlocked-text); }
-.dep-status-badge.unlocked .dep-status-dot { background-color: var(--color-unlocked-border); }
-.dep-status-badge.locked { background-color: var(--color-locked-bg); border-color: var(--color-locked-border); color: var(--color-locked-text); }
-.dep-status-badge.locked .dep-status-dot { background-color: var(--color-locked-border); }
-.dep-status-badge.half { background-color: var(--color-half-bg); border-color: var(--color-half-border); color: var(--color-half-text); }
-.dep-status-badge.half .dep-status-dot { background-color: var(--color-half-border); }
+.dep-status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-text-muted); }
+.dep-status-badge.unlocked { background: var(--color-unlocked-bg); border-color: var(--color-unlocked-border); color: var(--color-unlocked-text); }
+.dep-status-badge.unlocked .dep-status-dot { background: var(--color-unlocked-border); }
+.dep-status-badge.locked { background: var(--color-locked-bg); border-color: var(--color-locked-border); color: var(--color-locked-text); }
+.dep-status-badge.locked .dep-status-dot { background: var(--color-locked-border); }
+.dep-status-badge.half { background: var(--color-half-bg); border-color: var(--color-half-border); color: var(--color-half-text); }
+.dep-status-badge.half .dep-status-dot { background: var(--color-half-border); }
 
-/* ══════════════════════════════════════════════════════
-   CARTE UNLOCK / LOCKED
-   ══════════════════════════════════════════════════════ */
-/* ═══ CARTE CONDITION REMPLIE ═══
-   Changer --color-unlocked-* pour modifier la carte de dépôt débloqué */
+/* ── UNLOCK / LOCKED CARDS ── */
 .dep-unlock-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  background-color: var(--color-unlocked-bg);
-  border: 1px solid var(--color-unlocked-border);
-  border-radius: var(--radius-md);
-  padding: 14px 18px;
-  margin-bottom: 20px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  background: var(--color-unlocked-bg); border: 1px solid var(--color-unlocked-border);
+  border-radius: var(--radius-md); padding: 14px 18px; margin-bottom: 20px;
 }
-.dep-unlock-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--color-unlocked-text);
-}
-.dep-unlock-title {
-  font-weight: 600;
-  font-size: 0.875rem;
-  color: var(--color-unlocked-text);
-}
-.dep-unlock-sub {
-  font-size: 0.78rem;
-  color: var(--color-text-secondary);
-  margin-top: 2px;
-}
-.dep-unlock-right {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  text-align: right;
-  flex-shrink: 0;
-}
+.dep-unlock-left { display: flex; align-items: center; gap: 12px; color: var(--color-unlocked-text); }
+.dep-unlock-title { font-weight: 600; font-size: 0.875rem; color: var(--color-unlocked-text); }
+.dep-unlock-sub { font-size: 0.78rem; color: var(--color-text-secondary); margin-top: 2px; }
+.dep-unlock-right { font-size: 0.75rem; color: var(--color-text-muted); text-align: right; flex-shrink: 0; }
 
-/* ═══ CARTE DÉPÔT VERROUILLÉ ═══
-   Changer --color-locked-* pour modifier la carte de dépôt verrouillé */
 .dep-locked-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  background-color: var(--color-locked-bg);
-  border: 1px solid var(--color-locked-border);
-  border-radius: var(--radius-md);
-  padding: 14px 18px;
-  margin-bottom: 20px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  background: var(--color-locked-bg); border: 1px solid var(--color-locked-border);
+  border-radius: var(--radius-md); padding: 14px 18px; margin-bottom: 20px;
 }
 .dep-locked-left { display: flex; align-items: center; gap: 12px; }
 .dep-locked-icon { font-size: 1.2rem; }
-.dep-locked-title {
-  font-weight: 600;
-  font-size: 0.875rem;
-  color: var(--color-locked-text);
-}
-.dep-locked-sub {
-  font-size: 0.78rem;
-  color: var(--color-text-secondary);
-  margin-top: 2px;
-}
+.dep-locked-title { font-weight: 600; font-size: 0.875rem; color: var(--color-locked-text); }
+.dep-locked-sub { font-size: 0.78rem; color: var(--color-text-secondary); margin-top: 2px; }
 .dep-locked-btn {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color-locked-text);
-  text-decoration: none;
-  border: 1.5px solid var(--color-locked-border);
-  border-radius: var(--radius-sm);
-  padding: 6px 14px;
-  white-space: nowrap;
-  flex-shrink: 0;
+  font-size: 0.8rem; font-weight: 600; color: var(--color-locked-text);
+  text-decoration: none; border: 1.5px solid var(--color-locked-border);
+  border-radius: var(--radius-sm); padding: 6px 14px; white-space: nowrap; flex-shrink: 0;
 }
-.dep-locked-btn:hover { background-color: var(--color-locked-border); color: var(--color-surface); }
+.dep-locked-btn:hover { background: var(--color-locked-border); color: var(--color-surface); }
 
-/* ══════════════════════════════════════════════════════
-   INDICATEUR 3 ÉTAPES
-   ══════════════════════════════════════════════════════ */
-/* ═══ STEPS INDICATOR ═══
-   Changer --color-primary pour modifier la couleur de l'étape active */
-.dep-steps-indicator {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  margin-bottom: 24px;
-}
-.dep-step-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: var(--radius-sm);
-  cursor: default;
-}
-.dep-step-num {
-  font-size: 0.7rem;
-  font-weight: 800;
-  color: var(--color-text-muted);
-  letter-spacing: 0.05em;
-}
-.dep-step-label {
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--color-text-muted);
-}
+/* ── STEPS INDICATOR ── */
+.dep-steps-indicator { display: flex; align-items: center; gap: 0; margin-bottom: 24px; }
+.dep-step-item { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: var(--radius-sm); }
+.dep-step-num { font-size: 0.7rem; font-weight: 800; color: var(--color-text-muted); letter-spacing: 0.05em; }
+.dep-step-label { font-size: 0.8rem; font-weight: 500; color: var(--color-text-muted); }
 .dep-step-item--active .dep-step-num { color: var(--color-primary); }
 .dep-step-item--active .dep-step-label { color: var(--color-text); font-weight: 600; }
 .dep-step-item--done .dep-step-num { color: var(--color-success); }
 .dep-step-item--done .dep-step-label { color: var(--color-success); }
 .dep-step-connector {
-  flex: 1;
-  height: 1px;
+  flex: 1; height: 1px; min-width: 24px; max-width: 60px;
   background: repeating-linear-gradient(90deg, var(--color-border) 0, var(--color-border) 4px, transparent 4px, transparent 10px);
-  min-width: 24px;
-  max-width: 60px;
 }
 
-/* ══════════════════════════════════════════════════════
-   CORPS 2 COLONNES
-   ══════════════════════════════════════════════════════ */
-.dep-body {
-  display: grid;
-  grid-template-columns: 58fr 42fr;
-  gap: 20px;
-  align-items: start;
-}
+/* ── 2-COLUMN BODY ── */
+.dep-body { display: grid; grid-template-columns: 58fr 42fr; gap: 20px; align-items: start; }
+.dep-form-col { display: flex; flex-direction: column; gap: 16px; }
 
-/* ─── Colonne formulaire ─── */
-.dep-form-col {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-/* ═══ CARTES ÉTAPES ═══
-   Changer --color-surface et --color-border pour modifier les cartes */
+/* ── FORM CARDS ── */
 .dep-card {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: 28px;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); padding: 28px;
 }
-
 .dep-card-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-family: var(--font-ui);
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--color-text);
-  margin: 0 0 20px;
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--font-ui); font-size: 1rem; font-weight: 600;
+  color: var(--color-text); margin: 0 0 20px;
 }
-
-/* ═══ NUMÉRO D'ÉTAPE ═══
-   Changer --color-primary pour modifier la couleur des numéros */
 .dep-card-num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background-color: var(--color-primary);
-  color: var(--color-surface);
-  font-size: 0.7rem;
-  font-weight: 800;
-  flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--color-primary); color: var(--color-surface);
+  font-size: 0.7rem; font-weight: 800; flex-shrink: 0;
 }
 
-/* ══════════════════════════════════════════════════════
-   INPUT URL GOOGLE FORMS
-   ══════════════════════════════════════════════════════ */
+/* ── URL INPUT ── */
 .dep-url-wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 0 14px;
-  background-color: var(--color-surface);
-  transition: border-color 0.2s, background-color 0.2s;
+  display: flex; align-items: center; gap: 10px;
+  border: 1.5px solid var(--color-border); border-radius: var(--radius-md);
+  padding: 0 14px; background: var(--color-surface); transition: border-color 0.2s, background 0.2s;
 }
 .dep-url-wrap:focus-within { border-color: var(--color-primary); }
-.dep-url-wrap.valid { border-color: var(--color-unlocked-border); background-color: var(--color-unlocked-bg); }
+.dep-url-wrap.valid { border-color: var(--color-unlocked-border); background: var(--color-unlocked-bg); }
 .dep-url-wrap.invalid { border-color: var(--color-locked-border); }
 .dep-url-icon { flex-shrink: 0; color: var(--color-text-muted); }
-
-/* ═══ INPUT URL ═══
-   Hauteur 52px selon la spec — ne pas réduire */
 .dep-url-input {
-  flex: 1;
-  height: 52px;
-  border: none;
-  outline: none;
-  font-family: var(--font-ui);
-  font-size: 0.875rem;
-  color: var(--color-text);
-  background: transparent;
+  flex: 1; height: 52px; border: none; outline: none;
+  font-family: var(--font-ui); font-size: 0.875rem;
+  color: var(--color-text); background: transparent;
 }
 .dep-url-input::placeholder { color: var(--color-text-muted); }
-
-/* ═══ CHECKMARK ANIMÉ ═══
-   Visible uniquement quand l'URL est valide */
 .dep-url-check {
-  flex-shrink: 0;
-  color: var(--color-unlocked-border);
-  opacity: 0;
-  transform: scale(0.6);
-  transition: opacity 0.25s, transform 0.25s;
+  flex-shrink: 0; color: var(--color-unlocked-border);
+  opacity: 0; transform: scale(0.6); transition: opacity 0.25s, transform 0.25s;
 }
 .dep-url-wrap.valid .dep-url-check { opacity: 1; transform: scale(1); }
 
-/* Feedback URL */
-.dep-url-feedback {
-  margin-top: 6px;
-  font-size: 0.78rem;
-  min-height: 18px;
-  color: var(--color-text-muted);
-}
-.dep-url-feedback.valid   { color: var(--color-unlocked-text); }
+.dep-url-feedback { margin-top: 6px; font-size: 0.78rem; min-height: 18px; color: var(--color-text-muted); }
+.dep-url-feedback.valid { color: var(--color-unlocked-text); }
 .dep-url-feedback.invalid { color: var(--color-locked-text); }
-.dep-url-feedback.scanning {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--color-text-muted);
-}
+.dep-url-feedback.scanning { display: flex; align-items: center; gap: 6px; }
 .dep-url-feedback.scanning::after {
-  content: '';
-  display: inline-block;
-  width: 20px;
-  height: 6px;
-  border-radius: 3px;
+  content: ''; display: inline-block; width: 20px; height: 6px; border-radius: 3px;
   background: linear-gradient(90deg, var(--color-primary) 0%, transparent 100%);
   animation: scan 1s ease-in-out infinite alternate;
 }
 @keyframes scan { from { opacity: 0.2; } to { opacity: 1; } }
 
-/* ═══ CARTE SUCCÈS VALIDATION ═══ */
 .dep-url-success {
-  margin-top: 10px;
-  background-color: var(--color-unlocked-bg);
-  border: 1px solid var(--color-unlocked-border);
-  border-radius: var(--radius-sm);
-  padding: 10px 14px;
+  margin-top: 10px; background: var(--color-unlocked-bg);
+  border: 1px solid var(--color-unlocked-border); border-radius: var(--radius-sm); padding: 10px 14px;
 }
-.dep-url-success-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--color-unlocked-text);
-  font-weight: 600;
-  font-size: 0.8rem;
-}
-.dep-url-success-label { color: var(--color-unlocked-text); }
-.dep-url-success-meta {
-  margin-top: 4px;
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-}
+.dep-url-success-row { display: flex; align-items: center; gap: 6px; color: var(--color-unlocked-text); font-weight: 600; font-size: 0.8rem; }
+.dep-url-success-meta { margin-top: 4px; font-size: 0.75rem; color: var(--color-text-muted); }
 
-/* ══════════════════════════════════════════════════════
-   CHAMPS FORMULAIRE
-   ══════════════════════════════════════════════════════ */
+/* ── FORM FIELDS ── */
 .dep-field { margin-bottom: 16px; }
 .dep-field:last-child { margin-bottom: 0; }
-
-/* ═══ LABELS ═══ */
-.dep-label {
-  display: block;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  margin-bottom: 6px;
-}
-
-/* ═══ INPUTS ═══
-   Changer --color-primary pour modifier la bordure focus */
+.dep-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 6px; }
 .dep-input, .dep-select, .dep-textarea {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  font-family: var(--font-ui);
-  font-size: 0.875rem;
-  color: var(--color-text);
-  background-color: var(--color-surface);
-  transition: border-color 0.2s;
-  box-sizing: border-box;
+  width: 100%; padding: 10px 12px;
+  border: 1.5px solid var(--color-border); border-radius: var(--radius-sm);
+  font-family: var(--font-ui); font-size: 0.875rem;
+  color: var(--color-text); background: var(--color-surface);
+  transition: border-color 0.2s; box-sizing: border-box;
 }
-.dep-input:focus, .dep-select:focus, .dep-textarea:focus {
-  outline: none;
-  border-color: var(--color-primary);
-}
+.dep-input:focus, .dep-select:focus, .dep-textarea:focus { outline: none; border-color: var(--color-primary); }
 .dep-textarea { resize: vertical; min-height: 72px; }
 .dep-select { appearance: none; cursor: pointer; }
-
-.dep-char-count {
-  text-align: right;
-  font-size: 0.73rem;
-  color: var(--color-text-muted);
-  margin-top: 4px;
-}
-
-.dep-field--row {
-  display: flex;
-  gap: 12px;
-}
+.dep-char-count { text-align: right; font-size: 0.73rem; color: var(--color-text-muted); margin-top: 4px; }
+.dep-field--row { display: flex; gap: 12px; }
 .dep-field-half { flex: 1; }
 
-/* ══════════════════════════════════════════════════════
-   CHIPS DE NIVEAU
-   ══════════════════════════════════════════════════════ */
-.dep-chips-wrap {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-/* ═══ CHIP ═══
-   Changer --color-primary pour modifier la couleur active */
+/* ── CHIPS ── */
+.dep-chips-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
 .dep-chip {
-  padding: 5px 14px;
-  border-radius: 100px;
-  border: 1.5px solid var(--color-border);
-  background-color: var(--color-surface);
-  color: var(--color-text-secondary);
-  font-family: var(--font-ui);
-  font-size: 0.78rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+  padding: 5px 14px; border-radius: 100px;
+  border: 1.5px solid var(--color-border); background: var(--color-surface);
+  color: var(--color-text-secondary); font-family: var(--font-ui);
+  font-size: 0.78rem; font-weight: 500; cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
 }
 .dep-chip:hover { border-color: var(--color-primary); color: var(--color-primary); }
-.dep-chip--active {
-  border-color: var(--color-primary);
-  background-color: var(--color-primary-light);
-  color: var(--color-primary);
-  font-weight: 600;
-}
+.dep-chip--active { border-color: var(--color-primary); background: var(--color-primary-light); color: var(--color-primary); font-weight: 600; }
 
-/* ══════════════════════════════════════════════════════
-   TAGS
-   ══════════════════════════════════════════════════════ */
-.dep-tags-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-}
+/* ── TAGS ── */
+.dep-tags-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .dep-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 10px;
-  background-color: var(--color-primary-light);
-  color: var(--color-primary);
-  border-radius: 100px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; background: var(--color-primary-light);
+  color: var(--color-primary); border-radius: 100px; font-size: 0.75rem; font-weight: 600;
 }
 .dep-tag-remove {
-  cursor: pointer;
-  font-size: 0.85rem;
-  line-height: 1;
-  color: var(--color-primary);
-  background: none;
-  border: none;
-  padding: 0;
-  font-weight: 700;
-}
-.dep-tag-remove:hover { color: var(--color-locked-text); }
-
-/* ══════════════════════════════════════════════════════
-   RADIO CARDS CIBLAGE
-   ══════════════════════════════════════════════════════ */
-.dep-target-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 14px;
+  cursor: pointer; font-size: 0.85rem; line-height: 1;
+  color: var(--color-primary); background: none; border: none; padding: 0; font-weight: 700;
 }
 
-/* ═══ RADIO CARD CIBLAGE ═══
-   Changer --color-primary-light pour modifier le fond sélectionné */
+/* ── TARGET CARDS ── */
+.dep-target-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
 .dep-target-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background-color: var(--color-surface);
-  cursor: pointer;
-  transition: border-color 0.15s, background-color 0.15s;
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px; border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md); background: var(--color-surface);
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
 }
 .dep-target-card:hover { border-color: var(--color-primary); }
-.dep-target-card--selected {
-  border-color: var(--color-primary);
-  background-color: var(--color-primary-light);
-}
+.dep-target-card--selected { border-color: var(--color-primary); background: var(--color-primary-light); }
 .dep-radio-hidden { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
 .dep-target-icon { font-size: 1.25rem; flex-shrink: 0; }
-.dep-target-name {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color-text);
-  line-height: 1.3;
-}
-.dep-target-audience {
-  font-size: 0.72rem;
-  color: var(--color-text-muted);
-  margin-top: 2px;
-}
+.dep-target-name { font-size: 0.8rem; font-weight: 600; color: var(--color-text); line-height: 1.3; }
+.dep-target-audience { font-size: 0.72rem; color: var(--color-text-muted); margin-top: 2px; }
 
-/* ═══ COMPTEUR AUDIENCE ═══
-   Changer --color-accent pour modifier la couleur du compteur */
 .dep-audience-counter {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background-color: var(--color-accent-light);
-  border: 1px solid var(--color-accent);
-  border-radius: var(--radius-sm);
-  padding: 10px 14px;
-  font-size: 0.82rem;
-  color: var(--color-text-secondary);
+  display: flex; align-items: center; gap: 6px;
+  background: var(--color-accent-light); border: 1px solid var(--color-accent);
+  border-radius: var(--radius-sm); padding: 10px 14px;
+  font-size: 0.82rem; color: var(--color-text-secondary);
 }
-.dep-audience-count {
-  font-family: var(--font-display);
-  font-size: 1.4rem;
-  color: var(--color-accent);
-  font-weight: 700;
-}
+.dep-audience-count { font-family: var(--font-display); font-size: 1.4rem; color: var(--color-accent); font-weight: 700; }
 
-/* ══════════════════════════════════════════════════════
-   ERREUR & BOUTON PUBLIER
-   ══════════════════════════════════════════════════════ */
+/* ── ERROR & PUBLISH ── */
 .dep-form-error {
-  background-color: var(--color-locked-bg);
-  border: 1px solid var(--color-locked-border);
-  border-radius: var(--radius-sm);
-  padding: 10px 14px;
-  font-size: 0.82rem;
-  color: var(--color-locked-text);
-  margin-bottom: 14px;
+  background: var(--color-locked-bg); border: 1px solid var(--color-locked-border);
+  border-radius: var(--radius-sm); padding: 10px 14px;
+  font-size: 0.82rem; color: var(--color-locked-text); margin-bottom: 14px;
 }
-
-/* ═══ BOUTON PUBLIER ═══
-   Changer --color-primary pour modifier la couleur du bouton principal */
 .dep-publish-btn {
-  width: 100%;
-  height: 52px;
-  background-color: var(--color-primary);
-  color: var(--color-surface);
-  border: none;
-  border-radius: var(--radius-md);
-  font-family: var(--font-ui);
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s, transform 0.15s;
-  margin-top: 18px;
+  width: 100%; height: 52px; background: var(--color-primary); color: var(--color-surface);
+  border: none; border-radius: var(--radius-md); font-family: var(--font-ui);
+  font-size: 0.9rem; font-weight: 600; cursor: pointer;
+  transition: background 0.2s, transform 0.15s; margin-top: 18px;
 }
-.dep-publish-btn:hover:not(:disabled) {
-  background-color: var(--color-primary-hover);
-  transform: translateY(-1px);
-}
-.dep-publish-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-.dep-publish-note {
-  text-align: center;
-  font-size: 0.73rem;
-  color: var(--color-text-muted);
-  margin: 8px 0 0;
-}
+.dep-publish-btn:hover:not(:disabled) { background: var(--color-primary-hover); transform: translateY(-1px); }
+.dep-publish-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.dep-publish-note { text-align: center; font-size: 0.73rem; color: var(--color-text-muted); margin: 8px 0 0; }
 
-/* ══════════════════════════════════════════════════════
-   COLONNE DROITE — APERÇU STICKY
-   ══════════════════════════════════════════════════════ */
-.dep-preview-col {
-  position: sticky;
-  top: 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.dep-preview-wrap {}
+/* ── PREVIEW COLUMN ── */
+.dep-preview-col { position: sticky; top: 88px; display: flex; flex-direction: column; gap: 14px; }
 .dep-preview-label {
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--color-text-muted);
-  margin-bottom: 10px;
+  font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.07em; color: var(--color-text-muted); margin-bottom: 10px;
 }
-
-/* ═══ CARTE PRÉVISUALISATION ═══
-   Identique aux cartes du feed — mise à jour en temps réel */
-.dep-preview-card {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  cursor: default;
-}
-.dep-preview-stripe {
-  height: 4px;
-  background-color: var(--color-primary);
-  transition: background-color 0.3s;
-}
+.dep-preview-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; }
+.dep-preview-stripe { height: 4px; background: var(--color-primary); transition: background 0.3s; }
 .dep-preview-body { padding: 16px; }
-.dep-preview-row1 {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
+.dep-preview-row1 { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .dep-preview-school {
-  display: inline-block;
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-text-muted);
-  background-color: var(--color-surface-2);
-  padding: 2px 8px;
-  border-radius: 100px;
+  display: inline-block; font-size: 0.68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-muted);
+  background: var(--color-surface-2); padding: 2px 8px; border-radius: 100px;
 }
 .dep-preview-time { font-size: 0.72rem; color: var(--color-text-muted); }
-
-/* ═══ TITRE PREVIEW ═══ */
-.dep-preview-title {
-  font-family: var(--font-ui);
-  font-weight: 500;
-  font-size: 0.9rem;
-  color: var(--color-text);
-  margin: 0 0 6px;
-  line-height: 1.4;
-  min-height: 20px;
-}
+.dep-preview-title { font-family: var(--font-ui); font-weight: 500; font-size: 0.9rem; color: var(--color-text); margin: 0 0 6px; line-height: 1.4; min-height: 20px; }
 .dep-preview-title.placeholder { color: var(--color-text-muted); font-style: italic; }
+.dep-preview-desc { font-size: 0.78rem; color: var(--color-text-muted); margin: 0 0 10px; line-height: 1.5; }
+.dep-preview-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 4px; }
+.dep-preview-chip { display: inline-block; font-size: 0.65rem; font-weight: 600; padding: 2px 8px; border-radius: 100px; background: var(--color-surface-2); color: var(--color-text-secondary); }
+.dep-preview-footer { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-top: 1px solid var(--color-border); }
+.dep-preview-meta { font-size: 0.73rem; color: var(--color-text-muted); }
+.dep-preview-btn { font-size: 0.73rem; font-weight: 700; padding: 5px 12px; background: var(--color-primary); color: var(--color-surface); border-radius: var(--radius-sm); }
+.dep-preview-caption { font-size: 0.73rem; color: var(--color-text-muted); text-align: center; margin: 8px 0 0; }
 
-.dep-preview-desc {
-  font-size: 0.78rem;
-  color: var(--color-text-muted);
-  margin: 0 0 10px;
-  line-height: 1.5;
-  min-height: 16px;
-}
-.dep-preview-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-bottom: 4px;
-}
-.dep-preview-chip {
-  display: inline-block;
-  font-size: 0.65rem;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 100px;
-  background-color: var(--color-surface-2);
-  color: var(--color-text-secondary);
-}
-
-.dep-preview-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  border-top: 1px solid var(--color-border);
-}
-.dep-preview-meta {
-  font-size: 0.73rem;
-  color: var(--color-text-muted);
-}
-
-/* ═══ BOUTON RÉPONDRE (preview) ═══ */
-.dep-preview-btn {
-  font-size: 0.73rem;
-  font-weight: 700;
-  padding: 5px 12px;
-  background-color: var(--color-primary);
-  color: var(--color-surface);
-  border-radius: var(--radius-sm);
-}
-
-.dep-preview-caption {
-  font-size: 0.73rem;
-  color: var(--color-text-muted);
-  text-align: center;
-  margin: 8px 0 0;
-}
-
-/* ═══ CE QUI SE PASSE ENSUITE ═══ */
-.dep-next-card {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 16px;
-}
-.dep-next-title {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--color-text);
-  margin-bottom: 10px;
-}
-.dep-next-item {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  font-size: 0.78rem;
-  color: var(--color-text-secondary);
-  margin-bottom: 6px;
-  line-height: 1.4;
-}
+.dep-next-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 16px; }
+.dep-next-title { font-size: 0.82rem; font-weight: 600; color: var(--color-text); margin-bottom: 10px; }
+.dep-next-item { display: flex; align-items: baseline; gap: 8px; font-size: 0.78rem; color: var(--color-text-secondary); margin-bottom: 6px; line-height: 1.4; }
 .dep-next-item:last-child { margin-bottom: 0; }
 .dep-next-dot { color: var(--color-primary); font-weight: 700; flex-shrink: 0; }
 
-/* ═══ RAPPEL MENSUEL ═══
-   Changer --color-accent-light pour modifier le fond */
 .dep-monthly-card {
-  background-color: var(--color-accent-light);
-  border: 1px solid var(--color-accent);
-  border-radius: var(--radius-md);
-  padding: 12px 14px;
-  font-size: 0.78rem;
-  color: var(--color-text-secondary);
+  background: var(--color-accent-light); border: 1px solid var(--color-accent);
+  border-radius: var(--radius-md); padding: 12px 14px;
+  font-size: 0.78rem; color: var(--color-text-secondary);
 }
-.dep-monthly-sub {
-  display: block;
-  margin-top: 4px;
-  font-size: 0.73rem;
-  color: var(--color-text-muted);
-}
+.dep-monthly-sub { display: block; margin-top: 4px; font-size: 0.73rem; color: var(--color-text-muted); }
 
-/* ══════════════════════════════════════════════════════
-   TOAST NOTIFICATION
-   ══════════════════════════════════════════════════════ */
+/* ── CYCLE PROGRESS ── */
+.dep-cycle-progress { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 0.78rem; color: var(--color-text-secondary); }
+.dep-cycle-bar { flex: 1; height: 6px; background: var(--color-border); border-radius: 3px; overflow: hidden; }
+.dep-cycle-bar-fill { height: 100%; background: var(--color-primary); border-radius: 3px; transition: width 0.5s; }
+
+/* ── TOAST ── */
 .dep-toast {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background-color: var(--color-text);
-  color: var(--color-surface);
-  padding: 12px 20px;
-  border-radius: var(--radius-md);
-  font-size: 0.85rem;
-  font-weight: 500;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-  z-index: 9999;
-  animation: toast-in 0.25s ease;
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--color-text); color: var(--color-surface);
+  padding: 12px 20px; border-radius: var(--radius-md);
+  font-size: 0.85rem; font-weight: 500; box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  z-index: 9999; animation: toast-in 0.25s ease;
 }
-.dep-toast.success { background-color: var(--color-success); }
-.dep-toast.error   { background-color: var(--color-danger); }
+.dep-toast.success { background: var(--color-success); }
+.dep-toast.error { background: var(--color-danger); }
 @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-/* ══════════════════════════════════════════════════════
-   MULTI-DÉPÔT — badges de dépôts effectués ce mois
-   ══════════════════════════════════════════════════════ */
-
-/* Badge "2 dépôts ce mois" dans la carte unlock */
-.dep-deposit-count-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--color-primary);
-  background-color: var(--color-primary-light);
-  border: 1px solid var(--color-primary);
-  border-radius: 100px;
-  padding: 3px 10px;
-}
-
-/* Ligne de progression multi-dépôt (sous la carte unlock) */
-.dep-cycle-progress {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 10px;
-  font-size: 0.78rem;
-  color: var(--color-text-secondary);
-}
-.dep-cycle-bar {
-  flex: 1;
-  height: 6px;
-  background-color: var(--color-border);
-  border-radius: 100px;
-  overflow: hidden;
-}
-.dep-cycle-bar-fill {
-  height: 100%;
-  background-color: var(--color-primary);
-  border-radius: 100px;
-  transition: width 0.4s ease;
-}
-
-/* ══════════════════════════════════════════════════════
-   RESPONSIVE
-   ══════════════════════════════════════════════════════ */
-@media (max-width: 1100px) {
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
   .dep-body { grid-template-columns: 1fr; }
   .dep-preview-col { position: static; }
-}
-@media (max-width: 900px) {
-  .dep-shell { grid-template-columns: 1fr; }
-  .sidebar { display: none; }
-  .dep-main { padding: 20px 16px; }
-}
-@media (max-width: 600px) {
+  .dep-topbar-nav { display: none; }
+  .dep-topbar-name { display: none; }
+  .dep-header { flex-direction: column; }
   .dep-target-grid { grid-template-columns: 1fr; }
-  .dep-field--row { flex-direction: column; }
-  .dep-steps-indicator { flex-wrap: wrap; gap: 8px; }
 }

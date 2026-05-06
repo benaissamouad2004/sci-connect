@@ -1731,3 +1731,860 @@ Checklist complète :
 Puis-je pass
 er à la Partie X+1 ([Nom]) ?"
 
+══════════════════════════════════════════
+REFONTE COMPLÈTE V3 — TOUTES LES PAGES SAUF LANDING
+DERNIÈRES MODIFICATIONS VALIDÉES
+══════════════════════════════════════════
+
+RÈGLE ABSOLUE NUMÉRO 1 :
+NE JAMAIS TOUCHER frontend/index.html
+NE JAMAIS TOUCHER frontend/css/landing.css
+NE JAMAIS TOUCHER frontend/js/landing.js
+La landing page est gelée définitivement.
+
+RÈGLE ABSOLUE NUMÉRO 2 :
+Lire DESIGN.md à la racine avant toute ligne de code.
+Appliquer les skills emilkowalski et pbakaus pour toutes les animations.
+
+RÈGLE ABSOLUE NUMÉRO 3 :
+Travailler en parties séquentielles.
+Arrêter après chaque partie et attendre "oui" pour continuer.
+
+DESIGN SYSTEM GLOBAL :
+Teal primaire : #005F54
+Teal hover : #004A41
+Teal light : #E8F5F3
+Teal mid : #9FE1CB
+Or : #C9A84C
+Or light : #FDF8EC
+Bg global : #F7F6F2
+Surface : #FFFFFF
+Surface 2 : #F0EDE6
+Texte : #181816
+Texte 2 : #57564F
+Muted : #9A9890
+Border : #E2DED6
+Success : #1A7A5E
+Warning : #BA6A1A
+Danger : #C0392B
+
+Typographie :
+Display/titres : Fraunces (Google Fonts) via CDN
+Corps/UI : DM Sans (Google Fonts) via CDN
+Monospace : system mono pour codes, durées, compteurs
+
+Animations globales (emilkowalski style) :
+Spring entrée : cubic-bezier(0.32, 0.72, 0, 1) 300-400ms
+Spring sortie : cubic-bezier(0.4, 0, 0.6, 1) 200ms
+Hover boutons : translateY(-1px) à translateY(-2px) 150ms
+Hover cartes : translateY(-3px) à translateY(-4px) 180ms
+Scale bouton actif : scale(0.98) au mousedown
+Focus inputs : box-shadow 0 0 0 3px rgba(0,95,84,0.08) + border teal
+Stagger éléments : 60ms entre chaque enfant
+Scroll reveal : translateY(16px) opacity(0) → 0 opacity(1) 400ms IntersectionObserver threshold 0.12
+
+══════════════════════════════════════════
+PARTIE 1 — BACKEND : NOUVEAU SYSTÈME DE POINTS
+══════════════════════════════════════════
+
+FICHIERS À MODIFIER :
+- backend/models.py
+- backend/routes/auth.py
+- backend/routes/forms.py
+- backend/routes/responses.py
+
+SUPPRIMER COMPLÈTEMENT :
+- Tout le système monthly_responses_given
+- Toute logique d'approbation manuelle des réponses
+- Toute référence à monthly_responses_given dans le code
+
+NOUVEAU MODÈLE User (ajouter ces colonnes) :
+points                  = db.Column(db.Integer, default=0)
+streak_days             = db.Column(db.Integer, default=0)
+last_login_date         = db.Column(db.Date, nullable=True)
+total_responses_given   = db.Column(db.Integer, default=0)
+total_forms_posted      = db.Column(db.Integer, default=0)
+
+NOUVEAU MODÈLE Subscription :
+class Subscription(db.Model):
+    id              = db.Column(db.Integer, primary_key=True)
+    subscriber_id   = db.Column(db.Integer, db.ForeignKey('user.id'))
+    publisher_id    = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_at      = db.Column(db.DateTime, default=datetime.utcnow)
+    notify_email    = db.Column(db.Boolean, default=True)
+    notify_inapp    = db.Column(db.Boolean, default=True)
+
+CONSTANTES DE POINTS (backend/config.py) :
+# EDITABLE: modifier les valeurs ici pour ajuster le système
+POINTS_REPONDRE_COURT   = 10   # questionnaire < 5 min
+POINTS_REPONDRE_LONG    = 15   # questionnaire > 5 min
+POINTS_LOGIN_QUOTIDIEN  = 5    # connexion chaque jour
+POINTS_STREAK_7_JOURS   = 25   # bonus 7 jours consécutifs
+POINTS_50_REPONSES      = 20   # jalon 50 réponses reçues
+POINTS_DEPOSER          = -20  # coût d'un dépôt
+POINTS_MIN_DEPOT        = 20   # minimum requis pour déposer
+
+LOGIQUE CONNEXION QUOTIDIENNE dans routes/auth.py :
+Après chaque login Google ou email réussi :
+  today = date.today()
+  if user.last_login_date != today:
+      user.points += POINTS_LOGIN_QUOTIDIEN
+      if user.last_login_date == today - timedelta(days=1):
+          user.streak_days += 1
+          if user.streak_days % 7 == 0:
+              user.points += POINTS_STREAK_7_JOURS
+              streak_bonus = True
+      else:
+          user.streak_days = 1
+          streak_bonus = False
+      user.last_login_date = today
+      db.session.commit()
+  Retourner dans le JSON :
+      points_earned: POINTS_LOGIN_QUOTIDIEN,
+      streak: user.streak_days,
+      total_points: user.points,
+      streak_bonus: streak_bonus (True/False),
+      is_first_login_today: True/False
+
+LOGIQUE RÉPONSE AUTOMATIQUE dans routes/responses.py :
+Supprimer tout système d'approbation manuelle
+Toute réponse POST /api/responses → approuvée immédiatement
+Calculer durée = timestamp_fin - timestamp_début (en secondes)
+Si durée < 30 secondes → is_suspect = True (flag seulement, ne bloque pas)
+Attribuer points selon durée :
+    if duration_seconds < 300:  # moins de 5 min
+        points = POINTS_REPONDRE_COURT
+    else:
+        points = POINTS_REPONDRE_LONG
+user.points += points
+user.total_responses_given += 1
+db.session.commit()
+Retourner : { points_earned, total_points, is_suspect }
+
+LOGIQUE DÉPÔT dans routes/forms.py :
+Remplacer la vérification monthly_responses_given par :
+    if current_user.points < POINTS_MIN_DEPOT:
+        return { error: "Points insuffisants",
+                 points_needed: POINTS_MIN_DEPOT - current_user.points }, 403
+Après publication réussie :
+    current_user.points -= POINTS_DEPOSER  # soustraction de 20
+    current_user.total_forms_posted += 1
+    db.session.commit()
+    Envoyer email deposit_confirm (via email_service.py)
+    Envoyer notifications aux abonnés :
+        subscribers = Subscription.query.filter_by(
+            publisher_id=current_user.id,
+            notify_email=True
+        ).all()
+        for sub in subscribers:
+            send_subscription_notification(sub.subscriber, current_user, questionnaire)
+
+ABONNEMENTS routes/profiles.py :
+GET  /api/profiles/:slug                    → profil public
+POST /api/profiles/:slug/subscribe          → s'abonner
+DELETE /api/profiles/:slug/subscribe        → se désabonner
+GET  /api/profiles/:slug/questionnaires     → questionnaires publiés
+GET  /api/profiles/:slug/stats              → stats publiques
+
+CHECKLIST PARTIE 1 :
+□ Migration DB appliquée sans perte de données
+□ monthly_responses_given supprimé partout
+□ Points connexion quotidienne attribués et retournés dans JSON
+□ Streak calculé correctement
+□ Réponses approuvées automatiquement sans action manuelle
+□ is_suspect flag fonctionne pour durée < 30s
+□ Dépôt conditionné par points >= 20
+□ -20 points déduits après publication
+□ Modèle Subscription créé en DB
+□ Notifications abonnés envoyées à la publication
+
+══════════════════════════════════════════
+PARTIE 2 — DASHBOARD (refonte totale)
+══════════════════════════════════════════
+
+FICHIERS À MODIFIER :
+- frontend/dashboard.html (refonte totale)
+- frontend/css/dashboard.css (refonte totale)
+- frontend/js/dashboard.js (refonte totale)
+
+LAYOUT GLOBAL :
+Rail gauche 68px fixe + Sidebar 252px cachée + Contenu flex-1
+bg global #F7F6F2
+Pas de panneau droit — SUPPRIMÉ DÉFINITIVEMENT
+
+RAIL GAUCHE (68px, bg #FAFAF8, border-right 1px #E2DED6) :
+Toujours visible, ne disparaît jamais
+Padding 14px 0 10px
+
+Logo SciConnect en haut (40px carré arrondi bg teal) :
+SVG deux cercles Venn blancs + cercle or au centre
+Cliquable → ouvre/ferme sidebar
+Hover : scale(1.05) 150ms
+
+Séparateur 1px #E2DED6 width 28px
+
+Boutons rail (44px × 44px border-radius 12px) :
+Chaque bouton : icône SVG 18px + label texte 8px en dessous
+Gap entre icon et label : 3px
+Hover : background #E8F5F3
+Active : background #E8F5F3 + pseudo-element ::before barre teal 3px gauche 24px hauteur border-radius 0 3px 3px 0
+
+Icônes SVG (tracer à la main, stroke sans fill) :
+Feed : path maison M3 9L9 3L15 9V15H11V11H7V15H3V9Z
+Explorer : circle + path horloge
+Notifications : path cloche + arc bas
+Profil : circle tête + arc corps
+Déposer : rect + path plus
+Mes questionnaires : 3 barres croissantes
+Badges : path étoile 5 branches
+Paramètres : circle centre + 8 lignes autour
+Déconnexion : path porte avec flèche
+
+Badge notifications rouge 8px sur l'icône cloche (si non lus > 0)
+
+Spacer flex:1 entre les icônes de navigation et le bas
+
+Avatar utilisateur en bas (28px circle border teal + label "Profil" 8px)
+Cliquable → ouvre panneau profil dans topbar
+
+SIDEBAR (252px, bg blanc, border-right 1px #E2DED6) :
+Cachée par défaut : translateX(-252px)
+Ouverte : translateX(0)
+Animation : cubic-bezier(0.32, 0.72, 0, 1) 300ms
+S'ouvre au clic sur n'importe quelle icône du rail
+Se ferme au clic outside ou sur bouton ✕
+
+Header sidebar :
+Logo SciConnect texte + bouton ✕ fermeture
+Border-bottom 1px #E2DED6
+
+Carte identité (bg #E8F5F3 border teal 12px radius padding 12px) :
+Avatar Google 42px circle border teal
+Nom DM Sans 500 13px
+École + niveau muted 11px
+Badge "✓ Étudiant vérifié" teal bg blanc 9px
+
+Widget points (blanc border padding 10px radius 10px) :
+"240 pts" Fraunces 700 24px teal + "points accumulés" muted 10px
+Barre progrès teal fill
+"✓ Dépôt disponible !" vert si points >= 20
+"Il te manque X pts" rouge si points < 20
+
+Widget streak (blanc border padding 10px radius 10px) :
+"🔥 Streak X jours" DM Sans 500 11px
+7 cercles jours L M M J V S D, remplis teal si complétés
+"×2 pts aujourd'hui !" or si streak actif
+
+Navigation même structure que le rail mais avec labels texte
+
+POPUP CONNEXION QUOTIDIENNE :
+Déclencher si API auth retourne is_first_login_today: true
+Overlay rgba(0,0,0,0.4) avec card centrée
+Animation : scale(0.8) opacity(0) → scale(1) opacity(1) 400ms spring
+Contenu :
+    Étoile animée (pulse gold)
+    "+ X pts gagnés aujourd'hui !" Fraunces 700 32px teal
+    Si streak_bonus: "🔥 Streak de X jours ! Bonus +25 pts" or
+    "Tu as maintenant X pts" muted
+    Bouton teal "C'est parti !" → ferme
+    Auto-ferme après 4 secondes
+
+TOPBAR (bg blanc border-bottom 1px #E2DED6 hauteur 56px padding 0 18px) :
+Gauche :
+    Bouton ☰ (34×34px border radius 9px) → toggle sidebar
+    Animation hover : background #E8F5F3 border teal
+    "Bonjour, [Prénom] 👋" Fraunces 17px
+
+Centre (flex:1) :
+    Input recherche avec icône loupe gauche (svg 14px)
+    Width 190px, height 32px, border radius 8px bg #F7F6F2
+    Focus : border teal bg blanc box-shadow 3px ring
+
+Droite :
+    Pill "X actifs" (bg #E8F5F3 border #9FE1CB) :
+        Point vert 6px pulsant + nombre fluctuant JS 28-41 toutes 4s
+    
+    Bouton notifications (34×34px border radius 9px) :
+        Icône cloche SVG 16px stroke #57564F
+        Badge rouge nombre en haut droite si non lus
+        Clic → panneau notifications slide down sous topbar
+        État actif : bg #E8F5F3 border #9FE1CB
+    
+    Bouton profil pill (avatar 28px circle teal + prénom 12px + chevron) :
+        Hover : bg #E8F5F3 border teal
+        Clic → panneau profil slide down sous topbar
+
+PANNEAU NOTIFICATIONS (slide down, bg blanc border radius 12px margin 14px 18px) :
+Visible au clic sur cloche, caché au clic outside
+Header : "Notifications" 13px 500 + "Tout marquer comme lu" teal 11px droite
+Items :
+    Point bleu teal 8px (non lu) ou gris (lu)
+    Texte notification 12px + heure muted 10px
+    4 notifications exemple dont streak bonus et réponse reçue
+Bouton "Tout marquer comme lu" → tous points deviennent gris
+
+PANNEAU PROFIL (slide down, bg blanc border radius 12px) :
+Avatar 48px + nom + école + badge vérifié + pts
+Grid 3 stats : réponses données / questionnaires / taux complétion
+2 boutons : "Voir mon profil public" teal + "Déposer" outline
+Bouton déconnexion ghost
+
+CONTENU PRINCIPAL :
+
+Banner recommandation smart (bg teal border-radius 14px padding 16px 20px) :
+GET /api/forms/recommended → premier résultat
+Gauche :
+    "⭐ Recommandé pour toi" pill or
+    Titre Fraunces 15px blanc
+    Avatar publieur 20px + nom + école muted
+Droite :
+    "+10 pts" pill or
+    Bouton "Répondre →" blanc
+    "X min · Y questions" muted
+Animation entrée : slideUp + fadeIn 400ms delay 200ms
+
+Banner état points (visible si points < 40) :
+Si points = 0 : bg #FEF3F2 border rouge
+    Cadenas rouge + "Réponds à des questionnaires pour gagner des points"
+    Tracker [○ Réponse 1] [○ Réponse 2] [🔒 Dépôt]
+Si 0 < points < 20 : bg #FFF8EC border orange
+    "Il te manque X pts pour déposer"
+Si points >= 20 : ne pas afficher ce banner
+
+Filtres (chips scrollables) :
+"Tous" · "Mon domaine" · "Récents" · "Flash < 2min" · "Populaires" · "Mes abonnements 🔔" · "Sauvegardés ♡"
+Chip active : bg teal blanc
+Hover : border teal couleur teal
+
+GRILLE QUESTIONNAIRES — MASONRY 3 COLONNES :
+gap 12px, columns:3
+Cartes de hauteurs variées selon contenu
+
+CARTE QUESTIONNAIRE :
+bg blanc border 0.5px #E2DED6 border-radius 14px overflow hidden
+Hover : translateY(-3px) border-color teal 180ms spring
+
+Stripe top 3px couleur du domaine
+
+Header (padding 12px 14px 0) :
+    Badge école pill + badge domaine + heure muted droite
+    Si trending : pill "🔥 Tendance" rouge clair
+
+Titre DM Sans 500 12px line-height 1.4 margin-bottom 5px
+Description 11px muted si disponible margin-bottom 6px
+
+Chips domaine · niveau · durée · nb questions (9px bg #F0EDE6)
+
+Publieur row (border-top + border-bottom #F7F6F2 padding 6px 0 margin 7px 0) :
+    Avatar publieur 22px circle couleur domaine
+    Nom cliquable → page profil, hover underline
+    Bouton "S'abonner" / "Suivi ✓" toggle côté droit :
+        Non abonné : border teal couleur teal bg transparent
+        Abonné : bg teal blanc "Suivi ✓"
+        Animation clic : ripple teal scale 0.95→1
+
+Points état (selon user.points) :
+    points >= 20 : "✓ Dépôt disponible" vert 10px
+    points < 20 : "Il te manque X pts" rouge 10px
+
+Footer :
+    Bouton "Répondre · +10pts" teal full-width height 36px radius 8px
+    Icône ♡ save 28×28px radius 7px border côté droit
+
+JAVASCRIPT DASHBOARD :
+1. Appel API auth → détecter is_first_login_today → afficher popup
+2. Appel GET /api/forms/recommended → banner smart
+3. Appel GET /api/forms → charger grille masonry
+4. Toggle sidebar avec animation spring
+5. Toggle panneaux notif et profil
+6. Compteur actifs fluctuation 28-41 toutes 4s
+7. Toggle abonnement sur chaque carte
+8. Filtre chips → recharger feed depuis API
+9. Scroll reveal IntersectionObserver
+10. Popup connexion auto-ferme 4s
+
+CHECKLIST PARTIE 2 :
+□ Rail 68px toujours visible
+□ Sidebar s'ouvre/ferme avec animation spring
+□ Popup connexion quotidienne s'affiche si first_login_today
+□ Points affichés correctement dans sidebar
+□ Panneau notifications fonctionnel
+□ Panneau profil fonctionnel avec stats réelles
+□ Banner recommandation charge depuis API
+□ Grille masonry 3 colonnes
+□ Avatar + nom publieur sur chaque carte
+□ Bouton abonnement toggle
+□ Panneau droit ABSENT (supprimé)
+□ Animations spring partout
+
+══════════════════════════════════════════
+PARTIE 3 — PAGE LOGIN (refonte centrée)
+══════════════════════════════════════════
+
+FICHIERS À MODIFIER :
+- frontend/login.html (refonte totale)
+- frontend/css/login.css
+- backend/routes/auth.py (ajouter email auth)
+- backend/services/email_service.py (code vérif)
+
+LAYOUT :
+bg #F7F6F2 full page
+Navbar minimale : logo gauche + "← Retour à l'accueil" bouton droit (border radius 7px)
+
+Tagline centrée (fadeIn delay 100ms) :
+"Tu es à quelques pts d'avoir des données pour ton mémoire."
+Fraunces italic 18px teal centré
+Soulignement or animé 44px
+
+CARTE CENTRALE SEULEMENT (max-width 420px centré) :
+bg blanc border 0.5px #E2DED6 border-radius 20px overflow:hidden
+Animation entrée : fadeUp 400ms spring
+
+Stripe teal 6px top
+
+Padding 32px :
+
+Logo centré :
+    Box teal 48px radius 13px avec SVG Venn
+    "SciConnect" Fraunces 22px teal/or
+    "Plateforme académique marocaine · UCA · Hassan II" muted 12px
+
+Aperçu 3 étapes :
+    3 cercles : Connexion (teal rempli ✓) → Profil (teal outline) → Feed (gris)
+    Connecteurs ligne gris
+    Labels 9px muted sous chaque cercle
+    bg #F7F6F2 border-radius 10px padding 10px 16px
+
+Tabs (2 onglets, bg #F7F6F2 border-radius 10px padding 3px) :
+    Tab Google | Tab Email académique
+    Active : bg teal blanc border-radius 8px
+    Transition background 200ms
+
+ONGLET GOOGLE :
+Bouton Google DOMINANT (full width height 50px bg teal radius 12px) :
+    Vrai logo Google SVG multicolore 20px
+    "Continuer avec Google" DM Sans 500 14px
+    Flèche → droite opacity 0.5
+    Hover : bg #004A41 translateY(-2px) 150ms
+    Active : scale(0.99) translateY(0)
+
+Boîte confidentialité (bg #F7F6F2 radius 10px padding 10px 12px) :
+    3 lignes avec icônes SVG 14px :
+    Bouclier teal : "Uniquement ton nom et email · aucun accès à Gmail ou Drive."
+    Cadenas gris : "Connexion sécurisée OAuth 2.0."
+Séparateur "ou"
+Lien non-étudiant : "Tu n'es pas étudiant ? Accède directement via un lien →"
+
+ONGLET EMAIL ACADÉMIQUE :
+Description : "Pour les étudiants dont Google ne fonctionne pas."
+Input email avec icône enveloppe gauche (36px input icon)
+DÉTECTION DOMAINE EN TEMPS RÉEL (debounce 300ms) :
+    @uca.ac.ma → pill terracotta "UCA Cadi Ayyad détectée" bg #FDF5F0
+    @univh2c.ma ou @um5.ac.ma → pill navy "Hassan II détectée" bg #EBF0FB
+    @gmail.com hotmail yahoo → pill rouge "Email non académique"
+    *.ac.ma inconnu → pill orange "Domaine non répertorié — nous vérifierons"
+Bouton "Recevoir le code →" teal
+    Disabled si email invalide ou domaine non académique
+
+ÉCRAN CODE 6 CHIFFRES (remplace le formulaire) :
+Transition slide : form → code section avec fadeIn
+"Code envoyé à [email]" 13px 500 + "Vérifie tes spams" italic muted
+6 inputs 46×58px gap 8px centré :
+    Border 1.5px #E2DED6 radius 10px
+    Focus : border teal box-shadow 3px ring
+    Rempli : border teal bg #E8F5F3 texte teal 24px mono
+    Auto-focus case suivante à chaque chiffre
+    Backspace → retourne case précédente
+    Coller 6 chiffres → remplit tout automatiquement
+Countdown or : "Renvoyer dans 00:45" → devient lien "Renvoyer" à 0
+Bouton "Confirmer →" teal
+    Disabled jusqu'à 6 cases remplies
+Note sécurité muted 10px : cadenas icon + "Code à usage unique · 10 minutes"
+
+Séparateur "ou"
+Lien non-étudiant
+
+SOCIAL PROOF (sous la carte) :
+5 avatars chevauchants + "1 247 étudiants · 20 établissements · UCA + Hassan II"
+fadeIn delay 300ms
+
+BACKEND EMAIL AUTH :
+POST /api/auth/email/send-code :
+    Vérifier domaine dans ACADEMIC_DOMAINS list
+    Générer code 6 chiffres random
+    Stocker en cache/DB avec expiry 10 min
+    Envoyer email Flask-Mail : "Votre code SciConnect : XXXXXX"
+
+POST /api/auth/email/verify-code :
+    Vérifier code + expiry
+    Si valide : créer session (même logique Google OAuth)
+    Attribuer points connexion quotidienne
+
+ACADEMIC_DOMAINS = [
+    'uca.ac.ma', 'encg-marrakech.ac.ma', 'um5.ac.ma',
+    'univh2c.ma', 'ump.ac.ma', 'uae.ac.ma', 'uit.ac.ma',
+    'usms.ac.ma', 'usmba.ac.ma', 'ui.ac.ma'
+    # EDITABLE: ajouter d'autres domaines ici
+]
+
+CHECKLIST PARTIE 3 :
+□ Carte centrale seule, pas de sidebar gauche ni droite
+□ Tab Google/Email toggle fonctionnel
+□ Vrai logo Google SVG multicolore
+□ Détection domaine temps réel avec les 4 états de couleur
+□ 6 cases code avec auto-focus et coller automatique
+□ Countdown timer fonctionne
+□ Backend envoie email avec code
+□ Session créée après vérification email
+□ Points connexion attribués aussi pour login email
+
+══════════════════════════════════════════
+PARTIE 4 — PAGE DE RÉPONSE (refonte UX)
+══════════════════════════════════════════
+
+FICHIERS À MODIFIER :
+- frontend/respond.html (refonte totale)
+- frontend/css/respond.css
+- frontend/js/respond.js
+
+LAYOUT : max-width 580px centré, bg #F7F6F2
+
+TOPBAR (bg blanc border-bottom 1px #E2DED6 padding 10px 16px) :
+Bouton ← retour (30×30px border radius 7px hover teal)
+Barre progression :
+    Label "Question X / Y" 11px muted + pourcentage teal droit
+    Track 5px height bg #F0EDE6 border-radius 3px
+    Fill teal transition 500ms spring
+Timer restant : icône horloge SVG 12px + "~X min" muted, se met à jour par question
+Bouton "Quitter" (11px muted border radius 6px hover bg #F0EDE6)
+
+CARTE PUBLIEUR (bg teal padding 12px 16px) :
+Avatar publieur 38px circle bg rgba(white,0.15) border rgba(white,0.3)
+Nom 12px blanc 500 + badge "✓ Vérifiée" pill rgba(white,0.2)
+École muted rgba(white,0.6) 11px
+Titre questionnaire Fraunces 16px blanc line-height 1.35
+Chips (bg rgba(white,0.12)) : domaine · durée · nb questions
+Badge "+10 pts" bg rgba(or,0.2) couleur or
+Bouton S'abonner côté droit (bg rgba(white,0.12) border rgba(white,0.25) blanc)
+Toggle : "S'abonner" → "Suivi ✓" bg rgba(white,0.2)
+
+ÉTAPES (bg blanc border-bottom 1px #E2DED6 padding 10px 16px) :
+5 cercles 26px avec lignes connectrices flex
+Cercle complété : bg teal border teal blanc ✓
+Cercle actuel : bg #E8F5F3 border teal couleur teal animation pulse 2s ring
+Cercle à venir : bg #F7F6F2 border #E2DED6 muted
+Lignes : 2px height bg #E2DED6, se colorent en teal quand question complétée
+Cliquable : revenir à une question déjà complétée
+
+CARTE QUESTION (bg blanc border 0.5px #E2DED6 border-radius 14px margin 14px 0) :
+Animation question : translateX(18px) opacity(0) → 0 opacity(1) 280ms spring
+En sortie : translateX(-18px) opacity(0) 200ms ease-in
+
+Badge haut : "Q1" teal 500 11px + type question muted bg #F7F6F2 droite
+Titre : Fraunces 17px 700 line-height 1.4
+Hint si applicable : 11px muted
+
+TYPE CHOIX UNIQUE :
+Options empilées (gap 7px) :
+    bg blanc border 1.5px #E2DED6 radius 10px padding 11px 14px
+    Icon radio 18px circle gauche
+    Hover : border #9FE1CB bg #E8F5F3 translateX(2px) 150ms
+    Sélectionné : border teal bg #E8F5F3 couleur teal 500
+    Radio rempli teal + point blanc centre
+
+TYPE ÉCHELLE 1-5 :
+Labels extrêmes muted 11px
+5 boutons égaux height 46px radius 9px border 1.5px #E2DED6
+    Hover : border teal bg #E8F5F3 scale(1.04) 150ms
+    Sélectionné : bg teal blanc scale(1.06)
+    Adjacent sélectionné : bg #E8F5F3 border #9FE1CB
+
+TYPE CHOIX MULTIPLE :
+Même style que choix unique mais avec checkbox 17×17px radius 5px
+Sélectionné : checkbox bg teal border teal + icône ✓ SVG blanc
+
+TYPE TEXTE LIBRE :
+Textarea min-height 100px bg #F7F6F2 border 1.5px #E2DED6 radius 10px
+Focus : border teal bg blanc box-shadow 3px ring
+Compteur bas droit 10px muted "X / 400"
+Label "Question facultative" vert 10px bas gauche
+
+NAVIGATION (flex row gap 8px) :
+"← Précédent" : border 1.5px #E2DED6 radius 9px height 42px
+    Disabled : opacity 0.35
+    Hover : border teal couleur teal bg #E8F5F3
+"Suivant →" ou "Envoyer ✓" : bg teal blanc radius 9px height 42px flex-1
+    Disabled : bg #E2DED6 muted
+    Hover actif : bg #004A41 translateY(-1px)
+Lien discret : "Sauvegarder et continuer plus tard" muted 11px centré
+
+ÉCRAN SUCCÈS :
+Cercle check (72px bg #E8F5F3 border teal) :
+    Path ✓ SVG stroke-dashoffset animation 600ms ease-out delay 300ms
+"+10 pts gagnés !" Fraunces 40px or
+"merci pour ta contribution !" 13px muted
+"Total : X pts" muted + fort teal
+
+Carte déverrouillage (bg blanc border 1.5px teal radius 12px padding 14px) :
+    "Progression vers le dépôt" + "✓ Dépôt disponible !" vert
+    Barre teal fill transition 1.2s spring (0 → 100% si points >= 20)
+    Note : bouclier vert + "Tu peux maintenant déposer ton questionnaire !"
+
+3 boutons action :
+    "Déposer mon questionnaire →" teal primary height 46px
+    "Répondre à un autre" outline teal height 44px
+    "Voir le profil de [Publieur] →" ghost muted 12px
+
+JAVASCRIPT RESPOND :
+1. Charger questionnaire depuis GET /api/forms/:id
+2. Gérer state machine questions (current, answers array)
+3. POST /api/responses à la fin avec timestamps
+4. Recevoir points_earned dans réponse
+5. Afficher écran succès avec animation
+
+CHECKLIST PARTIE 4 :
+□ Barre progression et timer mis à jour à chaque question
+□ Carte publieur teal avec infos correctes
+□ Étapes bulles avec animation pulse sur active
+□ Animation spring entre questions (slide in/out)
+□ 4 types de questions rendus correctement
+□ Bouton suivant disabled si pas de réponse sauf texte
+□ Écran succès avec animation ✓ stroke-dashoffset
+□ Barre progression déverrouillage animée
+□ POST /api/responses avec timestamps
+
+══════════════════════════════════════════
+PARTIE 5 — PAGE STATISTIQUES (refonte)
+══════════════════════════════════════════
+
+FICHIERS À MODIFIER :
+- frontend/stats.html (refonte totale)
+- frontend/js/stats.js
+- backend/routes/export.py
+- backend/services/export.py
+
+LAYOUT : max-width 680px centré bg #F7F6F2
+
+TOPBAR (bg blanc border-bottom) :
+Bouton ← retour
+Info questionnaire : titre tronqué 14px 500 + point vert pulsant + "Mis à jour il y a Xs"
+Actions droite :
+    "Partager" (border, icon SVG partage)
+    "Export Excel" (bg teal, icon téléchargement, PRIMARY)
+
+4 MÉTRIQUES (grid 4 colonnes gap 8px padding 14px 16px) :
+Chaque carte (bg blanc border radius 12px padding 12px) :
+    Valeur Fraunces 24px teal (ou or pour temps moyen)
+    Label 10px muted
+    Barre progrès 4px
+    Sous-label 10px muted
+
+Valeurs réelles depuis GET /api/forms/:id/stats :
+    Réponses totales / objectif
+    Taux complétion + détail complètes/abandons
+    Temps moyen complétion
+    Dernière réponse heure relative + école
+
+GRAPHIQUE 1 — Réponses par jour (Line Chart.js) :
+bg blanc border radius 12px padding 14px
+Height wrapper : 140px
+Dataset : données réelles 7 derniers jours depuis DB
+borderColor : #005F54
+backgroundColor : #E8F5F3
+fill: true
+tension: 0.4
+Axes : grid #F0EDE6, ticks muted 11px
+
+GRAPHIQUE 2 — Complétion par question (Bar Chart.js) :
+bg blanc border radius 12px padding 14px
+Height wrapper : 220px
+Données réelles : pour chaque question % répondants qui y ont répondu
+Couleur barre :
+    >= 75% → #005F54 teal
+    < 75% → #E67E22 orange (point de chute)
+Border-radius barres : 6px
+Alerte automatique si une barre < 75% :
+    Box rouge clair bg #FEF3F2 border #E8A9A0 radius 10px padding 10px
+    "Point de chute à Q[X] (Y%). Reformule ou rends facultative."
+
+GRAPHIQUES RÉPONDANTS (grid 2 colonnes gap 10px) :
+Donut Chart.js gauche : par université
+    UCA #005F54 · Hassan II #C9A84C · Autres #E2DED6
+    cutout 60%, hauteur wrapper 130px
+    Légende custom HTML sous le donut (carrés colorés + label + %)
+
+Donut Chart.js droit : par niveau
+    M1 teal · M2 teal clair · L3 or · autres gris
+    Même style
+
+TABLEAU RÉPONDANTS RÉEL :
+bg blanc border radius 12px overflow hidden
+Données réelles depuis DB
+En-têtes : Répondant · Établissement · Niveau · Durée · Statut
+Durée en monospace
+Status pills :
+    "✓ Vérifié" bg #E8F5F3 couleur #085041
+    "Public" bg #FDF8EC couleur #633806
+    "Suspect" bg #FEF3F2 couleur #922B21 (durée < 30s)
+Hover row : bg #F7F6F2
+Bouton "Voir les X répondants →" pleine largeur bas
+
+EXPORT EXCEL RÉEL :
+Section bg blanc border radius 12px padding 14px
+4 feuilles présentées en grid 2×2 :
+    📋 bg #E8F5F3 "Données brutes" "Toutes les réponses avec profils"
+    📊 bg #FDF8EC "Statistiques auto" "Graphiques QCM + moyennes"
+    👥 bg #E8F5F3 "Profils démographiques" "Répartition par université"
+    ✅ bg #F0EDE6 "Fiabilité & Qualité" "Taux, suspects, points de chute"
+Hover sheet : border teal bg #E8F5F3
+
+Bouton export teal full-width height 42px :
+    Icon téléchargement + nom fichier "SciConnect_Export_[titre]_[date].xlsx"
+    Clic → GET /api/export/:id → téléchargement réel
+    Animation : texte change en "✓ Téléchargement en cours..." bg vert 2s
+
+Paragraphe méthodologique auto-généré :
+    bg #FDF8EC border or radius 10px padding 12px
+    Texte généré depuis les vraies données :
+    "Les données ont été collectées via SciConnect entre le [date_debut]
+    et le [date_fin]. Sur [total] participants, [complets] ont fourni
+    des réponses complètes ([taux]%). [verifies] répondants ([pct_v]%)
+    ont été vérifiés via email académique institutionnel."
+    Bouton "Copier ce paragraphe →" blanc border teal
+    Clic → navigator.clipboard.writeText() + animation "✓ Copié !"
+
+BACKEND EXPORT (backend/services/export.py) :
+Générer avec openpyxl depuis vraies données DB
+Feuille 1 "Données brutes" :
+    Toutes les réponses réelles avec colonnes :
+    # · Email · Prénom · Type · Université · École · Niveau · Date · Durée(sec) · Complétion(%) · Statut
+    Header bg #005F54 blanc
+    Lignes alternées blanc/#F7F6F2
+    Auto-fit colonnes
+
+Feuille 2 "Statistiques auto" :
+    Pour chaque question QCM : COUNT par option + PieChart openpyxl
+    Pour chaque échelle : AVERAGE(), MEDIAN(), STDEV()
+    Pour texte ouvert : liste des réponses
+
+Feuille 3 "Profils démographiques" :
+    Répartition université avec BarChart openpyxl
+    Répartition niveau avec PieChart
+    Répartition domaine
+
+Feuille 4 "Fiabilité & Qualité" :
+    Complètes vs abandonnées avec taux
+    Suspects surlignés rouge (durée < 30s)
+    Temps moyen par répondant
+    Question avec plus fort abandon surlignée orange
+    Paragraphe méthodologique texte dans cette feuille aussi
+
+CHECKLIST PARTIE 5 :
+□ 4 métriques avec vraies données depuis API
+□ Line chart réponses par jour vraies données
+□ Bar chart complétion par question vraies données
+□ Barres orange si < 75%, teal sinon
+□ Alerte point de chute automatique
+□ 2 donuts université et niveau vraies données
+□ Tableau répondants vraies données triable
+□ Export .xlsx télécharge un vrai fichier
+□ 4 feuilles Excel avec vraies données
+□ Graphiques openpyxl dans feuilles 2 et 3
+□ Paragraphe méthodologique généré depuis vraies données
+□ Copier paragraphe fonctionne clipboard
+
+══════════════════════════════════════════
+PARTIE 6 — PROFIL PUBLIC
+══════════════════════════════════════════
+
+FICHIERS À CRÉER :
+- frontend/profile.html
+- frontend/css/profile.css
+- frontend/js/profile.js
+
+URL : /profil/:slug
+Accessible sans connexion (lecture seule)
+
+TOPBAR :
+"← Retour au feed" bouton gauche
+"Partager" bouton droit (icon SVG + "Partager")
+
+BANNER (bg teal height 90px) :
+SVG décoratif : 3 cercles blancs opacity 0.06 tailles variées
+
+AVATAR (position relative margin 0 16px top -40px) :
+80px circle bg teal border 3px blanc Fraunces 24px initiales
+Badge vérifié absolu bas-droite : 20px circle bg #1A7A5E border 2px blanc SVG ✓
+
+IDENTITÉ + ACTIONS :
+Flex entre infos gauche et boutons droite
+Infos :
+    Nom Fraunces 22px 700
+    École + domaine + niveau muted 13px
+    Badges : "✓ Email vérifié" bg #E8F5F3 + "★ Fondateur" bg #FDF8EC + "240 pts" bg #F0EDE6
+    Depuis [mois] [année] · URL profil muted 11px
+Boutons (margin-top 40px) :
+    "S'abonner" / "Abonné ✓" toggle border teal
+    Icône message (border #E2DED6 hover teal)
+
+BANDE STATS (grid 4 colonnes border-top border-bottom bg blanc) :
+Réponses données / Questionnaires / Taux complétion / Classement #X
+Données depuis GET /api/profiles/:slug/stats
+
+PORTFOLIO QUESTIONNAIRES (section padding 0 16px) :
+Titre "Questionnaires publiés" + "Voir tout →" teal
+Cartes (bg blanc border radius 12px padding 12px 14px gap 8px) :
+    Stripe gauche 4px couleur domaine (border-radius 0)
+    Info : titre tronqué 12px 500 + meta muted 11px
+    Droite : nombre Fraunces 14px teal + "réponses" muted 10px
+    Hover : border teal bg #E8F5F3
+
+BADGES GRID (4 colonnes) :
+Obtenus : bg blanc border radius 10px padding 10px centré
+    Icon 36px circle colored bg + emoji
+    Nom 10px 500 + date/description 9px muted
+Verrouillés : même structure opacity 0.45
+
+CONTRIBUTION (bg blanc border radius 12px padding 14px) :
+3 barres :
+    Ce mois-ci : fill teal 65%
+    Meilleur mois : fill or 100%
+    Total : fill teal clair 47%
+Labels + valeurs
+
+CLASSEMENT (bg blanc border radius 12px padding 14px) :
+Nombre principal Fraunces 36px or + établissement + "Top X%"
+3 lignes : ENCG / UCA / Global avec badges teal
+
+CHECKLIST PARTIE 6 :
+□ /profil/:slug charge sans login
+□ Avatar + badge vérifié visibles
+□ Toggle abonnement POST/DELETE API
+□ Stats band avec vraies données
+□ Portfolio questionnaires depuis API
+□ Badges obtenus vs verrouillés
+□ Barres contribution animées
+□ Classement depuis API
+
+══════════════════════════════════════════
+RÈGLES GLOBALES ABSOLUES
+══════════════════════════════════════════
+
+1. NE JAMAIS toucher index.html / landing.css / landing.js
+2. NE JAMAIS envoyer email de façon synchrone — threading.Thread
+3. NE JAMAIS hardcoder des données fictives dans les stats
+4. NE JAMAIS utiliser monthly_responses_given (supprimé)
+5. NE JAMAIS approuver manuellement les réponses (auto-approuvé)
+6. TOUJOURS utiliser les CSS variables teal/or définies
+7. TOUJOURS Fraunces pour titres + DM Sans pour corps
+8. TOUJOURS spring cubic-bezier(0.32,0.72,0,1) pour animations entrée
+9. TOUJOURS commenter /* EDITABLE: */ avant textes modifiables
+10. TOUJOURS vérifier la checklist avant de passer à la partie suivante
+
+FORMAT MESSAGE FIN DE PARTIE :
+"✅ Partie X ([Nom]) terminée.
+Checklist :
+✓ item 1
+✓ item 2
+...
+Puis-je passer à la Partie X+1 ([Nom]) ?"

@@ -1,0 +1,178 @@
+' ══════════════════════════════════════════
+' SCICONNECT — DIAGRAMME DE CLASSES
+' Modèle de données de la plateforme
+' ══════════════════════════════════════════
+
+@startuml CLASS_SciConnect
+!theme plain
+skinparam class {
+  BackgroundColor #E8F5F3
+  BorderColor #005F54
+  ArrowColor #005F54
+  FontSize 13
+  AttributeFontSize 12
+  StereotypeFontSize 11
+}
+skinparam note {
+  BackgroundColor #FDF8EC
+  BorderColor #C9A84C
+}
+
+title Diagramme de Classes\n**SciConnect — Modèle de données**
+
+class Utilisateur {
+  - id : String
+  - email : String
+  - nom : String
+  - photo_profil : String
+  - slug : String
+  --
+  - universite : String
+  - ecole : String
+  - niveau : String
+  - domaines : Liste
+  - motivations : Liste
+  - temps_disponible : String
+  - domaines_reponse : Liste
+  --
+  - points : Entier
+  - niveau_badge : String
+  - streak : Entier
+  - est_fondateur : Booléen
+  - onboarding_complete : Booléen
+  --
+  - reponses_mensuelles : Entier
+  - date_reset_mensuel : Date
+  - derniere_activite : Date
+  - date_inscription : Date
+  ==
+  + se_connecter()
+  + completer_onboarding()
+  + repondre_questionnaire()
+  + deposer_questionnaire()
+  + consulter_statistiques()
+  + exporter_excel()
+}
+
+class Questionnaire {
+  - id : String
+  - titre : String
+  - description : Texte
+  - lien_google_forms : String
+  - identifiant_formulaire : String
+  - image : String
+  --
+  - domaine : String
+  - niveau_cible : String
+  - objectif_reponses : Entier
+  - nombre_reponses : Entier
+  - taux_completion : Décimal
+  - est_actif : Booléen
+  --
+  - ecole : String
+  - universite : String
+  - date_creation : Date
+  ==
+  + publier()
+  + desactiver()
+  + calculer_statistiques()
+  + generer_export()
+}
+
+class Reponse {
+  - id : String
+  - email_repondant : String
+  - type_repondant : String
+  - est_complete : Booléen
+  - pourcentage_completion : Décimal
+  --
+  - validee_par_auteur : Booléen
+  - ignoree_par_auteur : Booléen
+  - date_creation : Date
+  ==
+  + verifier()
+  + valider()
+  + ignorer()
+}
+
+class Universite {
+  - id : String
+  - nom : String
+  - abreviation : String
+  - ville : String
+  - couleur : String
+  ==
+  + lister_ecoles()
+}
+
+class Ecole {
+  - id : String
+  - nom : String
+  - abreviation : String
+  ==
+}
+
+class ContenuEditable {
+  - textes_landing : JSON
+  - textes_dashboard : JSON
+  - regles : JSON
+  ==
+  + charger()
+  + modifier()
+}
+
+class Parametres {
+  - labels_boutons : JSON
+  - feature_flags : JSON
+  - points : JSON
+  ==
+  + charger()
+  + modifier()
+}
+
+' ═══════════════════════════════════════
+' RELATIONS
+' ═══════════════════════════════════════
+
+Utilisateur "1" -- "0..*" Questionnaire : dépose >
+Utilisateur "1" -- "0..*" Reponse : donne >
+Questionnaire "1" -- "0..*" Reponse : reçoit >
+
+Universite "1" -- "1..*" Ecole : contient >
+Utilisateur "0..*" -- "1" Ecole : appartient à >
+Utilisateur "0..*" -- "1" Universite : inscrit à >
+Questionnaire "0..*" -- "1" Ecole : cible >
+Questionnaire "0..*" -- "1" Universite : visible par >
+
+' ═══════════════════════════════════════
+' NOTES
+' ═══════════════════════════════════════
+
+note bottom of Utilisateur
+  **Règle des 2** :
+  reponses_mensuelles ≥ 2
+  pour pouvoir déposer.
+  
+  **Fondateur** :
+  Parmi les 50 premiers inscrits.
+  1er dépôt gratuit.
+end note
+
+note bottom of Reponse
+  **3 types de répondants** :
+  • "verified" — étudiant connecté
+  • "public" — visiteur sans compte
+  • "anonymous" — anonyme
+end note
+
+note right of ContenuEditable
+  Fichiers JSON modifiables
+  sans redémarrer le serveur.
+  Chargés dynamiquement
+  par chaque page.
+end note
+
+note "Le compteur\nreponses_mensuelles\nse remet à 0\nle 1er de chaque mois" as N1
+N1 .. Utilisateur
+
+@enduml

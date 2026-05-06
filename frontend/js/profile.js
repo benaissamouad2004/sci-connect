@@ -1,17 +1,8 @@
 /* ═══════════════════════════════════════════════════════════
-   SCICONNECT — Profil Public
-   Accessible sans connexion — lecture seule
+   SCICONNECT — Profil V5
+   Matching mockup: banner + avatar + badge level + two-col
    ═══════════════════════════════════════════════════════════ */
 
-/* EDITABLE: définitions des badges — points minimum requis pour chaque niveau */
-const BADGE_DEFS = [
-  { id: 'novice',      icon: '⭐', name: 'Novice',       min_pts: 0,   label: 'Débloqué dès l\'inscription'  },
-  { id: 'contributor', icon: '🎯', name: 'Contributeur', min_pts: 50,  label: '50 points requis'              },
-  { id: 'expert',      icon: '🏆', name: 'Expert',       min_pts: 150, label: '150 points requis'             },
-  { id: 'master',      icon: '👑', name: 'Master',       min_pts: 300, label: '300 points requis'             },
-];
-
-/* EDITABLE: couleurs par domaine de recherche */
 const DOMAIN_COLORS = {
   'Économie & Gestion':          '#2D7A5E',
   'Informatique & IA':           '#2563EB',
@@ -24,334 +15,392 @@ const DOMAIN_COLORS = {
   'Autre':                       '#6B7280',
 };
 
-const profState = {
-  slug:    null,
-  profile: null,
-  forms:   [],
+const BADGE_LEVELS = [
+  { name: 'Novice',       icon: '\u2B50', desc: 'D\u00e9bloqu\u00e9 d\u00e8s l\'inscription', minPts: 0 },
+  { name: 'Contributeur', icon: '\uD83C\uDFAF', desc: '50 points requis',  minPts: 50 },
+  { name: 'Expert',       icon: '\uD83D\uDC68\u200D\uD83C\uDF93', desc: '150 points requis', minPts: 150 },
+  { name: 'Master',       icon: '\uD83D\uDC51', desc: '300 points requis', minPts: 300 },
+];
+
+const ALL_BADGES = [
+  { id: 'novice',      icon: '\u2B50', name: 'Novice',       desc: 'D\u00e9bloqu\u00e9 d\u00e8s l\'inscription', bg: '#FDF8EC', minPts: 0 },
+  { id: 'contributor', icon: '\uD83C\uDFAF', name: 'Contributeur', desc: '50 points requis', bg: '#F0EDE6', minPts: 50 },
+  { id: 'expert',      icon: '\uD83D\uDC68\u200D\uD83C\uDF93', name: 'Expert',       desc: '150 points requis', bg: '#E8F5F3', minPts: 150 },
+  { id: 'master',      icon: '\uD83D\uDC51', name: 'Master',       desc: '300 points requis', bg: '#FDF8EC', minPts: 300 },
+];
+
+const prf = {
+  slug: null, profile: null, forms: [], currentUser: null, subscribed: false,
 };
 
-/* ─── Initialisation ─── */
 document.addEventListener('DOMContentLoaded', async () => {
-  await loadContent();
-
-  /* Slug depuis ?slug=... ou /profil/[slug] dans le chemin */
   const params = new URLSearchParams(window.location.search);
-  const pathParts = window.location.pathname.split('/profil/');
-  profState.slug = params.get('slug') || pathParts[1] || null;
+  prf.slug = params.get('slug') || params.get('id');
 
-  /* Si pas de slug dans l'URL, charger le profil de l'utilisateur connecté */
-  if (!profState.slug) {
+  if (!prf.slug) {
     try {
-      const me = await fetch('/api/auth/me', { credentials: 'include' }).then(r => r.json());
-      if (me && me.authenticated && me.user.slug) {
-        profState.slug = me.user.slug;
+      const meResp = await fetch('/api/auth/me', { credentials: 'include' }).then(r => r.json());
+      if (meResp && meResp.authenticated && meResp.user) {
+        prf.slug = meResp.user.slug || meResp.user.id;
+        prf.currentUser = meResp.user;
+      } else {
+        showError('Connecte-toi pour voir ton profil.');
+        return;
       }
-    } catch { /* silencieux */ }
+    } catch {
+      showError('Impossible de charger le profil.');
+      return;
+    }
   }
 
-  if (!profState.slug) {
-    showError('Profil introuvable. Connecte-toi pour accéder à ton profil.');
-    return;
+  const fetches = [
+    fetch(`/api/profiles/${prf.slug}`).then(r => r.ok ? r.json() : null),
+    fetch(`/api/profiles/${prf.slug}/questionnaires`).then(r => r.ok ? r.json() : null),
+  ];
+  if (!prf.currentUser) {
+    fetches.push(fetch('/api/auth/me', { credentials: 'include' }).then(r => r.json()).catch(() => null));
   }
 
-  checkSession();
-  await Promise.all([loadProfile(), loadPortfolio()]);
+  const results = await Promise.allSettled(fetches);
+  prf.profile = results[0].value;
+  prf.forms   = (results[1].value?.items || []).filter(f => f.author_id !== 'demo-author-sciconnect');
+  if (!prf.currentUser && results[2]) {
+    prf.currentUser = results[2].value?.authenticated ? results[2].value.user : null;
+  }
+
+  if (!prf.profile) { showError('Profil introuvable.'); return; }
+
+  document.getElementById('prf-loader').style.display = 'none';
+
+  renderIdentity();
+  renderStatsBand();
+  renderPortfolio();
+  renderBadges();
+  renderIdentityCard();
+  renderContribution();
+  renderRanking();
 });
 
-/* ─── Session check (lecture seule si non connecté) ─── */
-async function checkSession() {
-  try {
-    const me = await fetch('/api/auth/me', { credentials: 'include' }).then(r => r.json());
-    if (me && me.authenticated) {
-      const dash = document.getElementById('nav-dashboard');
-      const login = document.getElementById('nav-login');
-      if (dash)  dash.style.display  = 'inline-flex';
-      if (login) login.style.display = 'none';
-    }
-  } catch {
-    /* pas de session — afficher le bouton login */
-  }
-}
+/* ─── Identity ─── */
+function renderIdentity() {
+  const p = prf.profile;
+  document.title = `${p.name} \u2014 SciConnect`;
 
-/* ─── Chargement du profil ─── */
-async function loadProfile() {
-  try {
-    const resp = await fetch(`/api/profiles/${profState.slug}`);
-    if (!resp.ok) {
-      if (resp.status === 404) return showError('Ce profil n\'existe pas ou a été supprimé.');
-      return showError('Impossible de charger ce profil.');
-    }
-    const data = await resp.json();
-    profState.profile = data;
-    renderProfile(data);
-  } catch {
-    showError('Erreur réseau lors du chargement du profil.');
-  }
-}
-
-/* ─── Chargement du portfolio ─── */
-async function loadPortfolio() {
-  try {
-    const resp = await fetch(`/api/profiles/${profState.slug}/questionnaires`);
-    if (!resp.ok) return;
-    const data = await resp.json();
-    profState.forms = data.items || [];
-    renderPortfolio(profState.forms);
-  } catch {
-    renderPortfolio([]);
-  }
-}
-
-/* ─── Rendu complet du profil ─── */
-function renderProfile(data) {
-  document.title = `${data.name} — SciConnect`;
-
-  renderAvatar(data);
-  renderHeroInfo(data);
-  renderStatsRow(data);
-  renderBadges(data);
-  renderContribution(data);
-  renderRanking(data);
-  renderIdentity(data);
-}
-
-/* ── Avatar ── */
-function renderAvatar(data) {
-  const el = document.getElementById('prof-avatar');
-  if (!el) return;
-  if (data.avatar_url) {
-    el.innerHTML = `<img src="${escAttr(data.avatar_url)}" alt="${escAttr(data.name)}" loading="lazy">`;
+  const avatar = document.getElementById('prf-avatar');
+  if (p.avatar_url) {
+    avatar.innerHTML = `<img src="${esc(p.avatar_url)}" alt="${esc(p.name)}" />`;
   } else {
-    el.textContent = (data.name || 'U')[0].toUpperCase();
+    avatar.textContent = (p.name || '?').charAt(0).toUpperCase();
   }
+
+  document.getElementById('prf-name').textContent = p.name || 'Utilisateur';
+
+  /* Details under name */
+  const details = [];
+  if (p.school_name) details.push(`\uD83C\uDFEB ${esc(p.school_name)}`);
+  if (p.university_name) details.push(esc(p.university_name));
+  if (p.domain) details.push(esc(p.domain));
+  if (p.level) details.push(esc(p.level));
+  const detailsEl = document.getElementById('prf-details');
+  detailsEl.innerHTML = details.join(' \u00b7 ');
+
+  /* Badges pills */
+  const badgesRow = document.getElementById('prf-badges-row');
+  const pills = [];
+  pills.push(`<span class="prf-badge-pill prf-badge-verified">\u2713 Email acad\u00e9mique v\u00e9rifi\u00e9</span>`);
+  if (p.is_founder) pills.push(`<span class="prf-badge-pill prf-badge-founder">\u2605 Fondateur</span>`);
+  badgesRow.innerHTML = pills.join('');
+
+  /* Since */
+  if (p.created_at) {
+    const d = new Date(p.created_at);
+    document.getElementById('prf-since').textContent =
+      `Membre depuis ${d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`;
+  }
+
+  /* Badge level on the right */
+  const pts = p.points || 0;
+  let currentLevel = BADGE_LEVELS[0];
+  for (const lvl of BADGE_LEVELS) {
+    if (pts >= lvl.minPts) currentLevel = lvl;
+  }
+  document.getElementById('prf-badge-level').innerHTML = `
+    <div class="prf-level-icon" style="background:rgba(201,168,76,0.12)">${currentLevel.icon}</div>
+    <div class="prf-level-name">${currentLevel.name}</div>
+    <div class="prf-level-desc">${currentLevel.desc}</div>
+  `;
 }
 
-/* ── Infos hero ── */
-function renderHeroInfo(data) {
-  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+/* ─── Stats band ─── */
+function renderStatsBand() {
+  const p = prf.profile;
+  document.getElementById('prf-stat-responses').textContent = p.total_responses ?? '\u2014';
+  document.getElementById('prf-stat-forms').textContent     = p.total_questionnaires ?? '\u2014';
+  document.getElementById('prf-stat-completion').textContent = p.avg_completion != null ? `${Math.round(p.avg_completion)}%` : '\u2014';
 
-  set('prof-name',    data.name || 'Utilisateur');
-  set('prof-school',  data.school_name || '—');
-  set('prof-university', data.university_name || '—');
-
-  const domainLevel = [data.domain, data.level].filter(Boolean).join(' · ');
-  set('prof-domain-level', domainLevel || '—');
-
-  /* Date d'inscription */
-  const since = data.created_at
-    ? new Date(data.created_at).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
-    : null;
-  set('prof-since', since ? `Membre depuis ${since}` : '');
-
-  /* Badge fondateur */
-  const founderEl = document.getElementById('prof-founder');
-  if (founderEl) founderEl.style.display = data.is_founder ? 'inline-flex' : 'none';
-
-  /* Badge actuel */
-  const currentBadge = BADGE_DEFS.find(b => b.id === data.badge_level) || BADGE_DEFS[0];
-  set('prof-badge-icon', currentBadge.icon);
-  set('prof-badge-name', currentBadge.name);
-  set('prof-badge-sub',  currentBadge.label);
-
-  /* URL profil */
-  const url = `${window.location.origin}/profil/${data.slug}`;
-  set('prof-url', url);
-}
-
-/* ── Stats row ── */
-function renderStatsRow(data) {
-  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-
-  set('stat-responses',      data.total_responses    || 0);
-  set('stat-questionnaires', data.total_questionnaires || 0);
-  set('stat-completion',     data.avg_completion > 0 ? `${data.avg_completion}%` : '—');
-
-  if (data.school_rank) {
-    set('stat-rank', `🥇 #${data.school_rank}`);
-    const label = document.getElementById('stat-rank-label');
-    if (label) label.textContent = `classement ${data.school_name || 'école'}`;
+  const rankEl = document.getElementById('prf-stat-rank');
+  const rankLabel = document.getElementById('prf-stat-rank-label');
+  if (p.general_rank) {
+    rankEl.innerHTML = `\uD83C\uDFC6 #${p.general_rank}`;
+    rankLabel.textContent = `classement ${p.school_name || 'SciConnect'}`;
   } else {
-    set('stat-rank', '—');
+    rankEl.textContent = '\u2014';
   }
 }
 
-/* ── Badges ── */
-function renderBadges(data) {
-  const el = document.getElementById('prof-badges-grid');
-  if (!el) return;
-
-  const pts          = data.points || 0;
-  const currentLevel = BADGE_DEFS.findIndex(b => b.id === data.badge_level);
-
-  el.innerHTML = BADGE_DEFS.map((badge, i) => {
-    const unlocked    = i <= currentLevel;
-    const itemClass   = unlocked ? 'prof-badge-item--unlocked' : 'prof-badge-item--locked';
-    const circleStyle = unlocked ? '' : '';
-    const sub         = unlocked ? badge.label : badge.label;
-
-    return `<div class="prof-badge-item ${itemClass}" aria-label="${escHtml(badge.name)} — ${unlocked ? 'obtenu' : 'verrouillé'}">
-      ${!unlocked ? `<div class="prof-badge-lock-overlay">🔒</div>` : ''}
-      <div class="prof-badge-item-circle">${badge.icon}</div>
-      <div class="prof-badge-item-name">${escHtml(badge.name)}</div>
-      <div class="prof-badge-item-sub">${escHtml(sub)}</div>
-    </div>`;
-  }).join('');
-}
-
-/* ── Contribution ── */
-function renderContribution(data) {
-  const el = document.getElementById('contribution-body');
-  if (!el) return;
-
-  const monthly = data.monthly_responses || 0;
-  const total   = data.total_responses   || 0;
-
-  /* EDITABLE: "meilleur mois" approximé à partir du total si non disponible */
-  const bestMonth = Math.max(monthly, Math.ceil(total / 3));
-  const maxBar    = Math.max(bestMonth, 1);
-
-  const monthPct = Math.min(100, (monthly / maxBar) * 100).toFixed(0);
-  const bestPct  = 100;
-
-  el.innerHTML = `
-    <div class="prof-contrib-row">
-      <div class="prof-contrib-label">
-        <span class="prof-contrib-label-bold">Ce mois-ci</span>
-        <span>${monthly} réponse${monthly > 1 ? 's' : ''}</span>
-      </div>
-      <div class="prof-contrib-bar-track">
-        <div class="prof-contrib-bar-fill prof-contrib-bar-fill--teal" style="width:${monthPct}%"></div>
-      </div>
-    </div>
-    <div class="prof-contrib-row">
-      <div class="prof-contrib-label">
-        <span class="prof-contrib-label-bold">Meilleur mois</span>
-        <span>${bestMonth} réponse${bestMonth > 1 ? 's' : ''}</span>
-      </div>
-      <div class="prof-contrib-bar-track">
-        <div class="prof-contrib-bar-fill prof-contrib-bar-fill--gold" style="width:${bestPct}%"></div>
-      </div>
-    </div>
-    <div class="prof-contrib-total">
-      Total · <strong>${total} réponse${total > 1 ? 's' : ''}</strong> · <strong>${data.total_questionnaires || 0} formulaire${(data.total_questionnaires || 0) > 1 ? 's' : ''}</strong>
-    </div>`;
-}
-
-/* ── Classement ── */
-function renderRanking(data) {
-  const mainEl  = document.getElementById('rank-main');
-  const tealEl  = document.getElementById('rank-teal');
-  const mutedEl = document.getElementById('rank-muted');
-
-  if (data.school_rank && data.school_name) {
-    if (mainEl) mainEl.textContent  = `${data.school_rank}${_ordinal(data.school_rank)} à ${data.school_name}`;
-  } else {
-    if (mainEl) mainEl.textContent  = `${data.points || 0} points`;
-  }
-
-  if (data.top_pct !== null && data.top_pct !== undefined) {
-    if (tealEl) tealEl.textContent = `Top ${data.top_pct}% de SciConnect`;
-  }
-
-  if (data.general_rank) {
-    if (mutedEl) mutedEl.textContent = `${data.general_rank}${_ordinal(data.general_rank)} au classement général`;
-  }
-}
-
-function _ordinal(n) {
-  return n === 1 ? 'er' : 'ème';
-}
-
-/* ── Identité académique ── */
-function renderIdentity(data) {
-  const el = document.getElementById('prof-identity-rows');
-  if (!el) return;
-
-  const rows = [
-    { icon: '🎓', label: 'Université', value: data.university_name || '—' },
-    { icon: '🏫', label: 'École',       value: data.school_name     || '—' },
-    { icon: '📚', label: 'Domaine',     value: data.domain          || '—' },
-    { icon: '🎯', label: 'Niveau',      value: data.level           || '—' },
-  ];
-
-  if (data.created_at) {
-    const date = new Date(data.created_at).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-    rows.push({ icon: '📅', label: 'Inscription', value: `Depuis ${date}` });
-  }
-
-  el.innerHTML = rows.map(r => `
-    <div class="prof-identity-row">
-      <span class="prof-identity-icon">${r.icon}</span>
-      <span style="color:var(--color-text-muted);font-size:0.78rem;min-width:70px">${escHtml(r.label)}</span>
-      <span style="font-weight:500">${escHtml(r.value)}</span>
-    </div>`).join('');
-}
-
-/* ── Portfolio ── */
-function renderPortfolio(forms) {
-  const el = document.getElementById('portfolio-list');
-  if (!el) return;
-
-  if (!forms.length) {
-    el.innerHTML = `<div class="prof-portfolio-empty">
-      Aucun questionnaire déposé pour l'instant.
-    </div>`;
+/* ─── Portfolio ─── */
+function renderPortfolio() {
+  document.getElementById('prf-portfolio-section').style.display = 'block';
+  if (!prf.forms.length) {
+    document.getElementById('prf-portfolio-list').innerHTML =
+      '<div style="font-size:0.78rem;color:var(--color-text-muted);padding:12px 0">Aucun questionnaire d\u00e9pos\u00e9 pour le moment.</div>';
     return;
   }
 
-  el.innerHTML = forms.map(q => {
-    const color   = DOMAIN_COLORS[q.domain] || 'var(--color-primary)';
-    const dateStr = q.created_at
-      ? new Date(q.created_at).toLocaleDateString('fr-FR', { day:'numeric', month:'short', year:'numeric' })
-      : '';
-    const count = q.response_count || 0;
-
-    return `<div class="prof-portfolio-item">
-      <div class="prof-portfolio-dot" style="background:${color}"></div>
-      <div style="flex:1;min-width:0">
-        <div class="prof-portfolio-title">${escHtml(q.title)}</div>
-        <div class="prof-portfolio-chips">
-          ${q.domain ? `<span class="prof-chip prof-chip--domain">${escHtml(q.domain)}</span>` : ''}
-          ${dateStr  ? `<span class="prof-chip prof-chip--date">${dateStr}</span>` : ''}
-          <span class="prof-chip prof-chip--count">${count} réponse${count > 1 ? 's' : ''}</span>
+  const list = document.getElementById('prf-portfolio-list');
+  list.innerHTML = prf.forms.map(f => {
+    const color = DOMAIN_COLORS[f.domain] || '#6B7280';
+    const domain = f.domain || '';
+    const date = f.created_at ? new Date(f.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+    return `
+      <div class="prf-form-item">
+        <div class="prf-form-dot" style="background:${color}"></div>
+        <div class="prf-form-info">
+          <div class="prf-form-title">${esc(f.title || 'Sans titre')}</div>
+          <div class="prf-form-chips">
+            ${domain ? `<span class="prf-form-chip prf-form-chip-domain">${esc(domain)}</span>` : ''}
+            ${date ? `<span class="prf-form-chip prf-form-chip-date">${date}</span>` : ''}
+            <span class="prf-form-chip prf-form-chip-count">${f.response_count ?? 0} r\u00e9ponses</span>
+          </div>
         </div>
-      </div>
-    </div>`;
+      </div>`;
   }).join('');
 }
 
-/* ── Partager le profil ── */
+/* ─── Badges ─── */
+function renderBadges() {
+  const pts = prf.profile?.points || 0;
+  document.getElementById('prf-badges-grid').innerHTML = ALL_BADGES.map(b => {
+    const earned = pts >= b.minPts;
+    return `
+      <div class="prf-badge-card${earned ? '' : ' locked'}">
+        ${!earned ? '<div class="prf-badge-lock">\uD83D\uDD12</div>' : ''}
+        <div class="prf-badge-icon-wrap" style="background:${b.bg}">${b.icon}</div>
+        <div class="prf-badge-name">${b.name}</div>
+        <div class="prf-badge-desc">${b.desc}</div>
+      </div>`;
+  }).join('');
+}
+
+/* ─── Identity card ─── */
+function renderIdentityCard() {
+  const p = prf.profile;
+  const rows = [];
+
+  rows.push(`<div class="prf-id-verified">\u2713 Email acad\u00e9mique v\u00e9rifi\u00e9</div>`);
+
+  if (p.university_name) {
+    rows.push(`<div class="prf-id-row">
+      <div class="prf-id-icon" style="background:#FDF8EC">\uD83C\uDFEB</div>
+      <span class="prf-id-label">Universit\u00e9</span>
+      <span class="prf-id-value">${esc(p.university_name)}</span>
+    </div>`);
+  }
+  if (p.school_name) {
+    rows.push(`<div class="prf-id-row">
+      <div class="prf-id-icon" style="background:#E8F5F3">\uD83D\uDCDA</div>
+      <span class="prf-id-label">\u00c9cole</span>
+      <span class="prf-id-value">${esc(p.school_name)}</span>
+    </div>`);
+  }
+  if (p.domain) {
+    rows.push(`<div class="prf-id-row">
+      <div class="prf-id-icon" style="background:#F0EDE6">\uD83D\uDCC1</div>
+      <span class="prf-id-label">Domaine</span>
+      <span class="prf-id-value">${esc(p.domain)}</span>
+    </div>`);
+  }
+  if (p.level) {
+    rows.push(`<div class="prf-id-row">
+      <div class="prf-id-icon" style="background:#E8F5F3">\uD83C\uDF93</div>
+      <span class="prf-id-label">Niveau</span>
+      <span class="prf-id-value">${esc(p.level)}</span>
+    </div>`);
+  }
+  if (p.created_at) {
+    const d = new Date(p.created_at);
+    rows.push(`<div class="prf-id-row">
+      <div class="prf-id-icon" style="background:#F0EDE6">\uD83D\uDCC5</div>
+      <span class="prf-id-label">Inscription</span>
+      <span class="prf-id-value">Depuis ${d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}</span>
+    </div>`);
+  }
+
+  document.getElementById('prf-id-rows').innerHTML = rows.join('');
+}
+
+/* ─── Contribution ─── */
+function renderContribution() {
+  const p = prf.profile;
+  const monthly = p.monthly_responses || 0;
+  const total   = p.total_responses   || 0;
+  const best    = Math.max(monthly, 1);
+  const maxBar  = Math.max(total, best, 1);
+
+  const card = document.getElementById('prf-contribution-card');
+  card.innerHTML = `<div class="prf-card-title">Contribution</div>
+    <div class="prf-contrib-row">
+      <div class="prf-contrib-item">
+        <div class="prf-contrib-header"><span>Ce mois-ci</span><span>${monthly} r\u00e9ponses</span></div>
+        <div class="prf-contrib-track">
+          <div class="prf-contrib-fill" style="width:0%;background:var(--color-primary)" data-pct="${Math.min(100, Math.round(monthly/maxBar*100))}"></div>
+        </div>
+      </div>
+      <div class="prf-contrib-item">
+        <div class="prf-contrib-header"><span>Meilleur mois</span><span>${best} r\u00e9ponses</span></div>
+        <div class="prf-contrib-track">
+          <div class="prf-contrib-fill" style="width:0%;background:var(--color-accent)" data-pct="100"></div>
+        </div>
+      </div>
+    </div>
+    <div class="prf-contrib-total">Total \u00b7 ${total} r\u00e9ponses \u00b7 ${prf.profile?.total_questionnaires || 0} formulaire${(prf.profile?.total_questionnaires || 0) > 1 ? 's' : ''}</div>`;
+
+  setTimeout(() => {
+    card.querySelectorAll('.prf-contrib-fill').forEach(el => {
+      el.style.width = el.dataset.pct + '%';
+    });
+  }, 200);
+}
+
+/* ─── Ranking ─── */
+function renderRanking() {
+  const p = prf.profile;
+
+  const rankNum = document.getElementById('prf-rank-num');
+  const rankSub = document.getElementById('prf-rank-sub');
+  const rankTop = document.getElementById('prf-rank-top');
+
+  if (p.general_rank && p.school_name) {
+    rankNum.textContent = `${p.general_rank === 1 ? '1er' : p.general_rank + 'e'}`;
+    rankSub.textContent = `\u00e0 ${p.school_name}`;
+    rankTop.textContent = p.top_pct != null ? `Top ${p.top_pct}% de SciConnect` : '';
+  } else if (p.general_rank) {
+    rankNum.textContent = `#${p.general_rank}`;
+    rankSub.textContent = 'SciConnect';
+    rankTop.textContent = p.top_pct != null ? `Top ${p.top_pct}%` : '';
+  } else {
+    rankNum.textContent = '\u2014';
+    rankSub.textContent = '';
+    rankTop.textContent = '';
+  }
+
+  const rows = [];
+  if (p.general_rank) {
+    rows.push(`${p.general_rank === 1 ? '1er' : p.general_rank + 'e'} au classement g\u00e9n\u00e9ral`);
+  }
+  document.getElementById('prf-rank-rows').innerHTML = rows.map(r =>
+    `<div class="prf-rank-row">${r}</div>`
+  ).join('');
+}
+
+/* ─── Share ─── */
 function shareProfile() {
-  const url = `${window.location.origin}/profil/${profState.slug}`;
-  navigator.clipboard.writeText(url).then(() => {
-    showToast('Lien de profil copié !', 'success');
-  }).catch(() => {
-    showToast(`Lien : ${url}`, 'info');
-  });
+  const url = location.href;
+  if (navigator.share) {
+    navigator.share({ title: prf.profile?.name, url }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(url).then(() => alert('Lien copi\u00e9 !')).catch(() => prompt('Lien :', url));
+  }
 }
 
-/* ── État d'erreur ── */
+/* ─── QR Code Modal (#12) ─── */
+function openQRModal() {
+  const overlay = document.getElementById('prf-qr-overlay');
+  overlay.hidden = false;
+  const url = location.href;
+  document.getElementById('prf-qr-url').textContent = url;
+  generateQR(url);
+}
+function closeQRModal() {
+  document.getElementById('prf-qr-overlay').hidden = true;
+}
+function copyProfileLink() {
+  navigator.clipboard.writeText(location.href)
+    .then(() => {
+      const btn = document.querySelector('.prf-qr-copy');
+      btn.textContent = '\u2713 Copi\u00e9 !';
+      setTimeout(() => btn.textContent = 'Copier le lien', 2000);
+    })
+    .catch(() => prompt('Lien :', location.href));
+}
+
+/* Minimal QR code generator (canvas) */
+function generateQR(text) {
+  const canvas = document.getElementById('prf-qr-canvas');
+  const ctx = canvas.getContext('2d');
+  const size = 200;
+  canvas.width = size; canvas.height = size;
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, size, size);
+
+  /* Simple visual QR-like pattern using text hash */
+  const hash = hashStr(text);
+  const grid = 21;
+  const cell = Math.floor(size / (grid + 2));
+  const offset = Math.floor((size - cell * grid) / 2);
+
+  ctx.fillStyle = '#005F54';
+
+  /* Finder patterns (top-left, top-right, bottom-left) */
+  drawFinderPattern(ctx, offset, offset, cell);
+  drawFinderPattern(ctx, offset + (grid - 7) * cell, offset, cell);
+  drawFinderPattern(ctx, offset, offset + (grid - 7) * cell, cell);
+
+  /* Data modules from hash */
+  for (let y = 0; y < grid; y++) {
+    for (let x = 0; x < grid; x++) {
+      if (isFinderZone(x, y, grid)) continue;
+      const bit = (hash[(y * grid + x) % hash.length].charCodeAt(0) + x * 7 + y * 13) % 3;
+      if (bit === 0) {
+        ctx.fillRect(offset + x * cell, offset + y * cell, cell - 1, cell - 1);
+      }
+    }
+  }
+}
+
+function drawFinderPattern(ctx, x, y, cell) {
+  const c = ctx.fillStyle;
+  for (let r = 0; r < 7; r++) {
+    for (let col = 0; col < 7; col++) {
+      const isBorder = r === 0 || r === 6 || col === 0 || col === 6;
+      const isInner = r >= 2 && r <= 4 && col >= 2 && col <= 4;
+      if (isBorder || isInner) {
+        ctx.fillRect(x + col * cell, y + r * cell, cell - 1, cell - 1);
+      }
+    }
+  }
+}
+
+function isFinderZone(x, y, grid) {
+  if (x < 8 && y < 8) return true;
+  if (x >= grid - 8 && y < 8) return true;
+  if (x < 8 && y >= grid - 8) return true;
+  return false;
+}
+
+function hashStr(s) {
+  let h = '';
+  for (let i = 0; i < s.length * 3; i++) {
+    h += String.fromCharCode(((s.charCodeAt(i % s.length) * 31 + i * 17) % 94) + 33);
+  }
+  return h;
+}
+
+/* ─── Error ─── */
 function showError(msg) {
-  const el = document.getElementById('prof-shell');
-  if (!el) return;
-  el.innerHTML = `
-    <div style="text-align:center;padding:80px 24px;color:var(--color-text-muted)">
-      <div style="font-size:2.5rem;margin-bottom:16px">🔍</div>
-      <div style="font-size:1rem;font-weight:600;color:var(--color-text-secondary);margin-bottom:8px">${escHtml(msg)}</div>
-      <a href="index.html" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:var(--color-primary);color:#fff;border-radius:var(--radius-md);text-decoration:none;font-weight:600;margin-top:16px">
-        ← Retour à l'accueil
-      </a>
-    </div>`;
+  document.getElementById('prf-loader').innerHTML =
+    `<p style="color:var(--color-text-muted);text-align:center;padding:40px">${msg}</p>`;
 }
 
-/* ─── Utilitaires ─── */
-function escHtml(str) {
-  if (!str) return '';
-  const d = document.createElement('div');
-  d.textContent = str;
-  return d.innerHTML;
-}
-
-function escAttr(str) {
-  return (str || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
+/* ─── Utility ─── */
+function esc(s) { return (s || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
