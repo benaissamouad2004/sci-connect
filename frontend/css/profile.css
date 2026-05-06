@@ -116,6 +116,34 @@ body { background: var(--color-bg); margin: 0; }
 
 .prf-since { font-size: 0.72rem; color: var(--color-text-muted); margin: 0; }
 
+/* Bio display */
+.prf-bio {
+  font-size: 0.82rem; color: var(--color-text-secondary);
+  line-height: 1.6; margin: 6px 0 0; max-width: 500px;
+}
+.prf-bio:empty { display: none; }
+
+/* Bio edit card */
+.prf-bio-textarea {
+  width: 100%; border: 1.5px solid var(--color-border);
+  border-radius: 12px; padding: 12px 14px;
+  font-family: var(--font-ui); font-size: 0.82rem;
+  color: var(--color-text); background: var(--color-surface);
+  resize: vertical; min-height: 80px; max-height: 160px;
+  transition: border-color 200ms; line-height: 1.5;
+}
+.prf-bio-textarea:focus { outline: none; border-color: var(--color-primary); }
+.prf-bio-save {
+  display: block; width: 100%; margin-top: 10px;
+  padding: 10px; border: none; border-radius: 10px;
+  background: linear-gradient(135deg, #005F54, #008573);
+  color: #fff; font-family: var(--font-ui);
+  font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: all 200ms;
+}
+.prf-bio-save:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,95,84,0.2); }
+.prf-bio-save.saved { background: #E8F5F3; color: var(--color-primary); }
+
 /* Badge level right side */
 .prf-identity-right {
   display: flex; flex-direction: column;

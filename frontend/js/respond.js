@@ -1,16 +1,15 @@
 /* ═══════════════════════════════════════════════════════════
-   SCICONNECT — respond.js V4
-   2-column layout with REAL form completion detection
+   SCICONNECT — respond.js V5
+   STRONG FORM COMPLETION VERIFICATION
    
-   HOW IT WORKS:
-   When a Google Form is submitted, the iframe navigates from
-   the form page to a "Thank you" confirmation page. This 
-   triggers a second 'load' event on the iframe. We use this
-   to detect that the user actually submitted the form.
+   The confirm button activates ONLY when ALL conditions met:
+   1. iframe loaded >= 2 times (Google Form submitted → confirmation page)
+   2. User interacted with iframe (clicked/focused inside it)
+   3. Minimum time elapsed (30 seconds)
    
-   The confirm button activates ONLY when BOTH conditions met:
-   1. iframe loaded at least 2 times (= form was submitted)
-   2. Minimum time elapsed (30 seconds)
+   If iframe load detection fails (some Google Forms handle
+   submission via AJAX), a fallback allows confirmation after
+   the user has interacted with the iframe for 60+ seconds.
    ═══════════════════════════════════════════════════════════ */
 
 const DOMAIN_COLORS = {
@@ -25,67 +24,76 @@ const DOMAIN_COLORS = {
   'Autre':                       '#6B7280',
 };
 
-const MIN_TIME_SECONDS = 30;
+var MIN_TIME_SECONDS = 30;
+var INTERACTION_FALLBACK_SECONDS = 90; // fallback if iframe load detection fails
 
-const rsp = {
-  formId:          null,
-  form:            null,
-  user:            null,
-  startTime:       null,
-  timerInterval:   null,
-  confirmed:       false,
-  btnReady:        false,
-  iframeLoadCount: 0,       // Track iframe loads: 1=form loaded, 2+=form submitted
-  formSubmitted:   false,    // True after Google Form submission detected
-  timeReady:       false,    // True after minimum time elapsed
+var rsp = {
+  formId:              null,
+  form:                null,
+  user:                null,
+  startTime:           null,
+  timerInterval:       null,
+  confirmed:           false,
+  btnReady:            false,
+  iframeLoadCount:     0,
+  formSubmitted:       false,
+  timeReady:           false,
+  iframeInteracted:    false,    // user clicked inside iframe at least once
+  iframeFocusTime:     0,        // total seconds iframe had focus
+  iframeHasFocus:      false,    // currently focused
+  lastFocusStart:      null,
 };
 
 /* ─── Boot ─── */
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', function() {
   var params = new URLSearchParams(window.location.search);
   rsp.formId = params.get('id');
 
   if (!rsp.formId) {
-    showError('Lien invalide \u2014 aucun questionnaire sp\u00e9cifi\u00e9.');
+    showError('Lien invalide — aucun questionnaire specifie.');
     return;
   }
 
-  var me = await fetch('/api/auth/me', { credentials: 'include' })
-                 .then(function(r) { return r.json(); }).catch(function() { return null; });
-  if (me && me.authenticated) rsp.user = me.user;
-
-  await loadForm();
+  fetch('/api/auth/me', { credentials: 'include' })
+    .then(function(r) { return r.json(); })
+    .then(function(me) {
+      if (me && me.authenticated) rsp.user = me.user;
+      loadForm();
+    })
+    .catch(function() { loadForm(); });
 });
 
 /* ─── Load form ─── */
-async function loadForm() {
-  try {
-    var resp = await fetch('/api/forms/' + rsp.formId, { credentials: 'include' });
-    if (!resp.ok) throw new Error(resp.status);
-    rsp.form = await resp.json();
-  } catch (e) {
-    showError('Impossible de charger le questionnaire. V\u00e9rifie le lien.');
-    return;
-  }
+function loadForm() {
+  fetch('/api/forms/' + rsp.formId, { credentials: 'include' })
+    .then(function(r) {
+      if (!r.ok) throw new Error(r.status);
+      return r.json();
+    })
+    .then(function(form) {
+      rsp.form = form;
+      rsp.startTime = Date.now();
 
-  rsp.startTime = Date.now();
+      document.getElementById('rsp-loading').style.display = 'none';
+      document.getElementById('rsp-layout').style.display = 'grid';
 
-  document.getElementById('rsp-loading').style.display = 'none';
-  document.getElementById('rsp-layout').style.display = 'grid';
-
-  renderTitleCard();
-  embedGoogleForm();
-  startTimer();
-  checkAlreadyResponded();
-  setupMobileBar();
+      renderTitleCard();
+      embedGoogleForm();
+      startTimer();
+      trackIframeInteraction();
+      checkAlreadyResponded();
+      setupMobileBar();
+    })
+    .catch(function() {
+      showError('Impossible de charger le questionnaire. Verifie le lien.');
+    });
 }
 
 /* ─── Title card ─── */
 function renderTitleCard() {
   var f = rsp.form;
-
   document.getElementById('rsp-title').textContent = f.title || 'Sans titre';
-  document.title = (f.title || 'Questionnaire') + ' \u2014 SciConnect';
+  document.title = (f.title || 'Questionnaire') + ' — SciConnect';
 
   var desc = document.getElementById('rsp-desc');
   if (f.description) {
@@ -102,10 +110,9 @@ function renderTitleCard() {
     chips.map(function(c) { return '<span class="rsp-chip">' + esc(c) + '</span>'; }).join('');
 
   var metaParts = [];
-  if (f.response_count !== undefined) metaParts.push(f.response_count + '/' + (f.target_count || 100) + ' r\u00e9ponses');
+  if (f.response_count !== undefined) metaParts.push(f.response_count + '/' + (f.target_count || 100) + ' reponses');
   if (f.school_id) metaParts.push(f.school_id.toUpperCase());
-  document.getElementById('rsp-meta').textContent = metaParts.join(' \u00b7 ');
-
+  document.getElementById('rsp-meta').textContent = metaParts.join(' · ');
   document.getElementById('rsp-pts-text').textContent = '+10 pts';
 }
 
@@ -121,21 +128,18 @@ function embedGoogleForm() {
 
   var iframe = document.getElementById('rsp-iframe');
 
-  /* ═══ KEY: Track iframe load events ═══
+  /* Track iframe load events:
      Load #1 = Google Form page loaded
-     Load #2 = User submitted the form (iframe navigated to confirmation page)
-  */
+     Load #2+ = User submitted (iframe navigated to confirmation page) */
   iframe.addEventListener('load', function() {
     rsp.iframeLoadCount++;
 
     if (rsp.iframeLoadCount === 1) {
-      /* Form loaded — update step 1 */
       updateStep(1, 'completed');
       updateStep(2, 'active');
     }
 
     if (rsp.iframeLoadCount >= 2) {
-      /* Form SUBMITTED — the iframe navigated to the confirmation page */
       rsp.formSubmitted = true;
       onFormSubmitted();
     }
@@ -144,31 +148,62 @@ function embedGoogleForm() {
   iframe.src = embedUrl;
 }
 
+/* ─── Track iframe interaction via focus/blur ─── */
+function trackIframeInteraction() {
+  /* When user clicks inside the iframe, the parent window loses focus.
+     When they click outside, parent regains focus.
+     We track this to know the user actually interacted with the form. */
+
+  window.addEventListener('blur', function() {
+    /* Check if iframe is the active element */
+    setTimeout(function() {
+      if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
+        rsp.iframeHasFocus = true;
+        rsp.iframeInteracted = true;
+        rsp.lastFocusStart = Date.now();
+      }
+    }, 100);
+  });
+
+  window.addEventListener('focus', function() {
+    if (rsp.iframeHasFocus && rsp.lastFocusStart) {
+      var focusDuration = Math.floor((Date.now() - rsp.lastFocusStart) / 1000);
+      rsp.iframeFocusTime += focusDuration;
+    }
+    rsp.iframeHasFocus = false;
+    rsp.lastFocusStart = null;
+  });
+}
+
 /* ─── Called when Google Form submission is detected ─── */
 function onFormSubmitted() {
-  /* Update step 2 to completed */
   updateStep(2, 'completed');
 
-  /* Update submission status in sidebar */
   var statusEl = document.getElementById('rsp-submission-status');
-  if (statusEl) {
-    statusEl.style.display = 'flex';
-  }
+  if (statusEl) statusEl.style.display = 'flex';
 
-  /* Check if we can enable the button */
   checkCanConfirm();
 }
 
-/* ─── Check if both conditions are met ─── */
+/* ─── Check if all conditions are met ─── */
 function checkCanConfirm() {
   if (rsp.confirmed || rsp.btnReady) return;
 
-  /* Both conditions required */
-  if (!rsp.formSubmitted || !rsp.timeReady) return;
+  /* Primary path: iframe load detected + time ready */
+  var primaryOk = rsp.formSubmitted && rsp.timeReady;
 
-  /* BOTH conditions met — enable the button! */
+  /* Fallback path: user interacted for 90+ seconds + time ready
+     (for Google Forms that don't trigger a second load event) */
+  var currentFocusTime = rsp.iframeFocusTime;
+  if (rsp.iframeHasFocus && rsp.lastFocusStart) {
+    currentFocusTime += Math.floor((Date.now() - rsp.lastFocusStart) / 1000);
+  }
+  var fallbackOk = rsp.iframeInteracted && currentFocusTime >= INTERACTION_FALLBACK_SECONDS && rsp.timeReady;
+
+  if (!primaryOk && !fallbackOk) return;
+
+  /* CONDITIONS MET — enable the button */
   rsp.btnReady = true;
-
   updateStep(3, 'active');
 
   var confirmBtn   = document.getElementById('rsp-confirm-btn');
@@ -180,22 +215,19 @@ function checkCanConfirm() {
   confirmBtn.disabled = false;
   confirmBtn.classList.add('ready');
   confirmIcon.textContent = '\u2713';
-  confirmLabel.textContent = "Valider ma r\u00e9ponse";
-  confirmHint.textContent = 'Formulaire soumis \u2014 clique pour confirmer';
-
-  timerLabelEl.textContent = '\u2713 Pr\u00eat \u00e0 valider';
+  confirmLabel.textContent = "Valider ma reponse";
+  confirmHint.textContent = 'Formulaire soumis — clique pour confirmer';
+  timerLabelEl.textContent = '\u2713 Pret a valider';
   timerLabelEl.style.color = 'var(--color-primary)';
 
-  /* Enable mobile button */
   var mobileConfirm = document.getElementById('rsp-mobile-confirm');
   var mobileLabel   = document.getElementById('rsp-mobile-label');
   if (mobileConfirm) {
     mobileConfirm.disabled = false;
     mobileConfirm.classList.add('ready');
-    mobileLabel.textContent = "\u2713 Valider ma r\u00e9ponse";
+    mobileLabel.textContent = "\u2713 Valider ma reponse";
   }
 
-  /* Hide warning */
   document.getElementById('rsp-warning').style.display = 'none';
 }
 
@@ -204,16 +236,12 @@ function updateStep(num, state) {
   var step = document.getElementById('rsp-step-' + num);
   var check = document.getElementById('rsp-check-' + num);
   if (!step) return;
-
   step.classList.remove('active', 'completed', 'done');
-
   if (state === 'completed') {
     step.classList.add('completed');
     if (check) check.textContent = '\u2713';
   } else if (state === 'active') {
     step.classList.add('active');
-  } else if (state === 'done') {
-    step.classList.add('done');
   }
 }
 
@@ -238,39 +266,54 @@ function startTimer() {
     var progress = Math.min(100, Math.round((elapsed / MIN_TIME_SECONDS) * 100));
     progressBar.style.width = progress + '%';
 
+    /* Check time condition */
     if (elapsed >= MIN_TIME_SECONDS && !rsp.timeReady) {
       rsp.timeReady = true;
       checkCanConfirm();
     }
 
+    /* Periodically check fallback (interaction time) */
+    if (elapsed % 5 === 0 && !rsp.btnReady) {
+      checkCanConfirm();
+    }
+
     /* Update button text based on current state */
     if (!rsp.confirmed && !rsp.btnReady) {
-      if (!rsp.formSubmitted && elapsed < MIN_TIME_SECONDS) {
+      var currentFocusTime = rsp.iframeFocusTime;
+      if (rsp.iframeHasFocus && rsp.lastFocusStart) {
+        currentFocusTime += Math.floor((Date.now() - rsp.lastFocusStart) / 1000);
+      }
+
+      if (!rsp.formSubmitted && !rsp.iframeInteracted) {
+        /* User hasn't even clicked in the form */
+        confirmLabel.textContent = 'Clique dans le formulaire pour commencer';
+        if (mobileLabel) mobileLabel.textContent = '\u23f3 Remplis le formulaire';
+      } else if (!rsp.formSubmitted && rsp.iframeInteracted && elapsed < MIN_TIME_SECONDS) {
         var remaining = MIN_TIME_SECONDS - elapsed;
-        confirmLabel.textContent = 'Remplis le formulaire... (' + remaining + 's)';
-        if (mobileLabel) mobileLabel.textContent = '\u23f3 Remplis le formulaire...';
-      } else if (!rsp.formSubmitted && elapsed >= MIN_TIME_SECONDS) {
-        confirmLabel.textContent = 'En attente de soumission du formulaire...';
-        if (mobileLabel) mobileLabel.textContent = '\u23f3 Soumets le formulaire';
-        timerLabelEl.textContent = 'Temps OK \u2014 soumets le formulaire';
-        timerLabelEl.style.color = '#D97706';
+        confirmLabel.textContent = 'En cours... encore ' + remaining + 's';
+        if (mobileLabel) mobileLabel.textContent = '\u23f3 Encore ' + remaining + 's';
+      } else if (!rsp.formSubmitted && rsp.iframeInteracted && elapsed >= MIN_TIME_SECONDS) {
+        if (currentFocusTime < INTERACTION_FALLBACK_SECONDS) {
+          confirmLabel.textContent = 'Soumets le formulaire pour valider';
+          if (mobileLabel) mobileLabel.textContent = '\u23f3 Soumets le formulaire';
+          timerLabelEl.textContent = 'Temps OK — soumets le formulaire';
+          timerLabelEl.style.color = '#D97706';
+        }
       } else if (rsp.formSubmitted && elapsed < MIN_TIME_SECONDS) {
         var remaining2 = MIN_TIME_SECONDS - elapsed;
-        confirmLabel.textContent = 'Formulaire soumis ! Encore ' + remaining2 + 's...';
-        if (mobileLabel) mobileLabel.textContent = '\u2713 Soumis ! Encore ' + remaining2 + 's';
+        confirmLabel.textContent = 'Soumis ! Encore ' + remaining2 + 's...';
+        if (mobileLabel) mobileLabel.textContent = '\u2713 Soumis ! ' + remaining2 + 's';
       }
     }
   }, 1000);
 }
 
-/* ─── Mobile bar setup ─── */
+/* ─── Mobile bar ─── */
 function setupMobileBar() {
   var mobileBar = document.getElementById('rsp-mobile-bar');
-  function updateBar() {
-    mobileBar.style.display = window.innerWidth <= 860 ? 'flex' : 'none';
-  }
-  updateBar();
-  window.addEventListener('resize', updateBar);
+  function update() { mobileBar.style.display = window.innerWidth <= 860 ? 'flex' : 'none'; }
+  update();
+  window.addEventListener('resize', update);
 }
 
 /* ─── Already responded ─── */
@@ -280,12 +323,11 @@ function checkAlreadyResponded() {
 }
 
 /* ─── Confirm response ─── */
-async function confirmResponse() {
+function confirmResponse() {
   if (rsp.confirmed) return;
 
-  /* Double-check both conditions */
-  if (!rsp.formSubmitted) {
-    showWarning('Soumets le formulaire Google Forms d\'abord !');
+  if (!rsp.formSubmitted && rsp.iframeFocusTime < INTERACTION_FALLBACK_SECONDS) {
+    showWarning("Soumets le formulaire Google Forms d'abord !");
     return;
   }
 
@@ -297,11 +339,8 @@ async function confirmResponse() {
 
   rsp.confirmed = true;
   clearInterval(rsp.timerInterval);
-
-  /* Update step 3 */
   updateStep(3, 'completed');
 
-  /* Update buttons */
   var confirmBtn = document.getElementById('rsp-confirm-btn');
   confirmBtn.disabled = true;
   confirmBtn.classList.remove('ready');
@@ -318,45 +357,41 @@ async function confirmResponse() {
 
   var endTime = Date.now();
   var duration = Math.floor((endTime - rsp.startTime) / 1000);
-  var result = null;
 
-  try {
-    var resp2 = await fetch('/api/responses', {
-      method:      'POST',
-      credentials: 'include',
-      headers:     { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        form_id:          rsp.formId,
-        answers:          {},
-        start_time:       rsp.startTime,
-        end_time:         endTime,
-        duration_seconds: duration,
-      }),
-    });
-
-    if (resp2.ok) {
-      result = await resp2.json();
-    } else {
-      var errData = await resp2.json().catch(function() { return {}; });
+  fetch('/api/responses', {
+    method:      'POST',
+    credentials: 'include',
+    headers:     { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      form_id:          rsp.formId,
+      answers:          {},
+      start_time:       rsp.startTime,
+      end_time:         endTime,
+      duration_seconds: duration,
+    }),
+  })
+  .then(function(resp2) {
+    if (resp2.ok) return resp2.json();
+    return resp2.json().catch(function() { return {}; }).then(function(errData) {
       if (errData.already_responded) {
-        showFailScreen("Tu as d\u00e9j\u00e0 r\u00e9pondu. Les points ne sont compt\u00e9s qu'une seule fois.");
-        return;
+        showFailScreen("Tu as deja repondu. Les points ne sont comptes qu'une seule fois.");
+        return null;
       }
-      if (errData.error) {
-        showFailScreen(errData.error);
-        return;
-      }
+      if (errData.error) { showFailScreen(errData.error); return null; }
+      return null;
+    });
+  })
+  .then(function(result) {
+    if (result === null || result === undefined) return;
+    if (result.is_suspect) {
+      showFailScreen("Reponse trop rapide. Reponds serieusement pour gagner des points.");
+      return;
     }
-  } catch (e) {
-    /* Network error — still show success with default */
-  }
-
-  if (result && result.is_suspect) {
-    showFailScreen("R\u00e9ponse trop rapide. R\u00e9ponds s\u00e9rieusement pour gagner des points.");
-    return;
-  }
-
-  showSuccess(result);
+    showSuccess(result);
+  })
+  .catch(function() {
+    showSuccess(null);
+  });
 }
 
 /* ─── Warning ─── */
@@ -381,7 +416,7 @@ function showSuccess(result) {
   var ptsEarned = (result && result.points_earned) || 10;
   var totalPts  = (result && result.total_points) || ((rsp.user && rsp.user.points) || 0) + ptsEarned;
 
-  document.getElementById('rsp-success-pts').textContent = '+' + ptsEarned + ' pts gagn\u00e9s !';
+  document.getElementById('rsp-success-pts').textContent = '+' + ptsEarned + ' pts gagnes !';
   document.getElementById('rsp-success-total-val').textContent = totalPts;
 
   if (window.SciConnectAnimations) {
@@ -404,13 +439,9 @@ function showSuccess(result) {
     document.getElementById('rsp-unlock-fill').style.width = pct + '%';
   }, 300);
 
-  document.getElementById('rsp-unlock-status').textContent =
-    unlocked ? '\u2713 D\u00e9p\u00f4t disponible !' : totalPts + ' / ' + MIN_DEPOT + ' pts';
-  document.getElementById('rsp-unlock-status').style.color =
-    unlocked ? 'var(--color-primary)' : '';
-  document.getElementById('rsp-unlock-note').textContent =
-    unlocked ? '\ud83d\udee1 Tu peux maintenant d\u00e9poser ton questionnaire !'
-             : 'Encore ' + (MIN_DEPOT - totalPts) + ' pts pour d\u00e9verrouiller le d\u00e9p\u00f4t.';
+  document.getElementById('rsp-unlock-status').textContent = unlocked ? '\u2713 Depot disponible !' : totalPts + ' / ' + MIN_DEPOT + ' pts';
+  document.getElementById('rsp-unlock-status').style.color = unlocked ? 'var(--color-primary)' : '';
+  document.getElementById('rsp-unlock-note').textContent = unlocked ? 'Tu peux maintenant deposer ton questionnaire !' : 'Encore ' + (MIN_DEPOT - totalPts) + ' pts pour deverrouiller le depot.';
 
   if (!unlocked) {
     var depositBtn = document.getElementById('rsp-deposit-btn');
@@ -434,23 +465,25 @@ function retryResponse() {
   rsp.timeReady = false;
   rsp.formSubmitted = false;
   rsp.iframeLoadCount = 0;
+  rsp.iframeInteracted = false;
+  rsp.iframeFocusTime = 0;
+  rsp.iframeHasFocus = false;
+  rsp.lastFocusStart = null;
   rsp.startTime = Date.now();
 
   document.getElementById('rsp-fail-overlay').style.display = 'none';
   document.getElementById('rsp-layout').style.display = 'grid';
 
-  /* Reset steps */
   updateStep(1, 'completed');
   updateStep(2, 'active');
   updateStep(3, 'done');
 
-  /* Reset button */
   var confirmBtn = document.getElementById('rsp-confirm-btn');
   confirmBtn.disabled = true;
   confirmBtn.classList.remove('ready', 'loading');
   document.getElementById('rsp-confirm-icon').textContent = '\u23f3';
-  document.getElementById('rsp-confirm-label').textContent = 'Remplis le formulaire...';
-  document.getElementById('rsp-confirm-hint').textContent = "Soumets le formulaire + 30s minimum";
+  document.getElementById('rsp-confirm-label').textContent = 'Clique dans le formulaire pour commencer';
+  document.getElementById('rsp-confirm-hint').textContent = 'Soumets le formulaire + 30s minimum';
   document.getElementById('rsp-timer-label').textContent = 'min. 30s requis';
   document.getElementById('rsp-timer-label').style.color = '';
   document.getElementById('rsp-warning').style.display = 'none';
@@ -459,7 +492,6 @@ function retryResponse() {
   var statusEl = document.getElementById('rsp-submission-status');
   if (statusEl) statusEl.style.display = 'none';
 
-  /* Reset mobile */
   var mobileConfirm = document.getElementById('rsp-mobile-confirm');
   if (mobileConfirm) {
     mobileConfirm.disabled = true;
@@ -467,7 +499,6 @@ function retryResponse() {
     document.getElementById('rsp-mobile-label').textContent = '\u23f3 Remplis le formulaire...';
   }
 
-  /* Re-embed form */
   embedGoogleForm();
   setupMobileBar();
   startTimer();

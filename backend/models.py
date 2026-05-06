@@ -36,6 +36,8 @@ class User(db.Model):
     last_active             = db.Column(db.DateTime)
     # EDITABLE: slug URL du profil public — généré depuis le nom à la création
     slug                    = db.Column(db.String(100), unique=True, nullable=True)
+    # Bio de l'utilisateur
+    bio                     = db.Column(db.String(500), nullable=True)
 
     questionnaires = db.relationship('Questionnaire', backref='author', lazy=True)
 
@@ -57,6 +59,7 @@ class User(db.Model):
             'is_founder':              self.is_founder,
             'onboarding_complete':     self.onboarding_complete,
             'slug':                    self.slug,
+            'bio':                     self.bio,
             'streak':                  self.streak or 0,
             'last_login_date':         self.last_login_date.isoformat() if self.last_login_date else None,
         }

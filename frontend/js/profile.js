@@ -129,6 +129,56 @@ function renderIdentity() {
     <div class="prf-level-name">${currentLevel.name}</div>
     <div class="prf-level-desc">${currentLevel.desc}</div>
   `;
+
+  /* Bio display */
+  const bioEl = document.getElementById('prf-bio');
+  if (bioEl && p.bio) {
+    bioEl.textContent = p.bio;
+  }
+
+  /* Bio edit section — only show for own profile */
+  const isOwnProfile = prf.currentUser && (prf.currentUser.slug === prf.slug || prf.currentUser.id === p.id);
+  if (isOwnProfile) {
+    const bioEditSection = document.getElementById('prf-bio-edit-section');
+    if (bioEditSection) {
+      bioEditSection.style.display = 'block';
+      const bioInput = document.getElementById('prf-bio-input');
+      if (bioInput) bioInput.value = p.bio || '';
+
+      const bioSaveBtn = document.getElementById('prf-bio-save');
+      if (bioSaveBtn) {
+        bioSaveBtn.addEventListener('click', async function() {
+          const newBio = (document.getElementById('prf-bio-input').value || '').trim();
+          bioSaveBtn.disabled = true;
+          bioSaveBtn.textContent = 'Enregistrement...';
+          try {
+            const res = await fetch('/api/auth/me', {
+              method: 'PATCH',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ bio: newBio }),
+            });
+            if (res.ok) {
+              const data = await res.json();
+              if (bioEl) bioEl.textContent = data.user?.bio || '';
+              prf.profile.bio = data.user?.bio || '';
+              bioSaveBtn.textContent = '\u2713 Enregistr\u00e9 !';
+              bioSaveBtn.classList.add('saved');
+              setTimeout(() => {
+                bioSaveBtn.textContent = 'Enregistrer';
+                bioSaveBtn.classList.remove('saved');
+              }, 2000);
+            } else {
+              bioSaveBtn.textContent = 'Erreur';
+            }
+          } catch {
+            bioSaveBtn.textContent = 'Erreur r\u00e9seau';
+          }
+          bioSaveBtn.disabled = false;
+        });
+      }
+    }
+  }
 }
 
 /* ─── Stats band ─── */

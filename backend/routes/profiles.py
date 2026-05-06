@@ -68,10 +68,12 @@ def get_profile(slug):
     domain = (user.domains or [None])[0] if user.domains else None
 
     return jsonify({
+        'id':                 user.id,
         'slug':               user.slug or user.id,
         'name':               user.name or 'Utilisateur',
         'avatar_url':         user.avatar_url,
         'email':              user.email,
+        'bio':                user.bio or '',
         'school_id':          user.school_id,
         'school_name':        school_names.get(user.school_id or '', user.school_id or '—'),
         'university_id':      user.university_id,

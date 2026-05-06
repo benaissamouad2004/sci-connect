@@ -23,7 +23,7 @@ ADMIN_DIR = os.path.join(
 
 # URL de base de l'application — définie dans .env via APP_URL
 def _app_url():
-    return os.getenv('APP_URL', 'http://localhost:5000').rstrip('/')
+    return os.getenv('APP_URL', 'https://sciconnect.pythonanywhere.com').rstrip('/')
 
 
 # ─── Helpers écoles ───

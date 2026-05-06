@@ -18,7 +18,7 @@ class Config:
 
     # EDITABLE: URL publique de l'app — utilisée dans les emails et les redirections
     # En prod : APP_URL=https://votre-domaine.com  (sans slash final)
-    APP_URL = os.getenv('APP_URL', 'http://localhost:5000')
+    APP_URL = os.getenv('APP_URL', 'https://sciconnect.pythonanywhere.com')
 
     # Cookie de session httpOnly — jamais localStorage
     SESSION_COOKIE_HTTPONLY  = True

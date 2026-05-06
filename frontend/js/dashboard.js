@@ -124,6 +124,48 @@ function renderUserUI(user) {
     railBtn.onclick = () => { window.location.href = user.slug ? `profile.html?slug=${user.slug}` : 'profile.html'; };
   }
 
+  /* Bio */
+  const sbBio = document.getElementById('sb-bio');
+  if (sbBio) sbBio.textContent = user.bio || '';
+  const bioInput = document.getElementById('pp-bio-input');
+  if (bioInput) bioInput.value = user.bio || '';
+
+  /* Bio save button */
+  const bioSave = document.getElementById('pp-bio-save');
+  if (bioSave && !bioSave._bound) {
+    bioSave._bound = true;
+    bioSave.addEventListener('click', async function() {
+      const newBio = (document.getElementById('pp-bio-input').value || '').trim();
+      bioSave.disabled = true;
+      bioSave.textContent = 'Enregistrement...';
+      try {
+        const res = await fetch('/api/auth/me', {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bio: newBio }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user) {
+            currentUser.bio = data.user.bio;
+            const sb = document.getElementById('sb-bio');
+            if (sb) sb.textContent = data.user.bio || '';
+          }
+          bioSave.textContent = '\u2713 Enregistr\u00e9';
+          bioSave.classList.add('saved');
+          setTimeout(function() {
+            bioSave.textContent = 'Enregistrer';
+            bioSave.classList.remove('saved');
+          }, 2000);
+        }
+      } catch (e) {
+        bioSave.textContent = 'Erreur';
+      }
+      bioSave.disabled = false;
+    });
+  }
+
   loadUserFormsCount();
 }
 

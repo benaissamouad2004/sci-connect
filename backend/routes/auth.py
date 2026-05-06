@@ -259,6 +259,31 @@ def get_me():
     })
 
 
+# ROUTE: PATCH /api/auth/me
+# OBJECTIF: Mettre a jour le profil utilisateur (bio, name)
+@auth_bp.route('/api/auth/me', methods=['PATCH'])
+def update_me():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'non authentifie'}), 401
+
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        return jsonify({'error': 'utilisateur introuvable'}), 404
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'donnees manquantes'}), 400
+
+    if 'bio' in data:
+        user.bio = (data['bio'] or '').strip()[:500]
+    if 'name' in data and data['name'].strip():
+        user.name = data['name'].strip()[:200]
+
+    db.session.commit()
+    return jsonify({'success': True, 'user': user.to_dict()})
+
+
 # ROUTE: POST /api/auth/logout
 @auth_bp.route('/api/auth/logout', methods=['POST'])
 def logout():

@@ -38,6 +38,7 @@
         <div class="prf-badges-row" id="prf-badges-row"></div>
         <h1 class="prf-name" id="prf-name">Chargement...</h1>
         <div class="prf-details" id="prf-details"></div>
+        <p class="prf-bio" id="prf-bio"></p>
         <p class="prf-since" id="prf-since"></p>
       </div>
       <div class="prf-identity-right" id="prf-badge-level">
@@ -76,6 +77,13 @@
           <div class="prf-card-title">Portfolio de recherche</div>
           <div class="prf-card-subtitle">Questionnaires déposés sur SciConnect</div>
           <div class="prf-portfolio-list" id="prf-portfolio-list"></div>
+        </section>
+
+        <!-- Bio edit (visible only for own profile) -->
+        <section class="prf-card" id="prf-bio-edit-section" style="display:none">
+          <div class="prf-card-title">Ma bio</div>
+          <textarea class="prf-bio-textarea" id="prf-bio-input" maxlength="500" rows="4" placeholder="Parle de toi, tes recherches, tes centres d'intérêt..."></textarea>
+          <button class="prf-bio-save" id="prf-bio-save">Enregistrer</button>
         </section>
 
         <!-- Identité académique -->
