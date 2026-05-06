@@ -191,6 +191,15 @@
   80% { transform: translateX(3px); }
 }
 
+/* ── SUBMISSION STATUS ── */
+.rsp-submission-status {
+  display: flex; align-items: center; gap: 8px;
+  background: #E8F5F3; border: 1px solid rgba(0,95,84,0.2);
+  border-radius: 10px; padding: 10px 14px; margin-bottom: 12px;
+  font-size: 0.75rem; color: var(--color-primary); font-weight: 600;
+  animation: rspFadeIn 300ms ease;
+}
+
 /* ══════════════════════════════
    CONFIRM BUTTON — Hero element
    ══════════════════════════════ */

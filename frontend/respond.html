@@ -106,19 +106,25 @@
           </div>
         </div>
 
-        <!-- Incomplete warning -->
+        <!-- Form submitted status -->
+        <div class="rsp-submission-status" id="rsp-submission-status" style="display:none">
+          <span>✅</span>
+          <span>Formulaire soumis avec succès !</span>
+        </div>
+
+        <!-- Warning -->
         <div class="rsp-warning" id="rsp-warning" style="display:none">
           <span>⚠️</span>
-          <span>Termine le formulaire avant de confirmer</span>
+          <span id="rsp-warning-text">Termine le formulaire avant de confirmer</span>
         </div>
 
         <!-- CONFIRM BUTTON — always visible -->
         <button class="rsp-confirm-btn" id="rsp-confirm-btn" disabled>
           <span class="rsp-confirm-btn-icon" id="rsp-confirm-icon">⏳</span>
-          <span id="rsp-confirm-label">Patiente encore...</span>
+          <span id="rsp-confirm-label">Remplis le formulaire...</span>
         </button>
 
-        <p class="rsp-confirm-hint" id="rsp-confirm-hint">Le bouton s'active après 30s minimum</p>
+        <p class="rsp-confirm-hint" id="rsp-confirm-hint">Soumets le formulaire + 30s minimum</p>
 
       </div>
     </aside>

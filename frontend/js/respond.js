@@ -1,7 +1,16 @@
 /* ═══════════════════════════════════════════════════════════
-   SCICONNECT — respond.js V3
-   2-column layout: sticky sidebar + scrollable iframe
-   Steps, progress bar, mobile bar, clear validation states
+   SCICONNECT — respond.js V4
+   2-column layout with REAL form completion detection
+   
+   HOW IT WORKS:
+   When a Google Form is submitted, the iframe navigates from
+   the form page to a "Thank you" confirmation page. This 
+   triggers a second 'load' event on the iframe. We use this
+   to detect that the user actually submitted the form.
+   
+   The confirm button activates ONLY when BOTH conditions met:
+   1. iframe loaded at least 2 times (= form was submitted)
+   2. Minimum time elapsed (30 seconds)
    ═══════════════════════════════════════════════════════════ */
 
 const DOMAIN_COLORS = {
@@ -19,18 +28,21 @@ const DOMAIN_COLORS = {
 const MIN_TIME_SECONDS = 30;
 
 const rsp = {
-  formId:        null,
-  form:          null,
-  user:          null,
-  startTime:     null,
-  timerInterval: null,
-  confirmed:     false,
-  btnReady:      false,
+  formId:          null,
+  form:            null,
+  user:            null,
+  startTime:       null,
+  timerInterval:   null,
+  confirmed:       false,
+  btnReady:        false,
+  iframeLoadCount: 0,       // Track iframe loads: 1=form loaded, 2+=form submitted
+  formSubmitted:   false,    // True after Google Form submission detected
+  timeReady:       false,    // True after minimum time elapsed
 };
 
 /* ─── Boot ─── */
-document.addEventListener('DOMContentLoaded', async () => {
-  const params = new URLSearchParams(window.location.search);
+document.addEventListener('DOMContentLoaded', async function() {
+  var params = new URLSearchParams(window.location.search);
   rsp.formId = params.get('id');
 
   if (!rsp.formId) {
@@ -38,8 +50,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  const me = await fetch('/api/auth/me', { credentials: 'include' })
-                   .then(r => r.json()).catch(() => null);
+  var me = await fetch('/api/auth/me', { credentials: 'include' })
+                 .then(function(r) { return r.json(); }).catch(function() { return null; });
   if (me && me.authenticated) rsp.user = me.user;
 
   await loadForm();
@@ -48,10 +60,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 /* ─── Load form ─── */
 async function loadForm() {
   try {
-    const resp = await fetch('/api/forms/' + rsp.formId, { credentials: 'include' });
+    var resp = await fetch('/api/forms/' + rsp.formId, { credentials: 'include' });
     if (!resp.ok) throw new Error(resp.status);
     rsp.form = await resp.json();
-  } catch {
+  } catch (e) {
     showError('Impossible de charger le questionnaire. V\u00e9rifie le lien.');
     return;
   }
@@ -70,26 +82,26 @@ async function loadForm() {
 
 /* ─── Title card ─── */
 function renderTitleCard() {
-  const f = rsp.form;
+  var f = rsp.form;
 
   document.getElementById('rsp-title').textContent = f.title || 'Sans titre';
   document.title = (f.title || 'Questionnaire') + ' \u2014 SciConnect';
 
-  const desc = document.getElementById('rsp-desc');
+  var desc = document.getElementById('rsp-desc');
   if (f.description) {
     desc.textContent = f.description;
   } else {
     desc.style.display = 'none';
   }
 
-  const color = DOMAIN_COLORS[f.domain] || 'var(--color-primary)';
+  var color = DOMAIN_COLORS[f.domain] || 'var(--color-primary)';
   document.getElementById('rsp-title-stripe').style.background = color;
 
-  const chips = [f.domain, f.target_level].filter(Boolean);
+  var chips = [f.domain, f.target_level].filter(Boolean);
   document.getElementById('rsp-title-chips').innerHTML =
-    chips.map(c => '<span class="rsp-chip">' + esc(c) + '</span>').join('');
+    chips.map(function(c) { return '<span class="rsp-chip">' + esc(c) + '</span>'; }).join('');
 
-  const metaParts = [];
+  var metaParts = [];
   if (f.response_count !== undefined) metaParts.push(f.response_count + '/' + (f.target_count || 100) + ' r\u00e9ponses');
   if (f.school_id) metaParts.push(f.school_id.toUpperCase());
   document.getElementById('rsp-meta').textContent = metaParts.join(' \u00b7 ');
@@ -97,30 +109,122 @@ function renderTitleCard() {
   document.getElementById('rsp-pts-text').textContent = '+10 pts';
 }
 
-/* ─── Embed Google Forms ─── */
+/* ─── Embed Google Forms + track submission via load events ─── */
 function embedGoogleForm() {
-  const url = rsp.form.google_forms_url;
+  var url = rsp.form.google_forms_url;
   if (!url) { showError("Ce questionnaire n'a pas de lien Google Forms."); return; }
 
-  let embedUrl = url;
+  var embedUrl = url;
   if (url.includes('docs.google.com/forms')) {
     embedUrl = url.replace(/\/viewform.*$/, '').replace(/\/$/, '') + '/viewform?embedded=true';
   }
-  document.getElementById('rsp-iframe').src = embedUrl;
+
+  var iframe = document.getElementById('rsp-iframe');
+
+  /* ═══ KEY: Track iframe load events ═══
+     Load #1 = Google Form page loaded
+     Load #2 = User submitted the form (iframe navigated to confirmation page)
+  */
+  iframe.addEventListener('load', function() {
+    rsp.iframeLoadCount++;
+
+    if (rsp.iframeLoadCount === 1) {
+      /* Form loaded — update step 1 */
+      updateStep(1, 'completed');
+      updateStep(2, 'active');
+    }
+
+    if (rsp.iframeLoadCount >= 2) {
+      /* Form SUBMITTED — the iframe navigated to the confirmation page */
+      rsp.formSubmitted = true;
+      onFormSubmitted();
+    }
+  });
+
+  iframe.src = embedUrl;
 }
 
-/* ─── Timer + progress + step updates ─── */
+/* ─── Called when Google Form submission is detected ─── */
+function onFormSubmitted() {
+  /* Update step 2 to completed */
+  updateStep(2, 'completed');
+
+  /* Update submission status in sidebar */
+  var statusEl = document.getElementById('rsp-submission-status');
+  if (statusEl) {
+    statusEl.style.display = 'flex';
+  }
+
+  /* Check if we can enable the button */
+  checkCanConfirm();
+}
+
+/* ─── Check if both conditions are met ─── */
+function checkCanConfirm() {
+  if (rsp.confirmed || rsp.btnReady) return;
+
+  /* Both conditions required */
+  if (!rsp.formSubmitted || !rsp.timeReady) return;
+
+  /* BOTH conditions met — enable the button! */
+  rsp.btnReady = true;
+
+  updateStep(3, 'active');
+
+  var confirmBtn   = document.getElementById('rsp-confirm-btn');
+  var confirmLabel = document.getElementById('rsp-confirm-label');
+  var confirmIcon  = document.getElementById('rsp-confirm-icon');
+  var confirmHint  = document.getElementById('rsp-confirm-hint');
+  var timerLabelEl = document.getElementById('rsp-timer-label');
+
+  confirmBtn.disabled = false;
+  confirmBtn.classList.add('ready');
+  confirmIcon.textContent = '\u2713';
+  confirmLabel.textContent = "Valider ma r\u00e9ponse";
+  confirmHint.textContent = 'Formulaire soumis \u2014 clique pour confirmer';
+
+  timerLabelEl.textContent = '\u2713 Pr\u00eat \u00e0 valider';
+  timerLabelEl.style.color = 'var(--color-primary)';
+
+  /* Enable mobile button */
+  var mobileConfirm = document.getElementById('rsp-mobile-confirm');
+  var mobileLabel   = document.getElementById('rsp-mobile-label');
+  if (mobileConfirm) {
+    mobileConfirm.disabled = false;
+    mobileConfirm.classList.add('ready');
+    mobileLabel.textContent = "\u2713 Valider ma r\u00e9ponse";
+  }
+
+  /* Hide warning */
+  document.getElementById('rsp-warning').style.display = 'none';
+}
+
+/* ─── Step indicator update ─── */
+function updateStep(num, state) {
+  var step = document.getElementById('rsp-step-' + num);
+  var check = document.getElementById('rsp-check-' + num);
+  if (!step) return;
+
+  step.classList.remove('active', 'completed', 'done');
+
+  if (state === 'completed') {
+    step.classList.add('completed');
+    if (check) check.textContent = '\u2713';
+  } else if (state === 'active') {
+    step.classList.add('active');
+  } else if (state === 'done') {
+    step.classList.add('done');
+  }
+}
+
+/* ─── Timer + progress ─── */
 function startTimer() {
-  const timerEl       = document.getElementById('rsp-timer');
-  const timerLabelEl  = document.getElementById('rsp-timer-label');
-  const progressBar   = document.getElementById('rsp-progress-bar');
-  const confirmBtn    = document.getElementById('rsp-confirm-btn');
-  const confirmLabel  = document.getElementById('rsp-confirm-label');
-  const confirmIcon   = document.getElementById('rsp-confirm-icon');
-  const confirmHint   = document.getElementById('rsp-confirm-hint');
-  const mobileTimer   = document.getElementById('rsp-mobile-timer');
-  const mobileConfirm = document.getElementById('rsp-mobile-confirm');
-  const mobileLabel   = document.getElementById('rsp-mobile-label');
+  var timerEl       = document.getElementById('rsp-timer');
+  var timerLabelEl  = document.getElementById('rsp-timer-label');
+  var progressBar   = document.getElementById('rsp-progress-bar');
+  var confirmLabel  = document.getElementById('rsp-confirm-label');
+  var mobileTimer   = document.getElementById('rsp-mobile-timer');
+  var mobileLabel   = document.getElementById('rsp-mobile-label');
 
   rsp.timerInterval = setInterval(function() {
     var elapsed = Math.floor((Date.now() - rsp.startTime) / 1000);
@@ -134,45 +238,27 @@ function startTimer() {
     var progress = Math.min(100, Math.round((elapsed / MIN_TIME_SECONDS) * 100));
     progressBar.style.width = progress + '%';
 
-    if (elapsed >= MIN_TIME_SECONDS && !rsp.confirmed) {
-      if (!rsp.btnReady) {
-        rsp.btnReady = true;
+    if (elapsed >= MIN_TIME_SECONDS && !rsp.timeReady) {
+      rsp.timeReady = true;
+      checkCanConfirm();
+    }
 
-        /* Update step indicators */
-        var step2 = document.getElementById('rsp-step-2');
-        var step3 = document.getElementById('rsp-step-3');
-        var check2 = document.getElementById('rsp-check-2');
-
-        step2.classList.remove('active');
-        step2.classList.add('completed');
-        check2.textContent = '\u2713';
-
-        step3.classList.add('active');
-
-        /* Enable desktop button */
-        confirmBtn.disabled = false;
-        confirmBtn.classList.add('ready');
-        confirmIcon.textContent = '\u2713';
-        confirmLabel.textContent = "J'ai termin\u00e9 \u2014 Valider";
-        confirmHint.textContent = 'Clique pour confirmer ta r\u00e9ponse';
-
-        timerLabelEl.textContent = '\u2713 Temps atteint';
-        timerLabelEl.style.color = 'var(--color-primary)';
-
-        /* Enable mobile button */
-        if (mobileConfirm) {
-          mobileConfirm.disabled = false;
-          mobileConfirm.classList.add('ready');
-          mobileLabel.textContent = "\u2713 Confirmer ma r\u00e9ponse";
-        }
-
-        /* Hide warning if shown */
-        document.getElementById('rsp-warning').style.display = 'none';
+    /* Update button text based on current state */
+    if (!rsp.confirmed && !rsp.btnReady) {
+      if (!rsp.formSubmitted && elapsed < MIN_TIME_SECONDS) {
+        var remaining = MIN_TIME_SECONDS - elapsed;
+        confirmLabel.textContent = 'Remplis le formulaire... (' + remaining + 's)';
+        if (mobileLabel) mobileLabel.textContent = '\u23f3 Remplis le formulaire...';
+      } else if (!rsp.formSubmitted && elapsed >= MIN_TIME_SECONDS) {
+        confirmLabel.textContent = 'En attente de soumission du formulaire...';
+        if (mobileLabel) mobileLabel.textContent = '\u23f3 Soumets le formulaire';
+        timerLabelEl.textContent = 'Temps OK \u2014 soumets le formulaire';
+        timerLabelEl.style.color = '#D97706';
+      } else if (rsp.formSubmitted && elapsed < MIN_TIME_SECONDS) {
+        var remaining2 = MIN_TIME_SECONDS - elapsed;
+        confirmLabel.textContent = 'Formulaire soumis ! Encore ' + remaining2 + 's...';
+        if (mobileLabel) mobileLabel.textContent = '\u2713 Soumis ! Encore ' + remaining2 + 's';
       }
-    } else if (!rsp.confirmed) {
-      var remaining = MIN_TIME_SECONDS - elapsed;
-      confirmLabel.textContent = 'Patiente encore ' + remaining + 's...';
-      if (mobileLabel) mobileLabel.textContent = '\u23f3 Encore ' + remaining + 's...';
     }
   }, 1000);
 }
@@ -180,12 +266,11 @@ function startTimer() {
 /* ─── Mobile bar setup ─── */
 function setupMobileBar() {
   var mobileBar = document.getElementById('rsp-mobile-bar');
-  if (window.innerWidth <= 860) {
-    mobileBar.style.display = 'flex';
-  }
-  window.addEventListener('resize', function() {
+  function updateBar() {
     mobileBar.style.display = window.innerWidth <= 860 ? 'flex' : 'none';
-  });
+  }
+  updateBar();
+  window.addEventListener('resize', updateBar);
 }
 
 /* ─── Already responded ─── */
@@ -198,18 +283,23 @@ function checkAlreadyResponded() {
 async function confirmResponse() {
   if (rsp.confirmed) return;
 
+  /* Double-check both conditions */
+  if (!rsp.formSubmitted) {
+    showWarning('Soumets le formulaire Google Forms d\'abord !');
+    return;
+  }
+
   var elapsed = Math.floor((Date.now() - rsp.startTime) / 1000);
   if (elapsed < MIN_TIME_SECONDS) {
-    var warning = document.getElementById('rsp-warning');
-    warning.style.display = 'flex';
-    warning.style.animation = 'none';
-    void warning.offsetWidth;
-    warning.style.animation = 'rspShake 0.5s ease';
+    showWarning('Patiente encore quelques secondes...');
     return;
   }
 
   rsp.confirmed = true;
   clearInterval(rsp.timerInterval);
+
+  /* Update step 3 */
+  updateStep(3, 'completed');
 
   /* Update buttons */
   var confirmBtn = document.getElementById('rsp-confirm-btn');
@@ -225,10 +315,6 @@ async function confirmResponse() {
     mobileConfirm.classList.remove('ready');
     document.getElementById('rsp-mobile-label').textContent = '\u23f3 Envoi...';
   }
-
-  /* Update step 3 */
-  var step3 = document.getElementById('rsp-step-3');
-  step3.classList.add('active');
 
   var endTime = Date.now();
   var duration = Math.floor((endTime - rsp.startTime) / 1000);
@@ -253,7 +339,7 @@ async function confirmResponse() {
     } else {
       var errData = await resp2.json().catch(function() { return {}; });
       if (errData.already_responded) {
-        showFailScreen("Tu as d\u00e9j\u00e0 r\u00e9pondu \u00e0 ce questionnaire. Les points ne sont compt\u00e9s qu'une seule fois.");
+        showFailScreen("Tu as d\u00e9j\u00e0 r\u00e9pondu. Les points ne sont compt\u00e9s qu'une seule fois.");
         return;
       }
       if (errData.error) {
@@ -261,16 +347,27 @@ async function confirmResponse() {
         return;
       }
     }
-  } catch {
-    /* Network error */
+  } catch (e) {
+    /* Network error — still show success with default */
   }
 
   if (result && result.is_suspect) {
-    showFailScreen("Ta r\u00e9ponse a \u00e9t\u00e9 d\u00e9tect\u00e9e comme trop rapide. R\u00e9ponds s\u00e9rieusement pour gagner des points.");
+    showFailScreen("R\u00e9ponse trop rapide. R\u00e9ponds s\u00e9rieusement pour gagner des points.");
     return;
   }
 
   showSuccess(result);
+}
+
+/* ─── Warning ─── */
+function showWarning(msg) {
+  var warning = document.getElementById('rsp-warning');
+  var warnText = document.getElementById('rsp-warning-text');
+  if (warnText) warnText.textContent = msg;
+  warning.style.display = 'flex';
+  warning.style.animation = 'none';
+  void warning.offsetWidth;
+  warning.style.animation = 'rspShake 0.5s ease';
 }
 
 /* ─── Success ─── */
@@ -334,37 +431,44 @@ function showFailScreen(message) {
 function retryResponse() {
   rsp.confirmed = false;
   rsp.btnReady = false;
+  rsp.timeReady = false;
+  rsp.formSubmitted = false;
+  rsp.iframeLoadCount = 0;
   rsp.startTime = Date.now();
 
   document.getElementById('rsp-fail-overlay').style.display = 'none';
   document.getElementById('rsp-layout').style.display = 'grid';
 
   /* Reset steps */
-  document.getElementById('rsp-step-2').classList.add('active');
-  document.getElementById('rsp-step-2').classList.remove('completed');
-  document.getElementById('rsp-check-2').textContent = '';
-  document.getElementById('rsp-step-3').classList.remove('active');
+  updateStep(1, 'completed');
+  updateStep(2, 'active');
+  updateStep(3, 'done');
 
   /* Reset button */
   var confirmBtn = document.getElementById('rsp-confirm-btn');
   confirmBtn.disabled = true;
   confirmBtn.classList.remove('ready', 'loading');
   document.getElementById('rsp-confirm-icon').textContent = '\u23f3';
-  document.getElementById('rsp-confirm-label').textContent = 'Patiente encore...';
-  document.getElementById('rsp-confirm-hint').textContent = "Le bouton s'active apr\u00e8s 30s minimum";
+  document.getElementById('rsp-confirm-label').textContent = 'Remplis le formulaire...';
+  document.getElementById('rsp-confirm-hint').textContent = "Soumets le formulaire + 30s minimum";
   document.getElementById('rsp-timer-label').textContent = 'min. 30s requis';
   document.getElementById('rsp-timer-label').style.color = '';
   document.getElementById('rsp-warning').style.display = 'none';
   document.getElementById('rsp-progress-bar').style.width = '0%';
+
+  var statusEl = document.getElementById('rsp-submission-status');
+  if (statusEl) statusEl.style.display = 'none';
 
   /* Reset mobile */
   var mobileConfirm = document.getElementById('rsp-mobile-confirm');
   if (mobileConfirm) {
     mobileConfirm.disabled = true;
     mobileConfirm.classList.remove('ready');
-    document.getElementById('rsp-mobile-label').textContent = '\u23f3 Patiente encore...';
+    document.getElementById('rsp-mobile-label').textContent = '\u23f3 Remplis le formulaire...';
   }
 
+  /* Re-embed form */
+  embedGoogleForm();
   setupMobileBar();
   startTimer();
 }
