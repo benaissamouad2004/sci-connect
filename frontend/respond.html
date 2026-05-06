@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Répondre — SciConnect</title>
+  <meta name="description" content="Répondre à un questionnaire académique et gagner des points sur SciConnect." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -12,117 +13,156 @@
 </head>
 <body>
 
-  <!-- ══════════════════════════════
-       TOPBAR
-  ══════════════════════════════ -->
-  <header class="rsp-topbar" id="rsp-topbar">
+  <!-- ═══ TOPBAR ═══ -->
+  <header class="rsp-topbar">
     <a href="dashboard.html" class="rsp-back-btn" aria-label="Retour">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-        <path d="M10 3L5 8l5 5"/>
-      </svg>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg>
       <span>Feed</span>
     </a>
-
     <div class="rsp-topbar-center">
-      <span class="rsp-topbar-logo">
-        <span style="color:var(--color-primary);font-family:var(--font-display);font-weight:700">Sci</span><span style="color:var(--color-accent);font-family:var(--font-display);font-weight:700">Connect</span>
-      </span>
+      <span style="color:var(--color-primary);font-family:var(--font-display);font-weight:700">Sci</span><span style="color:var(--color-accent);font-family:var(--font-display);font-weight:700">Connect</span>
     </div>
-
-    <div class="rsp-topbar-right">
-      <div class="rsp-pts-pill" id="rsp-pts-pill">
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="6,1 7.5,4.5 11,5 8.5,7.5 9,11 6,9.5 3,11 3.5,7.5 1,5 4.5,4.5"/></svg>
-        <span id="rsp-pts-text">+10 pts</span>
-      </div>
+    <div class="rsp-pts-pill" id="rsp-pts-pill">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="6,1 7.5,4.5 11,5 8.5,7.5 9,11 6,9.5 3,11 3.5,7.5 1,5 4.5,4.5"/></svg>
+      <span id="rsp-pts-text">+10 pts</span>
     </div>
   </header>
 
-  <!-- ══════════════════════════════
-       PAGE PRINCIPALE
-  ══════════════════════════════ -->
-  <div class="rsp-page" id="rsp-page">
+  <!-- ═══ LOADING ═══ -->
+  <div class="rsp-loading" id="rsp-loading">
+    <div class="rsp-spinner"></div>
+    <span>Chargement du questionnaire...</span>
+  </div>
 
-    <!-- CHARGEMENT -->
-    <div class="rsp-loading" id="rsp-loading">
-      <div class="rsp-spinner"></div>
-      <span>Chargement du questionnaire...</span>
-    </div>
+  <!-- ═══ ERROR ═══ -->
+  <div class="rsp-error" id="rsp-error" style="display:none">
+    <div class="rsp-error-icon">⚠️</div>
+    <p class="rsp-error-msg" id="rsp-error-msg">Impossible de charger le questionnaire.</p>
+    <a href="dashboard.html" class="rsp-error-link">← Retour au feed</a>
+  </div>
 
-    <!-- ERREUR -->
-    <div class="rsp-error" id="rsp-error" style="display:none">
-      <div class="rsp-error-icon">⚠️</div>
-      <p class="rsp-error-msg" id="rsp-error-msg">Impossible de charger le questionnaire.</p>
-      <a href="dashboard.html" class="rsp-error-link">← Retour au feed</a>
-    </div>
+  <!-- ═══ MAIN 2-COLUMN LAYOUT ═══ -->
+  <div class="rsp-layout" id="rsp-layout" style="display:none">
 
-    <!-- CONTENU PRINCIPAL (caché jusqu'au chargement) -->
-    <div class="rsp-content" id="rsp-content" style="display:none">
+    <!-- ── LEFT COLUMN (sticky) ── -->
+    <aside class="rsp-sidebar" id="rsp-sidebar">
+      <div class="rsp-sidebar-inner">
 
-      <!-- CARTE QUESTIONNAIRE -->
-      <div class="rsp-info-card" id="rsp-info-card">
-        <div class="rsp-info-stripe" id="rsp-info-stripe"></div>
-        <div class="rsp-info-body">
-          <div class="rsp-info-row1">
-            <div class="rsp-info-author">
-              <div class="rsp-info-avatar" id="rsp-info-avatar"></div>
-              <div>
-                <div class="rsp-info-author-name" id="rsp-info-author-name"></div>
-                <div class="rsp-info-school" id="rsp-info-school"></div>
-              </div>
-            </div>
-            <button class="rsp-subscribe-btn" id="rsp-subscribe-btn" onclick="toggleSubscribe()">S'abonner</button>
+        <!-- Title card -->
+        <div class="rsp-title-card">
+          <div class="rsp-title-stripe" id="rsp-title-stripe"></div>
+          <div class="rsp-title-body">
+            <div class="rsp-title-chips" id="rsp-title-chips"></div>
+            <h1 class="rsp-title" id="rsp-title">Chargement...</h1>
+            <p class="rsp-desc" id="rsp-desc"></p>
+            <div class="rsp-meta" id="rsp-meta"></div>
           </div>
-          <h1 class="rsp-info-title" id="rsp-info-title">Chargement...</h1>
-          <p class="rsp-info-desc" id="rsp-info-desc"></p>
-          <div class="rsp-info-chips" id="rsp-info-chips"></div>
         </div>
-      </div>
 
-      <!-- INSTRUCTIONS -->
-      <div class="rsp-instructions">
-        <div class="rsp-instructions-icon">📝</div>
-        <div class="rsp-instructions-text">
-          <strong>Comment ça marche ?</strong>
-          <p>Remplis le formulaire Google Forms ci-dessous. Une fois terminé, clique sur <strong>"J'ai terminé"</strong> pour valider ta réponse et gagner tes points.</p>
+        <!-- Steps -->
+        <div class="rsp-steps">
+          <div class="rsp-step done" id="rsp-step-1">
+            <div class="rsp-step-icon">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 4h12M2 8h8M2 12h10"/></svg>
+            </div>
+            <div class="rsp-step-text">
+              <div class="rsp-step-label">Étape 1</div>
+              <div class="rsp-step-name">Lire les instructions</div>
+            </div>
+            <div class="rsp-step-check" id="rsp-check-1">✓</div>
+          </div>
+          <div class="rsp-step-line"></div>
+          <div class="rsp-step active" id="rsp-step-2">
+            <div class="rsp-step-icon">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2L5.5 9.5 3 7"/></svg>
+            </div>
+            <div class="rsp-step-text">
+              <div class="rsp-step-label">Étape 2</div>
+              <div class="rsp-step-name">Répondre au formulaire</div>
+            </div>
+            <div class="rsp-step-check" id="rsp-check-2"></div>
+          </div>
+          <div class="rsp-step-line"></div>
+          <div class="rsp-step" id="rsp-step-3">
+            <div class="rsp-step-icon">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8l3 3 5-6"/></svg>
+            </div>
+            <div class="rsp-step-text">
+              <div class="rsp-step-label">Étape 3</div>
+              <div class="rsp-step-name">Confirmer ta réponse</div>
+            </div>
+            <div class="rsp-step-check" id="rsp-check-3"></div>
+          </div>
         </div>
-      </div>
 
-      <!-- IFRAME GOOGLE FORMS -->
-      <div class="rsp-iframe-wrap" id="rsp-iframe-wrap">
-        <iframe class="rsp-iframe" id="rsp-iframe"
-                src=""
-                frameborder="0"
-                allowfullscreen
-                title="Questionnaire Google Forms">
-        </iframe>
-      </div>
-
-      <!-- BOUTON CONFIRMATION -->
-      <div class="rsp-confirm-zone">
-        <div class="rsp-timer-info">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="6"/><path d="M7 4v3l2 1.5"/></svg>
-          <span id="rsp-elapsed">0:00 écoulé</span>
+        <!-- Timer / Progress -->
+        <div class="rsp-progress-section">
+          <div class="rsp-progress-bar-wrap">
+            <div class="rsp-progress-bar" id="rsp-progress-bar" style="width:0%"></div>
+          </div>
+          <div class="rsp-progress-info">
+            <span class="rsp-timer" id="rsp-timer">0:00</span>
+            <span class="rsp-timer-label" id="rsp-timer-label">min. 30s requis</span>
+          </div>
         </div>
-        <button class="rsp-confirm-btn" id="rsp-confirm-btn" onclick="confirmResponse()" disabled>
-          <span id="rsp-confirm-label">Remplis le formulaire d'abord...</span>
+
+        <!-- Incomplete warning -->
+        <div class="rsp-warning" id="rsp-warning" style="display:none">
+          <span>⚠️</span>
+          <span>Termine le formulaire avant de confirmer</span>
+        </div>
+
+        <!-- CONFIRM BUTTON — always visible -->
+        <button class="rsp-confirm-btn" id="rsp-confirm-btn" disabled>
+          <span class="rsp-confirm-btn-icon" id="rsp-confirm-icon">⏳</span>
+          <span id="rsp-confirm-label">Patiente encore...</span>
         </button>
-        <p class="rsp-confirm-note" id="rsp-confirm-note">Le bouton s'active après 30 secondes minimum</p>
+
+        <p class="rsp-confirm-hint" id="rsp-confirm-hint">Le bouton s'active après 30s minimum</p>
+
+      </div>
+    </aside>
+
+    <!-- ── RIGHT COLUMN (scrollable form) ── -->
+    <main class="rsp-main">
+      <!-- Already responded banner -->
+      <div class="rsp-already-banner" id="rsp-already-banner" style="display:none">
+        <span>✅</span>
+        <div>
+          <strong>Tu as déjà répondu à ce questionnaire.</strong><br>
+          Tu peux répondre à nouveau mais les points ne seront pas comptés une seconde fois.
+        </div>
       </div>
 
-    </div>
+      <!-- Iframe wrap -->
+      <div class="rsp-iframe-card">
+        <iframe class="rsp-iframe" id="rsp-iframe" src="" frameborder="0" allowfullscreen title="Questionnaire Google Forms"></iframe>
+      </div>
+    </main>
 
-    <!-- ÉCRAN SUCCÈS (caché au départ) -->
-    <div class="rsp-success-screen" id="rsp-success-screen" style="display:none">
+  </div><!-- /rsp-layout -->
+
+  <!-- ═══ MOBILE FIXED BOTTOM BAR ═══ -->
+  <div class="rsp-mobile-bar" id="rsp-mobile-bar" style="display:none">
+    <div class="rsp-mobile-timer" id="rsp-mobile-timer">0:00</div>
+    <button class="rsp-mobile-confirm" id="rsp-mobile-confirm" disabled>
+      <span id="rsp-mobile-label">⏳ Patiente encore...</span>
+    </button>
+  </div>
+
+  <!-- ═══ SUCCESS SCREEN ═══ -->
+  <div class="rsp-success-overlay" id="rsp-success-overlay" style="display:none">
+    <div class="rsp-success-card">
       <div class="rsp-success-circle">
-        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-          <path class="rsp-check-path" d="M10 20l7 7 13-14"
-                stroke="#005F54" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"
-                stroke-dasharray="40" stroke-dashoffset="40"/>
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+          <path class="rsp-check-path" d="M12 24l8 8 16-17"
+                stroke="#005F54" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"
+                stroke-dasharray="50" stroke-dashoffset="50"/>
         </svg>
       </div>
-      <div class="rsp-pts-earned" id="rsp-pts-earned">+10 pts gagnés !</div>
-      <p class="rsp-thanks-text">Merci pour ta contribution !</p>
-      <p class="rsp-total-pts">Total : <strong id="rsp-total-pts-val">—</strong> pts</p>
+      <div class="rsp-success-pts" id="rsp-success-pts">+10 pts gagnés !</div>
+      <p class="rsp-success-text">Merci pour ta contribution à la recherche !</p>
+      <p class="rsp-success-total">Total : <strong id="rsp-success-total-val">—</strong> pts</p>
 
       <div class="rsp-unlock-card" id="rsp-unlock-card">
         <div class="rsp-unlock-header">
@@ -136,13 +176,24 @@
       </div>
 
       <div class="rsp-success-actions">
-        <a href="deposit.html" class="rsp-action-primary" id="rsp-deposit-btn">Déposer mon questionnaire →</a>
-        <a href="dashboard.html" class="rsp-action-outline">Répondre à un autre</a>
-        <a href="#" class="rsp-action-ghost" id="rsp-publisher-link">Voir le profil du publieur →</a>
+        <a href="deposit.html" class="rsp-btn-primary" id="rsp-deposit-btn">Déposer mon questionnaire →</a>
+        <a href="dashboard.html" class="rsp-btn-outline">Répondre à un autre</a>
       </div>
     </div>
+  </div>
 
-  </div><!-- /rsp-page -->
+  <!-- ═══ FAIL SCREEN ═══ -->
+  <div class="rsp-success-overlay" id="rsp-fail-overlay" style="display:none">
+    <div class="rsp-success-card">
+      <div class="rsp-fail-icon">❌</div>
+      <div class="rsp-fail-title">Réponse non validée</div>
+      <p class="rsp-fail-text" id="rsp-fail-text">Tu dois compléter le questionnaire pour recevoir tes points.</p>
+      <div class="rsp-success-actions">
+        <button class="rsp-btn-primary" onclick="retryResponse()">↩ Réessayer</button>
+        <a href="dashboard.html" class="rsp-btn-outline">Retour au feed</a>
+      </div>
+    </div>
+  </div>
 
   <script src="js/main.js"></script>
   <script src="js/animations.js"></script>

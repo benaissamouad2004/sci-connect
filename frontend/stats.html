@@ -3,11 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Statistiques — SciConnect</title>
+  <title>Mes Questionnaires — SciConnect</title>
+  <meta name="description" content="Statistiques détaillées de vos questionnaires académiques sur SciConnect." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/main.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
-    /* ══ Stats V3 ══ */
+    /* ══ Stats V4 — Multi-questionnaire ══ */
     body { background: var(--color-bg); margin: 0; }
 
     /* Topbar */
@@ -44,7 +48,7 @@
       height: 32px; padding: 0 12px;
       border: 1.5px solid var(--color-border); border-radius: 7px;
       background: transparent; color: var(--color-text); font-size: 12px;
-      cursor: pointer; transition: all 150ms;
+      cursor: pointer; transition: all 150ms; font-family: var(--font-ui);
     }
     .st-share-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
     .st-export-btn {
@@ -52,18 +56,100 @@
       height: 32px; padding: 0 14px;
       border: none; border-radius: 7px;
       background: var(--color-primary); color: #fff; font-size: 12px; font-weight: 600;
-      cursor: pointer; transition: background 150ms;
+      cursor: pointer; transition: background 150ms; font-family: var(--font-ui);
     }
     .st-export-btn:hover { background: #004A41; }
     .st-export-btn.done { background: #16A34A; }
 
     /* Page layout */
-    .st-page { max-width: 680px; margin: 0 auto; padding: 20px 16px 60px; display: flex; flex-direction: column; gap: 14px; }
+    .st-page { max-width: 720px; margin: 0 auto; padding: 20px 16px 60px; display: flex; flex-direction: column; gap: 14px; }
+
+    /* ═══ QUESTIONNAIRE SELECTOR ═══ */
+    .st-selector {
+      background: #fff; border: 1px solid var(--color-border); border-radius: 16px;
+      padding: 20px; animation: stSlideUp 400ms cubic-bezier(0.32,0.72,0,1) both;
+    }
+    .st-selector-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .st-selector-title {
+      font-family: var(--font-display); font-size: 1.1rem; font-weight: 700;
+      color: var(--color-text);
+    }
+    .st-selector-count {
+      font-size: 0.75rem; color: var(--color-text-muted);
+      background: var(--color-surface-2); padding: 3px 10px; border-radius: 100px;
+      font-weight: 600;
+    }
+    .st-form-list { display: flex; flex-direction: column; gap: 8px; }
+    .st-form-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px; border-radius: 12px;
+      border: 1.5px solid var(--color-border);
+      cursor: pointer; transition: all 200ms;
+      background: #fff;
+    }
+    .st-form-item:hover { border-color: var(--color-primary); background: var(--color-primary-light); }
+    .st-form-item.active {
+      border-color: var(--color-primary);
+      background: var(--color-primary-light);
+      box-shadow: 0 2px 8px rgba(0,95,84,0.1);
+    }
+    .st-form-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .st-form-item-info { flex: 1; min-width: 0; }
+    .st-form-item-title {
+      font-size: 0.88rem; font-weight: 600; color: var(--color-text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .st-form-item-meta {
+      font-size: 0.72rem; color: var(--color-text-muted); margin-top: 2px;
+    }
+    .st-form-item-stats {
+      display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+    }
+    .st-form-item-stat {
+      text-align: center;
+    }
+    .st-form-item-stat-val {
+      font-family: var(--font-display); font-size: 1rem; font-weight: 700;
+      color: var(--color-primary); line-height: 1;
+    }
+    .st-form-item-stat-label {
+      font-size: 0.6rem; color: var(--color-text-muted); font-weight: 500;
+    }
+    .st-form-item-arrow {
+      color: var(--color-text-muted); font-size: 0.85rem; flex-shrink: 0;
+      transition: transform 150ms;
+    }
+    .st-form-item:hover .st-form-item-arrow { transform: translateX(3px); color: var(--color-primary); }
+
+    /* Empty state */
+    .st-empty {
+      text-align: center; padding: 40px 20px;
+      color: var(--color-text-muted); font-size: 0.88rem;
+    }
+    .st-empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .st-empty-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 12px; padding: 8px 18px;
+      background: var(--color-primary); color: #fff; border-radius: 10px;
+      text-decoration: none; font-size: 0.82rem; font-weight: 600;
+      transition: all 150ms;
+    }
+    .st-empty-link:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,95,84,0.2); }
+
+    /* ═══ STATS CONTENT ═══ */
+    .st-stats-content { display: none; }
+    .st-stats-content.visible { display: flex; flex-direction: column; gap: 14px; }
 
     /* Metric cards */
     .st-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
     .st-metric {
-      background: #fff; border: 1px solid var(--color-border); border-radius: 12px; padding: 12px;
+      background: #fff; border: 1px solid var(--color-border); border-radius: 12px; padding: 14px;
     }
     .st-metric-val {
       font-family: var(--font-display); font-size: 24px; color: var(--color-primary);
@@ -117,7 +203,7 @@
       width: 100%; padding: 10px; border: none; background: transparent;
       color: var(--color-primary); font-size: 12px; font-weight: 500; cursor: pointer;
       border-top: 1px solid var(--color-border); margin-top: 4px;
-      transition: background 150ms;
+      transition: background 150ms; font-family: var(--font-ui);
     }
     .st-see-all-btn:hover { background: var(--color-primary-light); }
 
@@ -135,6 +221,7 @@
       width: 100%; height: 42px;
       background: var(--color-primary); color: #fff; border: none; border-radius: 8px;
       font-size: 13px; font-weight: 600; cursor: pointer; transition: background 150ms;
+      font-family: var(--font-ui);
     }
     .st-export-main-btn:hover { background: #004A41; }
     .st-export-main-btn.done { background: #16A34A; }
@@ -149,7 +236,7 @@
       margin-top: 8px; padding: 6px 14px;
       border: 1.5px solid var(--color-primary); border-radius: 6px;
       background: #fff; color: var(--color-primary); font-size: 11px; cursor: pointer;
-      transition: all 150ms;
+      transition: all 150ms; font-family: var(--font-ui);
     }
     .st-copy-btn:hover { background: var(--color-primary-light); }
     .st-copy-btn.copied { background: var(--color-primary); color: #fff; }
@@ -165,6 +252,10 @@
       animation: stSpin 0.7s linear infinite;
     }
     @keyframes stSpin { to { transform: rotate(360deg); } }
+    @keyframes stSlideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
 
     @media (max-width: 580px) {
       .st-metrics { grid-template-columns: repeat(2, 1fr); }
@@ -172,6 +263,7 @@
       .st-export-sheets { grid-template-columns: 1fr; }
       .st-metric-val { font-size: 20px; }
       .st-form-title { display: none; }
+      .st-form-item-stats { display: none; }
     }
   </style>
 </head>
@@ -179,17 +271,17 @@
 
   <!-- Topbar -->
   <div class="st-topbar">
-    <button class="st-back-btn" onclick="history.back()" aria-label="Retour">
+    <button class="st-back-btn" onclick="window.location.href='dashboard.html'" aria-label="Retour">
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
         <path d="M9 2L4 7l5 5"/>
       </svg>
     </button>
     <div class="st-topbar-info">
       <div class="st-live-dot"></div>
-      <span class="st-form-title" id="st-form-title">Chargement...</span>
+      <span class="st-form-title" id="st-form-title">Mes Questionnaires</span>
       <span class="st-updated" id="st-updated"></span>
     </div>
-    <div class="st-topbar-actions">
+    <div class="st-topbar-actions" id="st-topbar-actions" style="display:none">
       <button class="st-share-btn" onclick="shareForm()" title="Partager">
         <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
           <circle cx="10.5" cy="2.5" r="1.5"/><circle cx="10.5" cy="10.5" r="1.5"/><circle cx="2.5" cy="6.5" r="1.5"/>
@@ -210,10 +302,20 @@
   <div class="st-page" id="st-page">
     <div class="st-loader" id="st-loader">
       <div class="st-spinner"></div>
-      <span>Chargement des statistiques...</span>
+      <span>Chargement de vos questionnaires...</span>
     </div>
 
-    <div id="st-content" style="display:none;display:contents;">
+    <!-- Questionnaire Selector -->
+    <div class="st-selector" id="st-selector" style="display:none">
+      <div class="st-selector-header">
+        <div class="st-selector-title">📊 Mes Questionnaires</div>
+        <span class="st-selector-count" id="st-selector-count">0</span>
+      </div>
+      <div class="st-form-list" id="st-form-list"></div>
+    </div>
+
+    <!-- Stats content (hidden until a form is selected) -->
+    <div class="st-stats-content" id="st-stats-content">
 
       <!-- 4 Metric cards -->
       <div class="st-metrics" id="st-metrics"></div>
@@ -300,7 +402,7 @@
         </div>
       </div>
 
-    </div><!-- /st-content -->
+    </div><!-- /st-stats-content -->
   </div><!-- /st-page -->
 
   <script src="js/main.js"></script>

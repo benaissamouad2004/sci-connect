@@ -224,7 +224,8 @@ async function loadRecommendedBanner() {
     document.getElementById('rec-sub').textContent = [
       form.author_name && `Par ${form.author_name}`, form.school_id, form.domain
     ].filter(Boolean).join(' · ');
-    document.getElementById('rec-meta').textContent = [
+    const recMeta = document.getElementById('rec-meta');
+    if (recMeta) recMeta.textContent = [
       form.target_level, form.response_count && `${form.response_count} réponses`
     ].filter(Boolean).join(' · ');
     document.getElementById('rec-btn').href = `/respond.html?id=${form.id}`;
