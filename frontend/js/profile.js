@@ -88,7 +88,8 @@ function renderIdentity() {
 
   const avatar = document.getElementById('prf-avatar');
   if (p.avatar_url) {
-    avatar.innerHTML = `<img src="${esc(p.avatar_url)}" alt="${esc(p.name)}" />`;
+    const initial = (p.name || '?').charAt(0).toUpperCase();
+    avatar.innerHTML = `<img src="${esc(p.avatar_url)}" alt="${esc(p.name)}" referrerPolicy="no-referrer" onerror="this.parentNode.textContent='${initial}'" />`;
   } else {
     avatar.textContent = (p.name || '?').charAt(0).toUpperCase();
   }

@@ -130,6 +130,9 @@ def google_auth():
         user.name       = name
         user.avatar_url = avatar_url
         user.last_active = datetime.utcnow()
+        # Auto-generate slug for users who don't have one
+        if not user.slug:
+            user.slug = _make_unique_slug(name, email)
 
     # V3: Système de connexion quotidienne + streak
     today = date.today()

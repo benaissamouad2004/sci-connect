@@ -111,17 +111,16 @@ function renderUserUI(user) {
   document.getElementById('pp-forms').textContent     = user.total_forms_posted || 0;
   document.getElementById('pp-streak').textContent    = streak + '🔥';
 
-  if (user.slug) {
-    const url = `profile.html?slug=${user.slug}`;
-    ['pp-profile-link', 'sb-profile-link'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.href = url;
-    });
-  }
+  const profileSlug = user.slug || user.id;
+  const profileUrl = `profile.html?slug=${profileSlug}`;
+  ['pp-profile-link', 'sb-profile-link'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.href = profileUrl;
+  });
   /* Rail profile button */
   const railBtn = document.getElementById('rail-profile-btn');
   if (railBtn) {
-    railBtn.onclick = () => { window.location.href = user.slug ? `profile.html?slug=${user.slug}` : 'profile.html'; };
+    railBtn.onclick = () => { window.location.href = profileUrl; };
   }
 
   /* Bio */
@@ -176,6 +175,12 @@ function renderAvatar(elId, user) {
     const img = document.createElement('img');
     img.src = user.avatar_url;
     img.alt = user.name || '';
+    img.referrerPolicy = 'no-referrer';
+    img.onerror = function() {
+      /* Google avatar expired or blocked — show initial */
+      el.innerHTML = '';
+      el.textContent = (user.name || '?')[0].toUpperCase();
+    };
     el.innerHTML = '';
     el.appendChild(img);
   } else {
@@ -338,7 +343,7 @@ function buildCard(form, user) {
   if (form.author_name) {
     const profileHref = form.author_slug ? `profile.html?slug=${form.author_slug}` : '#';
     const avatarHtml  = form.author_avatar
-      ? `<img src="${escHtml(form.author_avatar)}" alt="${escHtml(form.author_name)}">`
+      ? `<img src="${escHtml(form.author_avatar)}" alt="${escHtml(form.author_name)}" referrerPolicy="no-referrer" onerror="this.parentNode.textContent='${authorInit}'">`
       : authorInit;
     const subBtnHtml  = !isOwn
       ? `<button class="subscribe-btn${isSubscribed ? ' subscribed' : ''}" data-author-id="${form.author_id}">
