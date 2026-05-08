@@ -36,6 +36,7 @@ def list_forms():
     domain        = request.args.get('domain')
     level         = request.args.get('level')
     sort          = request.args.get('sort', 'recent')
+    status        = request.args.get('status', 'new')  # new | answered | all
     limit         = min(int(request.args.get('limit', 20)), 50)
     offset        = int(request.args.get('offset', 0))
 
@@ -49,7 +50,7 @@ def list_forms():
     if level:
         q = q.filter_by(target_level=level)
 
-    # Récupérer les questionnaires déjà répondus (pour les marquer, sans les cacher)
+    # Récupérer les questionnaires déjà répondus par l'utilisateur connecté
     user_id = session.get('user_id')
     answered_ids = set()
     if user_id:
@@ -58,9 +59,18 @@ def list_forms():
             for r in Response.query.filter_by(respondent_id=user_id).all()
         }
 
+    # Filtrage par statut (new = non répondus, answered = déjà répondus, all = tout)
+    if status == 'new' and answered_ids:
+        q = q.filter(~Questionnaire.id.in_(answered_ids))
+    elif status == 'answered' and answered_ids:
+        q = q.filter(Questionnaire.id.in_(answered_ids))
+    # status == 'all' → pas de filtre supplémentaire
+
     total = q.count()
     if sort == 'popular':
         items = q.order_by(Questionnaire.response_count.desc()).offset(offset).limit(limit).all()
+    elif sort == 'least_responses':
+        items = q.order_by(Questionnaire.response_count.asc()).offset(offset).limit(limit).all()
     else:
         items = q.order_by(Questionnaire.created_at.desc()).offset(offset).limit(limit).all()
 
@@ -77,8 +87,9 @@ def list_forms():
             d['author_slug']   = author.slug
         results.append(d)
 
-    # Tri : questionnaires non répondus en premier
-    results.sort(key=lambda x: x.get('already_responded', False))
+    # Tri : questionnaires non répondus en premier (sauf si filtre status actif)
+    if status == 'all':
+        results.sort(key=lambda x: x.get('already_responded', False))
 
     return jsonify({'items': results, 'total': total, 'limit': limit, 'offset': offset})
 
@@ -268,3 +279,37 @@ def get_schools():
         return jsonify({'universities': []}), 200
     with open(path, 'r', encoding='utf-8') as f:
         return jsonify(json.load(f))
+
+
+# ROUTE: GET /api/stats/public
+# OBJECTIF: Retourner les statistiques réelles pour la landing page (pas d'auth requise)
+@forms_bp.route('/api/stats/public', methods=['GET'])
+def public_stats():
+    total_users = User.query.count()
+    total_questionnaires = Questionnaire.query.filter_by(is_active=True).count()
+    total_responses = Response.query.count()
+
+    # Taux de complétion moyen
+    avg_completion = 0
+    active_forms = Questionnaire.query.filter_by(is_active=True).all()
+    if active_forms:
+        rates = []
+        for f in active_forms:
+            if f.target_count and f.target_count > 0:
+                rates.append(min(100, round(f.response_count / f.target_count * 100)))
+        if rates:
+            avg_completion = round(sum(rates) / len(rates))
+
+    # Nombre d'écoles uniques
+    schools = db.session.query(db.func.count(db.distinct(User.school_id))).filter(
+        User.school_id != None, User.school_id != ''
+    ).scalar() or 0
+
+    return jsonify({
+        'total_users': total_users,
+        'total_questionnaires': total_questionnaires,
+        'total_responses': total_responses,
+        'avg_completion': avg_completion,
+        'total_schools': schools,
+    })
+

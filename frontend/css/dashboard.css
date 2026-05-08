@@ -893,29 +893,67 @@
 .points-banner.halfway .pb-btn { color: var(--color-accent); }
 .points-banner.halfway .pb-btn:hover { background: rgba(201,168,76,.06); transform: translateY(-1px); }
 
-/* ─── Filtres chips ─── */
-.filter-row {
+/* ─── Barre de filtres avancés ─── */
+.filter-bar {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
-.filter-chips { display: flex; gap: 6px; flex-wrap: wrap; flex:1; }
-.chip {
-  background: var(--color-surface);
+.filter-bar-left {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.filter-select-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.filter-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.filter-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--color-surface);
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239A9890' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
   border: 1px solid var(--color-border);
-  border-radius: 20px;
-  padding: 5px 13px;
+  border-radius: 10px;
+  padding: 7px 30px 7px 12px;
   font-family: var(--font-ui);
-  font-size: 12px;
-  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--color-text);
   cursor: pointer;
-  transition: border-color 150ms, background 150ms, color 150ms;
-  white-space: nowrap;
+  transition: border-color 150ms, box-shadow 150ms;
+  min-width: 130px;
 }
-.chip:hover { border-color: var(--color-primary); color: var(--color-primary); }
-.chip.active { background: var(--color-primary); border-color: var(--color-primary); color: white; }
-.filter-count { font-size: 11px; color: var(--color-text-muted); white-space: nowrap; }
+.filter-select:hover {
+  border-color: var(--color-primary);
+}
+.filter-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+.filter-count {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  font-weight: 500;
+  padding-bottom: 4px;
+}
 
 /* ═══ GRILLE MASONRY 3 COLONNES ═══
    columns: 3 crée l'effet masonry natif CSS */

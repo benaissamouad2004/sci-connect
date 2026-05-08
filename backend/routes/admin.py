@@ -1,11 +1,15 @@
-# ROUTE: Endpoints admin live-edit — lecture et écriture des fichiers JSON
+# ROUTE: Endpoints admin live-edit + panneau d'administration secret
 # OBJECTIF: Permettre de modifier content.json, settings.json, schools.json sans redémarrer
+#           + Dashboard admin protégé par login/mot de passe
 # Tous les POST sont protégés par session (admin uniquement en production)
 
 import os
 import json
-from flask import Blueprint, request, jsonify, session
-from backend.models import User
+import hmac
+from datetime import datetime, timedelta
+from flask import Blueprint, request, jsonify, session, send_from_directory
+from backend.models import db, User, Questionnaire
+from backend.config import FRONTEND_DIR
 
 admin_bp  = Blueprint('admin', __name__)
 ADMIN_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'admin')
@@ -150,4 +154,97 @@ def status():
         'server': 'ok',
         'files':  files_ok,
         'authenticated': bool(session.get('user_id')),
+    })
+
+
+# ═══ PANNEAU D'ADMINISTRATION SECRET ═══
+
+ADMIN_PANEL_USERNAME = 'admin'
+ADMIN_PANEL_PASSWORD = 'sciconnect-admin-2025'
+ADMIN_SESSION_DURATION = 3600
+
+
+def _check_admin_session():
+    if not session.get('admin_panel_auth'):
+        return False
+    login_time = session.get('admin_panel_login_time')
+    if not login_time:
+        return False
+    try:
+        login_dt = datetime.fromisoformat(login_time)
+        if (datetime.utcnow() - login_dt).total_seconds() > ADMIN_SESSION_DURATION:
+            session.pop('admin_panel_auth', None)
+            session.pop('admin_panel_login_time', None)
+            return False
+    except (ValueError, TypeError):
+        return False
+    return True
+
+
+@admin_bp.route('/admin')
+def admin_panel_page():
+    return send_from_directory(FRONTEND_DIR, 'admin.html')
+
+
+@admin_bp.route('/admin/panel/login', methods=['POST'])
+def admin_panel_login():
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Données manquantes'}), 400
+    username = data.get('username', '')
+    password = data.get('password', '')
+    if (hmac.compare_digest(username, ADMIN_PANEL_USERNAME) and
+            hmac.compare_digest(password, ADMIN_PANEL_PASSWORD)):
+        session['admin_panel_auth'] = True
+        session['admin_panel_login_time'] = datetime.utcnow().isoformat()
+        return jsonify({'success': True})
+    return jsonify({'error': 'Identifiants incorrects'}), 401
+
+
+@admin_bp.route('/admin/panel/logout', methods=['POST'])
+def admin_panel_logout():
+    session.pop('admin_panel_auth', None)
+    session.pop('admin_panel_login_time', None)
+    return jsonify({'success': True})
+
+
+@admin_bp.route('/admin/panel/check', methods=['GET'])
+def admin_panel_check():
+    return jsonify({'authenticated': _check_admin_session()})
+
+
+@admin_bp.route('/admin/panel/data', methods=['GET'])
+def admin_panel_data():
+    if not _check_admin_session():
+        return jsonify({'error': 'Non authentifié'}), 401
+    total_users = User.query.count()
+    total_questionnaires = Questionnaire.query.count()
+    today = datetime.utcnow().date()
+    new_today = User.query.filter(db.func.date(User.created_at) == today).count()
+    week_ago = today - timedelta(days=7)
+    new_this_week = User.query.filter(
+        User.created_at >= datetime.combine(week_ago, datetime.min.time())
+    ).count()
+    users = User.query.order_by(User.created_at.desc()).all()
+    users_list = [{
+        'name': u.name or 'Sans nom',
+        'email': u.email,
+        'created_at': u.created_at.strftime('%d/%m/%Y %H:%M') if u.created_at else '—'
+    } for u in users]
+    daily_signups = []
+    for i in range(6, -1, -1):
+        day = today - timedelta(days=i)
+        count = User.query.filter(db.func.date(User.created_at) == day).count()
+        daily_signups.append({
+            'date': day.strftime('%d/%m'),
+            'day_name': ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'][day.weekday()],
+            'count': count
+        })
+    return jsonify({
+        'total_users': total_users,
+        'total_questionnaires': total_questionnaires,
+        'new_today': new_today,
+        'new_this_week': new_this_week,
+        'users': users_list,
+        'daily_signups': daily_signups
     })

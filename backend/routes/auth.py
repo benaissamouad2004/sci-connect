@@ -100,7 +100,14 @@ def google_auth():
         }), 403
 
     # Chercher ou créer l'utilisateur en base
+    # ANTI-DOUBLON: d'abord par google_id, puis par email pour éviter les comptes dupliqués
     user = User.query.filter_by(google_id=google_id).first()
+    if not user:
+        # Vérifier si un compte existe déjà avec le même email (ex: inscription par email)
+        user = User.query.filter_by(email=email).first()
+        if user:
+            # Fusionner : lier le vrai google_id au compte existant
+            user.google_id = google_id
     is_new = user is None
 
     if is_new:
@@ -134,28 +141,8 @@ def google_auth():
         if not user.slug:
             user.slug = _make_unique_slug(name, email)
 
-    # V3: Système de connexion quotidienne + streak
-    today = date.today()
-    is_first_login_today = False
-    points_earned        = 0
-    streak_bonus         = False
-
-    if not is_new:
-        if user.last_login_date != today:
-            is_first_login_today = True
-            points_earned        = Config.POINTS_LOGIN_QUOTIDIEN
-            user.points          = (user.points or 0) + points_earned
-
-            if user.last_login_date == today - timedelta(days=1):
-                user.streak = (user.streak or 0) + 1
-                if user.streak % 7 == 0:
-                    user.points += Config.POINTS_STREAK_7_JOURS
-                    streak_bonus = True
-            else:
-                user.streak = 1
-
-            user.last_login_date = today
-
+    # V3: date de connexion (les points quotidiens sont gérés par /api/auth/me)
+    user.last_login_date = date.today()
     db.session.commit()
 
     if is_new:
@@ -168,26 +155,17 @@ def google_auth():
     # Session httpOnly — jamais de token dans la réponse JSON
     session['user_id']   = user.id
     session['google_id'] = user.google_id
-    # V3: stocker infos popup pour le dashboard
-    session['first_login_today'] = is_first_login_today
-    session['login_points']      = points_earned
-    session['streak_bonus']      = streak_bonus
-    session['streak_days']       = user.streak or 0
-    session.permanent            = True
+    session.permanent    = True
 
     redirect_to = '/onboarding.html' if is_new or not user.onboarding_complete else '/dashboard.html'
 
     return jsonify({
-        'success':              True,
-        'redirect':             redirect_to,
-        'is_new':               is_new,
-        'is_founder':           user.is_founder,
-        'is_first_login_today': is_first_login_today,
-        'points_earned':        points_earned,
-        'streak':               user.streak or 0,
-        'streak_bonus':         streak_bonus,
-        'total_points':         user.points or 0,
-        'user':                 user.to_dict()
+        'success':      True,
+        'redirect':     redirect_to,
+        'is_new':       is_new,
+        'is_founder':   user.is_founder,
+        'total_points': user.points or 0,
+        'user':         user.to_dict()
     })
 
 
@@ -230,6 +208,7 @@ def save_onboarding():
 
 # ROUTE: GET /api/auth/me
 # OBJECTIF: Retourner l'utilisateur connecté depuis la session
+# Vérifie aussi les points quotidiens à chaque chargement de page
 @auth_bp.route('/api/auth/me', methods=['GET'])
 def get_me():
     user_id = session.get('user_id')
@@ -241,6 +220,30 @@ def get_me():
         session.clear()
         return jsonify({'authenticated': False}), 200
 
+    # ── Vérification quotidienne basée sur la DATE (pas la session) ──
+    today = date.today()
+    is_first_login_today = False
+    points_earned        = 0
+    streak_bonus         = False
+
+    if user.last_login_date != today:
+        is_first_login_today = True
+        points_earned        = Config.POINTS_LOGIN_QUOTIDIEN
+        user.points          = (user.points or 0) + points_earned
+
+        # Streak : jour consécutif ?
+        if user.last_login_date == today - timedelta(days=1):
+            user.streak = (user.streak or 0) + 1
+            if user.streak % 7 == 0:
+                user.points += Config.POINTS_STREAK_7_JOURS
+                streak_bonus = True
+        else:
+            user.streak = 1
+
+        user.last_login_date = today
+        user.last_active     = datetime.utcnow()
+        db.session.commit()
+
     user_dict = user.to_dict()
 
     # V3: can_deposit basé sur les points
@@ -248,16 +251,11 @@ def get_me():
     user_dict['can_deposit']   = can_deposit
     user_dict['points_min_deposit'] = Config.POINTS_MIN_DEPOT
 
-    # V3: infos popup connexion quotidienne (lues une seule fois depuis session)
-    first_login_today = session.pop('first_login_today', False)
-    login_points      = session.pop('login_points', 0)
-    streak_bonus      = session.pop('streak_bonus', False)
-
     return jsonify({
         'authenticated':        True,
         'user':                 user_dict,
-        'is_first_login_today': first_login_today,
-        'points_earned':        login_points,
+        'is_first_login_today': is_first_login_today,
+        'points_earned':        points_earned,
         'streak_bonus':         streak_bonus,
     })
 
@@ -394,12 +392,15 @@ def email_verify_code():
     # Code valide — supprimer du cache
     del _email_codes[email]
 
-    # Trouver ou créer utilisateur (google_id synthétique pour email auth)
-    synthetic_google_id = f'email_{email}'
-    user   = User.query.filter_by(google_id=synthetic_google_id).first()
+    # ANTI-DOUBLON: d'abord par email pour éviter les doublons, puis par google_id synthétique
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        synthetic_google_id = f'email_{email}'
+        user = User.query.filter_by(google_id=synthetic_google_id).first()
     is_new = user is None
 
     if is_new:
+        synthetic_google_id = f'email_{email}'
         founder_count = User.query.filter_by(is_founder=True).count()
         user = User(
             google_id  = synthetic_google_id,
@@ -413,32 +414,12 @@ def email_verify_code():
     else:
         user.last_active = datetime.utcnow()
 
-    # Points connexion quotidienne
-    today                = date.today()
-    is_first_login_today = False
-    points_earned        = 0
-    streak_bonus         = False
-
-    if user.last_login_date != today:
-        is_first_login_today = True
-        points_earned        = Config.POINTS_LOGIN_QUOTIDIEN
-        user.points          = (user.points or 0) + points_earned
-        if user.last_login_date == today - timedelta(days=1):
-            user.streak = (user.streak or 0) + 1
-            if user.streak % 7 == 0:
-                user.points += Config.POINTS_STREAK_7_JOURS
-                streak_bonus = True
-        else:
-            user.streak = 1
-        user.last_login_date = today
-
+    # Date de connexion (les points quotidiens sont gérés par /api/auth/me)
+    user.last_login_date = date.today()
     db.session.commit()
 
-    session['user_id']           = user.id
-    session['first_login_today'] = is_first_login_today
-    session['login_points']      = points_earned
-    session['streak_bonus']      = streak_bonus
-    session.permanent            = True
+    session['user_id']  = user.id
+    session.permanent   = True
 
     redirect_to = '/onboarding.html' if is_new or not user.onboarding_complete else '/dashboard.html'
     return jsonify({
@@ -446,3 +427,88 @@ def email_verify_code():
         'redirect': redirect_to,
         'is_new':   is_new,
     })
+
+
+# ═══════════════════════════════════════════════
+# FUSION DES COMPTES DUPLIQUÉS EXISTANTS
+# ═══════════════════════════════════════════════
+
+def merge_duplicate_accounts():
+    """
+    Trouve tous les emails en double dans la base, garde le compte le plus ancien,
+    transfère les questionnaires/réponses/abonnements vers le compte gardé,
+    puis supprime le doublon.
+    Retourne le nombre de comptes fusionnés.
+    """
+    from backend.models import Questionnaire, Response, Subscription
+    from sqlalchemy import func
+
+    # Trouver les emails qui apparaissent plus d'une fois
+    duplicates = db.session.query(
+        User.email, func.count(User.id).label('cnt')
+    ).group_by(User.email).having(func.count(User.id) > 1).all()
+
+    merged_count = 0
+
+    for dup_email, cnt in duplicates:
+        # Récupérer tous les comptes avec cet email, triés par date de création
+        accounts = User.query.filter_by(email=dup_email).order_by(User.created_at.asc()).all()
+        if len(accounts) < 2:
+            continue
+
+        # Garder le plus ancien
+        keeper = accounts[0]
+        duplicates_to_remove = accounts[1:]
+
+        for dup in duplicates_to_remove:
+            # Transférer les questionnaires
+            Questionnaire.query.filter_by(author_id=dup.id).update(
+                {'author_id': keeper.id}, synchronize_session=False
+            )
+            # Transférer les réponses
+            Response.query.filter_by(respondent_id=dup.id).update(
+                {'respondent_id': keeper.id}, synchronize_session=False
+            )
+            # Transférer les abonnements (subscriber)
+            Subscription.query.filter_by(subscriber_id=dup.id).update(
+                {'subscriber_id': keeper.id}, synchronize_session=False
+            )
+            # Transférer les abonnements (publisher)
+            Subscription.query.filter_by(publisher_id=dup.id).update(
+                {'publisher_id': keeper.id}, synchronize_session=False
+            )
+            # Cumuler les points et stats
+            keeper.points = (keeper.points or 0) + (dup.points or 0)
+            keeper.total_responses_given = (keeper.total_responses_given or 0) + (dup.total_responses_given or 0)
+            keeper.total_forms_posted = (keeper.total_forms_posted or 0) + (dup.total_forms_posted or 0)
+            # Si le doublon a un vrai google_id (pas synthétique), le garder
+            if dup.google_id and not dup.google_id.startswith('email_'):
+                keeper.google_id = dup.google_id
+            # Supprimer le doublon
+            db.session.delete(dup)
+            merged_count += 1
+
+    db.session.commit()
+    return merged_count
+
+
+# ROUTE: POST /api/auth/merge-duplicates
+# OBJECTIF: Endpoint admin pour lancer la fusion des comptes dupliqués
+@auth_bp.route('/api/auth/merge-duplicates', methods=['POST'])
+def run_merge_duplicates():
+    """Fusionne les comptes dupliqués. Réservé aux admins."""
+    user_id = session.get('user_id')
+    if not user_id:
+        # Accepter aussi la session admin panel
+        if not session.get('admin_panel_auth'):
+            return jsonify({'error': 'non authentifié'}), 401
+    else:
+        user = User.query.filter_by(id=user_id).first()
+        if not user or not user.is_founder:
+            return jsonify({'error': 'accès réservé aux administrateurs'}), 403
+    try:
+        count = merge_duplicate_accounts()
+        return jsonify({'success': True, 'merged': count})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500

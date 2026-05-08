@@ -125,15 +125,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             <div class="hero-card-stats">
               <div class="hero-card-stat">
-                <span class="hero-card-stat-value">73</span>
+                <span class="hero-card-stat-value" id="hero-stat-responses">—</span>
                 <span class="hero-card-stat-label">réponses</span>
               </div>
               <div class="hero-card-stat">
-                <span class="hero-card-stat-value">91%</span>
+                <span class="hero-card-stat-value" id="hero-stat-completion">—</span>
                 <span class="hero-card-stat-label">complétion</span>
               </div>
               <div class="hero-card-stat">
-                <span class="hero-card-stat-value">12</span>
+                <span class="hero-card-stat-value" id="hero-stat-schools">—</span>
                 <span class="hero-card-stat-label">écoles</span>
               </div>
             </div>
@@ -149,27 +149,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <section class="stats-band" aria-label="Statistiques SciConnect">
       <div class="stats-band-inner">
         <div class="stat-item">
-          <!-- EDITABLE: chargé depuis admin/content.json → landing.stats_students -->
-          <span class="stat-item-value" data-content="landing.stats_students">1 200+</span>
-          <!-- EDITABLE: chargé depuis admin/content.json → landing.stats_students_label -->
-          <div class="stat-item-label" data-content="landing.stats_students_label">étudiants inscrits</div>
+          <span class="stat-item-value" id="landing-stat-users">—</span>
+          <div class="stat-item-label">étudiants inscrits</div>
         </div>
         <div class="stat-item">
-          <!-- EDITABLE: chargé depuis admin/content.json → landing.stats_questionnaires -->
-          <span class="stat-item-value" data-content="landing.stats_questionnaires">340</span>
-          <!-- EDITABLE: chargé depuis admin/content.json → landing.stats_questionnaires_label -->
-          <div class="stat-item-label" data-content="landing.stats_questionnaires_label">questionnaires actifs</div>
+          <span class="stat-item-value" id="landing-stat-questionnaires">—</span>
+          <div class="stat-item-label">questionnaires actifs</div>
         </div>
         <div class="stat-item">
-          <!-- EDITABLE: chargé depuis admin/content.json → landing.stats_completion -->
-          <span class="stat-item-value" data-content="landing.stats_completion">92%</span>
-          <!-- EDITABLE: chargé depuis admin/content.json → landing.stats_completion_label -->
-          <div class="stat-item-label" data-content="landing.stats_completion_label">taux de complétion moyen</div>
+          <span class="stat-item-value" id="landing-stat-responses">—</span>
+          <div class="stat-item-label">réponses collectées</div>
         </div>
         <div class="stat-item">
-          <!-- EDITABLE: chargé depuis admin/content.json → landing.stats_rule -->
           <span class="stat-item-value gold" data-content="landing.stats_rule">2 réponses</span>
-          <!-- EDITABLE: chargé depuis admin/content.json → landing.stats_rule_label -->
           <div class="stat-item-label" data-content="landing.stats_rule_label">pour déposer le vôtre</div>
         </div>
       </div>
@@ -527,6 +519,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       if (schoolsData) {
         renderUniversities(schoolsData.universities);
       }
+
+      /* Charger les statistiques réelles depuis l'API */
+      loadRealStats();
     });
 
     /* ─── Rendu dynamique des universités ─── */
@@ -563,6 +558,65 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const div = document.createElement('div');
       div.textContent = str;
       return div.innerHTML;
+    }
+
+    /* ─── Chargement des statistiques réelles ─── */
+    async function loadRealStats() {
+      try {
+        const res = await fetch('/api/stats/public');
+        if (!res.ok) return;
+        const s = await res.json();
+
+        /* Bande de stats */
+        animateCount('landing-stat-users', s.total_users, '+');
+        animateCount('landing-stat-questionnaires', s.total_questionnaires);
+        animateCount('landing-stat-responses', s.total_responses, '+');
+
+        /* Hero card */
+        animateCount('hero-stat-responses', s.total_responses);
+        animateCountSuffix('hero-stat-completion', s.avg_completion, '%');
+        animateCount('hero-stat-schools', s.total_schools);
+
+        /* Hero progress bar */
+        const heroProgress = document.querySelector('.hero-card-progress-fill');
+        if (heroProgress) heroProgress.style.width = Math.min(100, s.avg_completion) + '%';
+        const heroProgressLabel = document.querySelector('.hero-card-progress-label');
+        if (heroProgressLabel) {
+          heroProgressLabel.innerHTML =
+            `<span>${s.total_responses} réponses</span><span>Objectif : ${s.total_questionnaires * 100}</span>`;
+        }
+      } catch (e) {
+        console.error('Erreur stats publiques:', e);
+      }
+    }
+
+    function animateCount(id, target, suffix) {
+      const el = document.getElementById(id);
+      if (!el || target === undefined) return;
+      const duration = 1200;
+      const start = performance.now();
+      function step(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const val = Math.round(target * eased);
+        el.textContent = val.toLocaleString('fr-FR') + (suffix || '');
+        if (progress < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    function animateCountSuffix(id, target, suffix) {
+      const el = document.getElementById(id);
+      if (!el || target === undefined) return;
+      const duration = 1200;
+      const start = performance.now();
+      function step(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.round(target * eased) + (suffix || '');
+        if (progress < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
     }
 
     /* ─── FAQ accordéon ─── */

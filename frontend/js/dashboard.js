@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   startActiveCounter();
   bindSidebarToggle();
   bindTopbarActions();
-  bindFilterChips();
+  bindFilters();
   bindLogout();
 });
 
@@ -282,15 +282,21 @@ async function loadRecommendedBanner() {
 }
 
 /* ── Feed questionnaires ── */
-async function loadFeed(filter) {
+async function loadFeed() {
   const grid    = document.getElementById('feed-grid');
   const loading = document.getElementById('feed-loading');
   if (loading) loading.style.display = 'flex';
 
-  const params = new URLSearchParams({ limit: '30' });
-  if (filter === 'domain' && currentUser?.domains?.[0]) params.set('domain', currentUser.domains[0]);
-  if (filter === 'recent') params.set('sort', 'recent');
-  if (filter === 'popular') params.set('sort', 'popular');
+  const statusEl = document.getElementById('filter-status');
+  const domainEl = document.getElementById('filter-domain');
+  const sortEl   = document.getElementById('filter-sort');
+
+  const status = statusEl ? statusEl.value : 'new';
+  const domain = domainEl ? domainEl.value : '';
+  const sort   = sortEl   ? sortEl.value   : 'recent';
+
+  const params = new URLSearchParams({ limit: '30', status, sort });
+  if (domain) params.set('domain', domain);
 
   try {
     const res   = await fetch(`/api/forms?${params}`, { credentials: 'include' });
@@ -299,7 +305,13 @@ async function loadFeed(filter) {
     const items = (data.items || []).filter(f => f.author_id !== 'demo-author-sciconnect' && f.author_id !== 'system-sciconnect-demo' && f.author_name !== 'SciConnect Demo');
 
     const countEl = document.getElementById('filter-count');
-    if (countEl) countEl.textContent = `${items.length} résultats`;
+    if (countEl) {
+      const n = items.length;
+      countEl.textContent = `${n} questionnaire${n > 1 ? 's' : ''} trouvé${n > 1 ? 's' : ''}`;
+    }
+
+    /* Populate domain filter from items (only on first load) */
+    populateDomainFilter(items);
 
     Array.from(grid.children).forEach(c => { if (c.id !== 'feed-loading') c.remove(); });
     if (loading) loading.style.display = 'none';
@@ -322,6 +334,40 @@ async function loadFeed(filter) {
     console.error('Erreur feed:', e);
     if (loading) loading.style.display = 'none';
   }
+}
+
+let _domainsPopulated = false;
+function populateDomainFilter(items) {
+  if (_domainsPopulated) return;
+  const domainEl = document.getElementById('filter-domain');
+  if (!domainEl) return;
+  const domains = new Set();
+  items.forEach(f => { if (f.domain) domains.add(f.domain); });
+  /* Also fetch all domains from a full query */
+  fetch('/api/forms?limit=50&status=all', { credentials: 'include' })
+    .then(r => r.json())
+    .then(data => {
+      (data.items || []).forEach(f => { if (f.domain) domains.add(f.domain); });
+      const sorted = [...domains].sort();
+      sorted.forEach(d => {
+        if (!domainEl.querySelector(`option[value="${CSS.escape(d)}"]`)) {
+          const opt = document.createElement('option');
+          opt.value = d;
+          opt.textContent = d;
+          domainEl.appendChild(opt);
+        }
+      });
+      _domainsPopulated = true;
+    })
+    .catch(() => {
+      [...domains].sort().forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d;
+        domainEl.appendChild(opt);
+      });
+      _domainsPopulated = true;
+    });
 }
 
 function buildCard(form, user) {
@@ -494,14 +540,10 @@ function bindTopbarActions() {
 }
 
 /* ── Filtres ── */
-function bindFilterChips() {
-  document.querySelectorAll('.chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      activeFilter = chip.dataset.filter || '';
-      loadFeed(activeFilter);
-    });
+function bindFilters() {
+  ['filter-status', 'filter-domain', 'filter-sort'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', () => loadFeed());
   });
 }
 

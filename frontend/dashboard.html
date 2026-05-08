@@ -358,15 +358,31 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <a href="deposit.html" class="pb-btn" id="pb-btn">Voir les questionnaires →</a>
         </div>
 
-        <!-- Filtres chips -->
-        <div class="filter-row">
-          <div class="filter-chips" id="filter-chips">
-            <button class="chip active" data-filter="">Tous</button>
-            <button class="chip" data-filter="domain">Mon domaine</button>
-            <button class="chip" data-filter="recent">Récents</button>
-            <button class="chip" data-filter="flash">Flash &lt; 2min</button>
-            <button class="chip" data-filter="popular">Populaires</button>
-            <button class="chip" data-filter="saved">Sauvegardés ♡</button>
+        <!-- Barre de filtres avancés -->
+        <div class="filter-bar" id="filter-bar">
+          <div class="filter-bar-left">
+            <div class="filter-select-wrap">
+              <label class="filter-label">Statut</label>
+              <select class="filter-select" id="filter-status">
+                <option value="new" selected>Nouveaux</option>
+                <option value="answered">Déjà répondus</option>
+                <option value="all">Tous</option>
+              </select>
+            </div>
+            <div class="filter-select-wrap">
+              <label class="filter-label">Domaine</label>
+              <select class="filter-select" id="filter-domain">
+                <option value="">Tous les domaines</option>
+              </select>
+            </div>
+            <div class="filter-select-wrap">
+              <label class="filter-label">Tri</label>
+              <select class="filter-select" id="filter-sort">
+                <option value="recent" selected>Plus récents</option>
+                <option value="popular">Plus populaires</option>
+                <option value="least_responses">Moins de réponses</option>
+              </select>
+            </div>
           </div>
           <div class="filter-count" id="filter-count"></div>
         </div>

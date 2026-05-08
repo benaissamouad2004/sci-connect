@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SciConnect — Administration</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Fraunces:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --abg: #09090b;
+            --asurf: #18181b;
+            --asurf2: #1e1e24;
+            --abord: rgba(255,255,255,0.07);
+            --atext: #fafafa;
+            --atext2: #a1a1aa;
+            --atext3: #71717a;
+            --ateal: #14b8a6;
+            --ateal-dim: rgba(20,184,166,0.15);
+            --agold: #d4a843;
+            --agold-dim: rgba(212,168,67,0.15);
+            --ablue: #3b82f6;
+            --ablue-dim: rgba(59,130,246,0.15);
+            --agreen: #22c55e;
+            --agreen-dim: rgba(34,197,94,0.15);
+            --ared: #ef4444;
+            --radius: 12px;
+            --font-ui: 'DM Sans', system-ui, sans-serif;
+            --font-display: 'Fraunces', Georgia, serif;
+        }
+
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--font-ui);
+            background: var(--abg);
+            color: var(--atext);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ═══ LOGIN SCREEN ═══ */
+        #login-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-bg-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.35;
+            animation: orbFloat 12s ease-in-out infinite;
+        }
+        .login-bg-orb:nth-child(1) {
+            width: 400px; height: 400px;
+            background: var(--ateal);
+            top: -100px; left: -100px;
+            animation-delay: 0s;
+        }
+        .login-bg-orb:nth-child(2) {
+            width: 300px; height: 300px;
+            background: var(--agold);
+            bottom: -80px; right: -80px;
+            animation-delay: -4s;
+        }
+        .login-bg-orb:nth-child(3) {
+            width: 250px; height: 250px;
+            background: var(--ablue);
+            top: 50%; left: 60%;
+            animation-delay: -8s;
+        }
+
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -20px) scale(1.05); }
+            66% { transform: translate(-20px, 15px) scale(0.95); }
+        }
+
+        .login-card {
+            position: relative;
+            z-index: 2;
+            background: rgba(24, 24, 27, 0.75);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--abord);
+            border-radius: 20px;
+            padding: 48px 40px;
+            width: 100%;
+            max-width: 420px;
+            margin: 20px;
+            animation: cardIn 0.6s ease-out;
+        }
+
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(24px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .login-brand {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+        .login-brand h1 {
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, var(--ateal), var(--agold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .login-brand p {
+            color: var(--atext3);
+            font-size: 0.85rem;
+            margin-top: 6px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.82rem;
+            color: var(--atext2);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--abord);
+            border-radius: 10px;
+            color: var(--atext);
+            font-family: var(--font-ui);
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-group input:focus {
+            border-color: var(--ateal);
+            box-shadow: 0 0 0 3px var(--ateal-dim);
+        }
+        .form-group input::placeholder { color: var(--atext3); }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--ateal), #0d9488);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-family: var(--font-ui);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 8px;
+        }
+        .login-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(20,184,166,0.3);
+        }
+        .login-btn:active { transform: translateY(0); }
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .login-error {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.2);
+            color: var(--ared);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+            display: none;
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        /* ═══ DASHBOARD ═══ */
+        #dashboard-screen { display: none; animation: fadeIn 0.5s ease; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .dash-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 28px;
+            background: var(--asurf);
+            border-bottom: 1px solid var(--abord);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .dash-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .dash-header h2 {
+            font-family: var(--font-display);
+            font-size: 1.15rem;
+            background: linear-gradient(135deg, var(--ateal), var(--agold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .live-dot {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--agreen);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .live-dot::before {
+            content: '';
+            width: 7px; height: 7px;
+            background: var(--agreen);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
+            50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+        }
+
+        .logout-btn {
+            padding: 8px 20px;
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.2);
+            color: var(--ared);
+            border-radius: 8px;
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .logout-btn:hover {
+            background: rgba(239,68,68,0.2);
+            border-color: rgba(239,68,68,0.4);
+        }
+
+        .dash-body {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 28px 60px;
+        }
+
+        /* ═══ STAT CARDS ═══ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            margin-bottom: 36px;
+        }
+
+        .stat-card {
+            background: var(--asurf);
+            border: 1px solid var(--abord);
+            border-radius: var(--radius);
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(255,255,255,0.12);
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+        }
+        .stat-card:nth-child(1)::before { background: linear-gradient(90deg, var(--ateal), #0d9488); }
+        .stat-card:nth-child(2)::before { background: linear-gradient(90deg, var(--ablue), #6366f1); }
+        .stat-card:nth-child(3)::before { background: linear-gradient(90deg, var(--agreen), #10b981); }
+        .stat-card:nth-child(4)::before { background: linear-gradient(90deg, var(--agold), #f59e0b); }
+
+        .stat-icon {
+            width: 44px; height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            font-size: 1.2rem;
+        }
+        .stat-card:nth-child(1) .stat-icon { background: var(--ateal-dim); color: var(--ateal); }
+        .stat-card:nth-child(2) .stat-icon { background: var(--ablue-dim); color: var(--ablue); }
+        .stat-card:nth-child(3) .stat-icon { background: var(--agreen-dim); color: var(--agreen); }
+        .stat-card:nth-child(4) .stat-icon { background: var(--agold-dim); color: var(--agold); }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .stat-label {
+            font-size: 0.82rem;
+            color: var(--atext3);
+        }
+
+        /* ═══ CHART ═══ */
+        .section-card {
+            background: var(--asurf);
+            border: 1px solid var(--abord);
+            border-radius: var(--radius);
+            padding: 28px;
+            margin-bottom: 28px;
+        }
+        .section-title {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            margin-bottom: 24px;
+            color: var(--atext);
+        }
+
+        .chart-container {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            height: 180px;
+            padding-top: 20px;
+        }
+        .chart-bar-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            height: 100%;
+            justify-content: flex-end;
+        }
+        .chart-count {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--atext2);
+        }
+        .chart-bar {
+            width: 100%;
+            max-width: 48px;
+            min-height: 4px;
+            background: linear-gradient(180deg, var(--ateal), rgba(20,184,166,0.4));
+            border-radius: 6px 6px 2px 2px;
+            transition: height 0.6s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .chart-label {
+            font-size: 0.72rem;
+            color: var(--atext3);
+            text-align: center;
+            line-height: 1.3;
+        }
+        .chart-day { font-weight: 600; color: var(--atext2); }
+
+        /* ═══ TABLE ═══ */
+        .table-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .search-input {
+            padding: 10px 16px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--abord);
+            border-radius: 8px;
+            color: var(--atext);
+            font-family: var(--font-ui);
+            font-size: 0.85rem;
+            width: 260px;
+            max-width: 100%;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus { border-color: var(--ateal); }
+        .search-input::placeholder { color: var(--atext3); }
+
+        .user-count-label {
+            font-size: 0.82rem;
+            color: var(--atext3);
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid var(--abord);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 500px;
+        }
+        thead th {
+            padding: 12px 16px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--atext3);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            text-align: left;
+            background: var(--asurf2);
+            border-bottom: 1px solid var(--abord);
+        }
+        tbody td {
+            padding: 14px 16px;
+            font-size: 0.88rem;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        tbody tr { transition: background 0.15s; }
+        tbody tr:hover { background: rgba(255,255,255,0.02); }
+        tbody tr:last-child td { border-bottom: none; }
+
+        .user-name { font-weight: 600; }
+        .user-email { color: var(--atext2); }
+        .user-date { color: var(--atext3); font-size: 0.82rem; }
+
+        /* ═══ LOADING ═══ */
+        .loading-spinner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+            color: var(--atext3);
+            gap: 12px;
+        }
+        .spinner {
+            width: 22px; height: 22px;
+            border: 2.5px solid var(--abord);
+            border-top-color: var(--ateal);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ═══ RESPONSIVE ═══ */
+        @media (max-width: 900px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 600px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .login-card { padding: 36px 24px; }
+            .dash-header { padding: 14px 16px; }
+            .dash-body { padding: 20px 16px 40px; }
+            .section-card { padding: 20px 16px; }
+            .chart-container { height: 140px; gap: 6px; }
+            .search-input { width: 100%; }
+            .stat-value { font-size: 1.6rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══ LOGIN SCREEN ═══ -->
+<div id="login-screen">
+    <div class="login-bg-orb"></div>
+    <div class="login-bg-orb"></div>
+    <div class="login-bg-orb"></div>
+
+    <div class="login-card">
+        <div class="login-brand">
+            <h1>SciConnect</h1>
+            <p>Panneau d'Administration</p>
+        </div>
+
+        <div id="login-error" class="login-error"></div>
+
+        <form id="login-form" autocomplete="off">
+            <div class="form-group">
+                <label for="admin-username">Nom d'utilisateur</label>
+                <input type="text" id="admin-username" placeholder="admin" required autofocus>
+            </div>
+            <div class="form-group">
+                <label for="admin-password">Mot de passe</label>
+                <input type="password" id="admin-password" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="login-btn" id="login-btn">Se connecter</button>
+        </form>
+    </div>
+</div>
+
+<!-- ═══ DASHBOARD SCREEN ═══ -->
+<div id="dashboard-screen">
+    <header class="dash-header">
+        <div class="dash-header-left">
+            <h2>SciConnect Admin</h2>
+            <span class="live-dot">Live</span>
+        </div>
+        <button class="logout-btn" id="logout-btn">Déconnexion</button>
+    </header>
+
+    <main class="dash-body">
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-value" id="stat-users">—</div>
+                <div class="stat-label">Utilisateurs inscrits</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📋</div>
+                <div class="stat-value" id="stat-questionnaires">—</div>
+                <div class="stat-label">Questionnaires déposés</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✨</div>
+                <div class="stat-value" id="stat-today">—</div>
+                <div class="stat-label">Nouveaux aujourd'hui</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📅</div>
+                <div class="stat-value" id="stat-week">—</div>
+                <div class="stat-label">Inscriptions cette semaine</div>
+            </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="section-card">
+            <h3 class="section-title">Inscriptions — 7 derniers jours</h3>
+            <div class="chart-container" id="chart-container">
+                <div class="loading-spinner"><div class="spinner"></div> Chargement…</div>
+            </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="section-card">
+            <div class="table-header">
+                <h3 class="section-title" style="margin-bottom:0">Tous les utilisateurs</h3>
+                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                    <span class="user-count-label" id="user-count-label"></span>
+                    <input type="text" class="search-input" id="search-users" placeholder="Rechercher par nom ou email…">
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Nom</th>
+                            <th>Email</th>
+                            <th>Date d'inscription</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-tbody">
+                        <tr><td colspan="4"><div class="loading-spinner"><div class="spinner"></div> Chargement…</div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+(function() {
+    const loginScreen    = document.getElementById('login-screen');
+    const dashScreen     = document.getElementById('dashboard-screen');
+    const loginForm      = document.getElementById('login-form');
+    const loginBtn       = document.getElementById('login-btn');
+    const loginError     = document.getElementById('login-error');
+    const logoutBtn      = document.getElementById('logout-btn');
+    const searchInput    = document.getElementById('search-users');
+
+    let allUsers = [];
+
+    // ── Check session on load ──
+    fetch('/admin/panel/check', { credentials: 'include' })
+        .then(r => r.json())
+        .then(d => { if (d.authenticated) showDashboard(); })
+        .catch(() => {});
+
+    // ── Login ──
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        loginError.style.display = 'none';
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Connexion…';
+
+        try {
+            const res = await fetch('/admin/panel/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    username: document.getElementById('admin-username').value,
+                    password: document.getElementById('admin-password').value
+                })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                showDashboard();
+            } else {
+                loginError.textContent = data.error || 'Identifiants incorrects';
+                loginError.style.display = 'block';
+            }
+        } catch {
+            loginError.textContent = 'Erreur de connexion au serveur';
+            loginError.style.display = 'block';
+        }
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Se connecter';
+    });
+
+    // ── Logout ──
+    logoutBtn.addEventListener('click', async () => {
+        await fetch('/admin/panel/logout', { method: 'POST', credentials: 'include' });
+        dashScreen.style.display = 'none';
+        loginScreen.style.display = 'flex';
+        document.getElementById('admin-username').value = '';
+        document.getElementById('admin-password').value = '';
+    });
+
+    // ── Show dashboard ──
+    function showDashboard() {
+        loginScreen.style.display = 'none';
+        dashScreen.style.display = 'block';
+        loadData();
+    }
+
+    // ── Load data ──
+    async function loadData() {
+        try {
+            const res = await fetch('/admin/panel/data', { credentials: 'include' });
+            if (res.status === 401) {
+                dashScreen.style.display = 'none';
+                loginScreen.style.display = 'flex';
+                loginError.textContent = 'Session expirée. Reconnectez-vous.';
+                loginError.style.display = 'block';
+                return;
+            }
+            const d = await res.json();
+
+            // Stats
+            animateNumber('stat-users', d.total_users);
+            animateNumber('stat-questionnaires', d.total_questionnaires);
+            animateNumber('stat-today', d.new_today);
+            animateNumber('stat-week', d.new_this_week);
+
+            // Chart
+            renderChart(d.daily_signups);
+
+            // Users
+            allUsers = d.users;
+            renderUsers(allUsers);
+            document.getElementById('user-count-label').textContent = d.total_users + ' utilisateur' + (d.total_users > 1 ? 's' : '');
+        } catch {
+            document.getElementById('chart-container').innerHTML = '<p style="color:var(--ared)">Erreur de chargement</p>';
+        }
+    }
+
+    // ── Animate number ──
+    function animateNumber(id, target) {
+        const el = document.getElementById(id);
+        const duration = 800;
+        const start = performance.now();
+        const from = 0;
+        function step(now) {
+            const progress = Math.min((now - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            el.textContent = Math.round(from + (target - from) * eased);
+            if (progress < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+    }
+
+    // ── Render chart ──
+    function renderChart(data) {
+        const container = document.getElementById('chart-container');
+        const maxCount = Math.max(...data.map(d => d.count), 1);
+        container.innerHTML = data.map(d => {
+            const h = Math.max((d.count / maxCount) * 130, 4);
+            return `
+                <div class="chart-bar-wrap">
+                    <span class="chart-count">${d.count}</span>
+                    <div class="chart-bar" style="height:${h}px"></div>
+                    <div class="chart-label">
+                        <span class="chart-day">${d.day_name}</span><br>${d.date}
+                    </div>
+                </div>`;
+        }).join('');
+    }
+
+    // ── Render users table ──
+    function renderUsers(users) {
+        const tbody = document.getElementById('users-tbody');
+        if (!users.length) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--atext3)">Aucun utilisateur</td></tr>';
+            return;
+        }
+        tbody.innerHTML = users.map((u, i) => `
+            <tr>
+                <td style="color:var(--atext3)">${i + 1}</td>
+                <td class="user-name">${esc(u.name)}</td>
+                <td class="user-email">${esc(u.email)}</td>
+                <td class="user-date">${esc(u.created_at)}</td>
+            </tr>
+        `).join('');
+    }
+
+    // ── Search ──
+    searchInput.addEventListener('input', () => {
+        const q = searchInput.value.toLowerCase().trim();
+        if (!q) { renderUsers(allUsers); return; }
+        renderUsers(allUsers.filter(u =>
+            (u.name || '').toLowerCase().includes(q) ||
+            (u.email || '').toLowerCase().includes(q)
+        ));
+    });
+
+    // ── Escape HTML ──
+    function esc(s) {
+        const d = document.createElement('div');
+        d.textContent = s || '';
+        return d.innerHTML;
+    }
+})();
+</script>
+</body>
+</html>
