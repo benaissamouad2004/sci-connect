@@ -468,34 +468,6 @@
   flex-shrink: 0;
 }
 
-.topbar-search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  max-width: 190px;
-  height: 32px;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  padding: 0 10px;
-  transition: border-color 200ms, box-shadow 200ms;
-}
-.topbar-search input {
-  flex: 1;
-  border: none;
-  background: none;
-  font-family: var(--font-ui);
-  font-size: 12px;
-  color: var(--color-text);
-  outline: none;
-}
-.topbar-search input::placeholder { color: var(--color-text-muted); }
-.topbar-search:focus-within {
-  border-color: var(--color-primary);
-  background: var(--color-surface);
-  box-shadow: 0 0 0 3px rgba(0,95,84,0.08);
-}
 
 .topbar-right {
   display: flex;
@@ -1389,6 +1361,5 @@
 @media (max-width: 1100px) { .feed-grid { columns: 2; } }
 @media (max-width: 680px) {
   .feed-grid { columns: 1; }
-  .topbar-search { display: none; }
-  .active-pill { display: none; }
+.active-pill { display: none; }
 }

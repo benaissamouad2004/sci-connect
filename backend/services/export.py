@@ -26,15 +26,16 @@ def _header_style():
         Alignment(horizontal='center', vertical='center', wrap_text=True),
     )
 
-def _apply_header(ws, headers):
+def _apply_header(ws, headers, start_row=1):
     fill, font, align = _header_style()
     ws.append(headers)
-    for cell in ws[1]:
+    row_num = ws.max_row
+    for cell in ws[row_num]:
         cell.fill      = fill
         cell.font      = font
         cell.alignment = align
-    ws.row_dimensions[1].height = 28
-    ws.freeze_panes = 'A2'
+    ws.row_dimensions[row_num].height = 28
+    ws.freeze_panes = f'A{row_num + 1}'
 
 def _alternating_rows(ws, start_row=2):
     fill_e = PatternFill(start_color=COLOR_ROW_EVEN, end_color=COLOR_ROW_EVEN, fill_type='solid')
@@ -115,21 +116,33 @@ def _build_sheet1(wb, q, enriched):
     """
     Feuille 1 : Données brutes
     EDITABLE: ajouter/supprimer des colonnes dans headers ci-dessous
+    Données confidentielles — usage interne uniquement
     """
     ws = wb.active
     ws.title = 'Données brutes'
 
+    # Ligne de confidentialité en haut
+    ws.append(['⚠ Données confidentielles — usage interne uniquement — ne pas diffuser'])
+    conf_cell = ws['A1']
+    conf_cell.font = Font(bold=True, color='922B21', name='Calibri', size=10)
+    conf_cell.fill = PatternFill(start_color='FEF3F2', end_color='FEF3F2', fill_type='solid')
+    ws.merge_cells('A1:J1')
+    ws.row_dimensions[1].height = 20
+
     # EDITABLE: colonnes feuille 1
-    headers = ['#', 'Email Google', 'Type', 'Université', 'École',
+    # Email académique : affiché uniquement pour les étudiants vérifiés (respondent_type == 'verified')
+    headers = ['#', 'Email académique', 'Type', 'Université', 'École',
                'Filière', 'Niveau', 'Date', 'Complétion (%)', 'Statut validation']
-    _apply_header(ws, headers)
+    _apply_header(ws, headers, start_row=2)
 
     for i, e in enumerate(enriched, 1):
         r      = e['response']
         domain = (e['domain'] or [None])[0] if isinstance(e['domain'], list) else (e['domain'] or '—')
+        # Email uniquement si répondant vérifié — anonyme sinon
+        email  = r.respondent_email if r.respondent_type == 'verified' else 'Anonyme'
         ws.append([
             i,
-            r.respondent_email or 'Anonyme',
+            email,
             _format_type(r.respondent_type),
             e['uni_name'],
             e['school_name'],
@@ -140,7 +153,7 @@ def _build_sheet1(wb, q, enriched):
             'Validé ✓' if r.validated_by_emitter else ('Ignoré' if r.ignored_by_emitter else 'En attente'),
         ])
 
-    _alternating_rows(ws)
+    _alternating_rows(ws, start_row=3)
     _autofit(ws)
 
 
@@ -247,7 +260,7 @@ def _build_sheet3(wb, q, enriched, uni_names):
     ws.cell(row, 1, 'Niveau').fill   = fill
     ws.cell(row, 1, 'Niveau').font   = font
     ws.cell(row, 2, 'Réponses').fill = fill
-    ws.cell(row, 2, 'Réponses').font = fill
+    ws.cell(row, 2, 'Réponses').font = font
     row += 1
     level_counts = {}
     for e in enriched:
@@ -278,7 +291,7 @@ def _build_sheet3(wb, q, enriched, uni_names):
 def _build_sheet4(wb, q, enriched):
     """
     Feuille 4 : Fiabilité & Qualité
-    EDITABLE: modifier le seuil de suspect (30 secondes) ci-dessous
+    EDITABLE: le seuil suspect est configurable dans routes/responses.py (MIN_DURATION_SUSPECT)
     """
     ws = wb.create_sheet('Fiabilité & Qualité')
 
@@ -294,6 +307,7 @@ def _build_sheet4(wb, q, enriched):
     abandoned = total - complete
     validated = sum(1 for e in enriched if e['response'].validated_by_emitter)
     ignored   = sum(1 for e in enriched if e['response'].ignored_by_emitter)
+    suspect_count = sum(1 for e in enriched if e['response'].is_suspect or False)
 
     summary = [
         ['Indicateur',               'Valeur',  '%',       'Interprétation'],
@@ -302,6 +316,7 @@ def _build_sheet4(wb, q, enriched):
         ['Réponses abandonnées',     abandoned,  f'{abandoned/total*100:.1f}%' if total else '—', 'Alerte si > 30%'],
         ['Validées par émetteur',    validated,  f'{validated/total*100:.1f}%' if total else '—', ''],
         ['Ignorées par émetteur',    ignored,    f'{ignored/total*100:.1f}%' if total else '—', ''],
+        ['Réponses suspectes',       suspect_count, f'{suspect_count/total*100:.1f}%' if total else '—', 'Durée < 60s — 0 pts attribués'],
     ]
 
     fill_h, font_h, _ = _header_style()
@@ -314,20 +329,19 @@ def _build_sheet4(wb, q, enriched):
 
     _alternating_rows(ws, start_row=3)
 
-    # ─ Répondants suspects (complétion < 30%)
-    # EDITABLE: seuil de suspicion — changer 30 pour ajuster
-    suspect_threshold = 30
-    suspects = [e for e in enriched if (e['response'].completion_percentage or 0) < suspect_threshold]
+    # ─ Répondants suspects (durée trop courte, détectés par le backend)
+    # EDITABLE: la détection suspect est faite dans routes/responses.py (seuil 60s)
+    suspects = [e for e in enriched if (e['response'].is_suspect or False)]
 
     row = 10
-    ws.cell(row, 1, f'Répondants suspects (complétion < {suspect_threshold}%)')
+    ws.cell(row, 1, f'Répondants suspects ({len(suspects)} — durée < 60s)')
     ws.cell(row, 1).fill = PatternFill(start_color=COLOR_DANGER, end_color=COLOR_DANGER, fill_type='solid')
     ws.cell(row, 1).font = Font(color='FFFFFF', bold=True, name='Calibri', size=11)
     ws.merge_cells(f'A{row}:D{row}')
     row += 1
 
     if suspects:
-        hdrs = ['Email', 'Type', 'Complétion (%)', 'Date']
+        hdrs = ['Type', 'Durée (sec)', 'Date', 'Note']
         ws.append(hdrs)
         for cell in ws[row]:
             cell.fill = fill_h
@@ -337,10 +351,10 @@ def _build_sheet4(wb, q, enriched):
         for e in suspects:
             r = e['response']
             ws.append([
-                r.respondent_email or 'Anonyme',
                 _format_type(r.respondent_type),
-                f"{r.completion_percentage:.0f}%" if r.completion_percentage is not None else '—',
+                r.duration_seconds or '—',
                 r.created_at.strftime('%d/%m/%Y %H:%M') if r.created_at else '—',
+                'Durée inférieure au minimum requis (60s)',
             ])
             for cell in ws[ws.max_row]:
                 cell.fill = danger_fill

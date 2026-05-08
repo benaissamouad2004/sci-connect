@@ -75,18 +75,47 @@ def submit_response():
     if already:
         return jsonify({'error': 'déjà répondu', 'already_responded': True}), 409
 
-    # Calculer durée
+    # Calculer durée — accepter duration_seconds direct ou calculer depuis start/end
     duration_seconds = None
     is_suspect       = False
-    if start_time and end_time:
+
+    raw_duration = data.get('duration_seconds')
+    if raw_duration is not None:
         try:
-            duration_seconds = int((int(end_time) - int(start_time)) / 1000)
-            is_suspect       = duration_seconds < 30
+            duration_seconds = int(raw_duration)
         except (ValueError, TypeError):
             pass
 
-    # Points selon durée — EDITABLE dans config.py
-    if duration_seconds is not None and duration_seconds >= 300:
+    if duration_seconds is None and start_time and end_time:
+        try:
+            duration_seconds = int((int(end_time) - int(start_time)) / 1000)
+        except (ValueError, TypeError):
+            pass
+
+    # Rejeter les durées physiquement impossibles
+    # EDITABLE: seuil minimal absolu en secondes
+    if duration_seconds is not None and duration_seconds < 30:
+        return jsonify({
+            'error': 'Durée invalide',
+            'message': 'La durée de réponse est trop courte pour être valide.'
+        }), 400
+
+    # Seuil suspect — aligné sur MIN_TIME_SECONDS dans respond.js (60s)
+    # EDITABLE: ajuster ce seuil de détection suspect
+    MIN_DURATION_SUSPECT = 60
+    if duration_seconds is not None and duration_seconds < MIN_DURATION_SUSPECT:
+        is_suspect = True
+
+    # Points selon durée — 0 si suspect
+    # EDITABLE: modifier les seuils de durée dans config.py
+    if is_suspect:
+        points_earned = 0
+        from flask import current_app
+        current_app.logger.warning(
+            '[SUSPECT] user=%s form=%s duration=%ss',
+            user_id, form_id, duration_seconds
+        )
+    elif duration_seconds is not None and duration_seconds >= 300:
         points_earned = Config.POINTS_REPONDRE_LONG
     else:
         points_earned = Config.POINTS_REPONDRE_COURT
@@ -342,14 +371,16 @@ def ignore_response(resp_id):
     return jsonify({'success': True})
 
 
-# ROUTE: GET /api/forms/:id/responses
-# OBJECTIF: Lister les réponses d'un questionnaire (pour l'auteur)
+# ROUTE: GET /api/forms/:id/responses — désactivé pour confidentialité
 @responses_bp.route('/api/forms/<string:form_id>/responses', methods=['GET'])
 def list_responses(form_id):
-    q = Questionnaire.query.filter_by(id=form_id).first()
-    if not q:
-        return jsonify({'error': 'questionnaire introuvable'}), 404
-
-    responses = Response.query.filter_by(questionnaire_id=form_id)\
-                              .order_by(Response.created_at.desc()).all()
-    return jsonify({'items': [r.to_dict() for r in responses], 'total': len(responses)})
+    """
+    Endpoint désactivé pour raisons de confidentialité.
+    Les identités des répondants sont anonymes et protégées.
+    Utiliser /api/forms/:id/stats pour les statistiques agrégées.
+    """
+    return jsonify({
+        'error': 'Confidentialité',
+        'message': 'Les identités des répondants sont protégées et anonymes. '
+                   'Utilise /api/forms/{id}/stats pour les statistiques agrégées.'
+    }), 403

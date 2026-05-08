@@ -358,24 +358,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
       </div>
 
-      <!-- Respondent table -->
+      <!-- Profil des répondants — données agrégées anonymes uniquement -->
       <div class="st-card">
-        <div class="st-card-title">Répondants</div>
-        <div class="st-table-wrap">
-          <table class="st-table" id="st-table">
-            <thead>
-              <tr>
-                <th>Répondant</th>
-                <th>Établissement</th>
-                <th>Niveau</th>
-                <th>Durée</th>
-                <th>Statut</th>
-              </tr>
-            </thead>
-            <tbody id="st-tbody"></tbody>
-          </table>
+        <div class="st-card-title">Profil des répondants</div>
+        <div style="background:#E8F5F3;border:1px solid #9FE1CB;border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:8px;font-size:12px;color:#085041">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M7 1L2 3.5v4C2 10 4.5 12.5 7 13c2.5-.5 5-3 5-5.5v-4L7 1z"/></svg>
+          <span>Les identités des répondants sont anonymes et protégées. Tu accèdes uniquement aux statistiques agrégées.</span>
         </div>
-        <button class="st-see-all-btn" id="st-see-all-btn" style="display:none" onclick="toggleAllRespond()"></button>
+        <div id="st-respondent-metrics" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;"></div>
       </div>
 
       <!-- Export section -->

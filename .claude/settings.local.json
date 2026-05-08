@@ -13,7 +13,8 @@
       "Bash(/c/Users/user/AppData/Local/Programs/Python/Python314/python.exe -m pip install flask-cors --quiet)",
       "Bash(/c/Users/user/AppData/Local/Programs/Python/Python314/python.exe -m pip install python-dotenv --quiet)",
       "Bash($PYTHON *)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5000/)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5000/)",
+      "Bash(python -m py_compile backend/app.py backend/routes/responses.py backend/services/google_forms.py frontend/js/respond.js)"
     ]
   }
 }

@@ -1,6 +1,7 @@
 /* ═══════════════════════════════════════════════════════════
    SCICONNECT — Statistiques V4
    Multi-questionnaire selector + per-form stats + Excel export
+   Données agrégées uniquement — aucune identité individuelle
    ═══════════════════════════════════════════════════════════ */
 
 const DOMAIN_COLORS = {
@@ -16,21 +17,16 @@ const DOMAIN_COLORS = {
 };
 
 const st = {
-  formId:       null,
-  form:         null,
-  stats:        null,
-  responses:    [],
-  myForms:      [],
-  user:         null,
-  showAll:      false,
-  charts:       {},
-  selectedIdx:  -1,
+  formId:      null,
+  form:        null,
+  stats:       null,
+  myForms:     [],
+  user:        null,
+  charts:      {},
+  selectedIdx: -1,
 };
 
-const PREVIEW_COUNT = 5;
-
 document.addEventListener('DOMContentLoaded', async () => {
-  /* Check auth */
   try {
     const meResp = await fetch('/api/auth/me', { credentials: 'include' });
     const meData = await meResp.json();
@@ -44,25 +40,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  /* Check if a specific form ID was provided in URL */
-  const params = new URLSearchParams(window.location.search);
+  const params    = new URLSearchParams(window.location.search);
   const urlFormId = params.get('id');
 
-  /* Load user's forms */
   await loadMyForms();
 
   if (urlFormId) {
-    /* Direct link to a specific form's stats */
     const idx = st.myForms.findIndex(f => f.id === urlFormId);
     if (idx >= 0) {
       selectForm(idx);
     } else {
-      /* Form ID not in user's list — try loading directly */
       st.formId = urlFormId;
       await loadFormStats(urlFormId);
     }
   } else if (st.myForms.length === 1) {
-    /* Auto-select if only one form */
     selectForm(0);
   }
 });
@@ -70,7 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 /* ─── Load user's questionnaires ─── */
 async function loadMyForms() {
   try {
-    const res = await fetch('/api/forms?limit=50', { credentials: 'include' });
+    const res  = await fetch('/api/forms?limit=50', { credentials: 'include' });
     const data = await res.json();
     st.myForms = (data.items || []).filter(f => f.author_id === st.user?.id);
   } catch {
@@ -110,8 +101,8 @@ function renderSelector() {
 
   const list = document.getElementById('st-form-list');
   list.innerHTML = st.myForms.map((f, i) => {
-    const color = DOMAIN_COLORS[f.domain] || '#6B7280';
-    const date = f.created_at
+    const color    = DOMAIN_COLORS[f.domain] || '#6B7280';
+    const date     = f.created_at
       ? new Date(f.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
       : '';
     const isActive = i === st.selectedIdx;
@@ -142,10 +133,9 @@ function renderSelector() {
 /* ─── Select a form ─── */
 async function selectForm(idx) {
   st.selectedIdx = idx;
-  const form = st.myForms[idx];
-  st.formId = form.id;
+  const form     = st.myForms[idx];
+  st.formId      = form.id;
 
-  /* Update active state in selector */
   document.querySelectorAll('.st-form-item').forEach((el, i) => {
     el.classList.toggle('active', i === idx);
   });
@@ -155,31 +145,25 @@ async function selectForm(idx) {
 
 /* ─── Load stats for a specific form ─── */
 async function loadFormStats(formId) {
-  /* Show topbar actions */
   document.getElementById('st-topbar-actions').style.display = 'flex';
 
-  /* Destroy existing charts */
   Object.values(st.charts).forEach(c => { if (c && c.destroy) c.destroy(); });
   st.charts = {};
-  st.showAll = false;
 
   try {
-    const [formResp, statsResp, respResp] = await Promise.all([
-      fetch(`/api/forms/${formId}`,          { credentials: 'include' }),
-      fetch(`/api/forms/${formId}/stats`,    { credentials: 'include' }),
-      fetch(`/api/forms/${formId}/responses`, { credentials: 'include' }),
+    const [formResp, statsResp] = await Promise.all([
+      fetch(`/api/forms/${formId}`,       { credentials: 'include' }),
+      fetch(`/api/forms/${formId}/stats`, { credentials: 'include' }),
     ]);
 
     if (!formResp.ok) throw new Error('form');
-    st.form = await formResp.json();
-    if (statsResp.ok)  st.stats     = await statsResp.json();
-    if (respResp.ok)   { const d = await respResp.json(); st.responses = d.items || []; }
+    st.form  = await formResp.json();
+    if (statsResp.ok) st.stats = await statsResp.json();
   } catch {
     showError('Impossible de charger les statistiques pour ce questionnaire.');
     return;
   }
 
-  /* Show stats content */
   const content = document.getElementById('st-stats-content');
   content.classList.add('visible');
 
@@ -188,11 +172,10 @@ async function loadFormStats(formId) {
   renderLineChart();
   renderBarChart();
   renderDonuts();
-  renderTable();
+  renderRespondentProfile();
   renderExportSection();
   renderMethodParagraph();
 
-  /* Scroll to stats */
   content.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -201,7 +184,7 @@ function renderTopbar() {
   document.title = `Stats — ${st.form.title || 'Questionnaire'} — SciConnect`;
   document.getElementById('st-form-title').textContent = st.form.title || 'Sans titre';
 
-  const last = st.responses[0]?.created_at;
+  const last = st.stats?.last_response_at;
   if (last) {
     const diff = Math.round((Date.now() - new Date(last).getTime()) / 1000);
     const rel  = diff < 60 ? `${diff}s` : diff < 3600 ? `${Math.round(diff/60)}min` : `${Math.round(diff/3600)}h`;
@@ -217,21 +200,35 @@ function renderTopbar() {
 
 /* ─── Metrics ─── */
 function renderMetrics() {
-  const s = st.stats || {};
-  const total    = s.total_responses    ?? st.responses.length;
-  const complete = s.complete_count     ?? st.responses.filter(r => r.is_complete).length;
+  const s        = st.stats || {};
+  const total    = s.total_responses  ?? 0;
+  const complete = s.complete_count   ?? total;
   const abandoned = total - complete;
-  const avgSec   = s.avg_duration_sec   ?? computeAvgDuration();
-  const lastResp = st.responses[0];
+  const avgSec   = s.avg_duration_sec ?? 0;
   const target   = st.form.target_count || 100;
+  const lastAt   = s.last_response_at;
 
   const metrics = [
-    { val: total,      label: 'Réponses totales', sub: `/ ${target} objectif`,       pct: Math.min(100, Math.round(total/target*100)), gold: false },
-    { val: `${complete > 0 && total > 0 ? Math.round(complete/total*100) : 0}%`,
-                       label: 'Taux complétion',  sub: `${complete} complètes · ${abandoned} abandons`, pct: complete > 0 && total > 0 ? Math.round(complete/total*100) : 0, gold: false },
-    { val: formatDur(avgSec), label: 'Temps moyen', sub: avgSec < 300 ? 'Questionnaire court' : 'Questionnaire long', pct: Math.min(100, Math.round(avgSec/600*100)), gold: true },
-    { val: lastResp ? relTime(lastResp.created_at) : '—',
-                       label: 'Dernière réponse', sub: lastResp?.respondent_university || lastResp?.respondent_email?.split('@')[1] || '—', pct: 100, gold: false },
+    { val: total,
+      label: 'Réponses totales',
+      sub: `/ ${target} objectif`,
+      pct: Math.min(100, Math.round(total / target * 100)),
+      gold: false },
+    { val: `${total > 0 ? Math.round(complete / total * 100) : 0}%`,
+      label: 'Taux complétion',
+      sub: `${complete} complètes · ${abandoned} abandons`,
+      pct: total > 0 ? Math.round(complete / total * 100) : 0,
+      gold: false },
+    { val: formatDur(avgSec),
+      label: 'Temps moyen',
+      sub: avgSec < 300 ? 'Questionnaire court' : 'Questionnaire long',
+      pct: Math.min(100, Math.round(avgSec / 600 * 100)),
+      gold: true },
+    { val: lastAt ? relTime(lastAt) : '—',
+      label: 'Dernière réponse',
+      sub: `${s.verified ?? 0} vérifiés · ${s.public ?? 0} publics`,
+      pct: 100,
+      gold: false },
   ];
 
   document.getElementById('st-metrics').innerHTML = metrics.map(m => `
@@ -249,11 +246,6 @@ function renderMetrics() {
   }, 100);
 }
 
-function computeAvgDuration() {
-  const durations = st.responses.map(r => r.duration_seconds).filter(d => d != null && d > 0);
-  return durations.length ? Math.round(durations.reduce((a,b) => a+b, 0) / durations.length) : 0;
-}
-
 function formatDur(sec) {
   if (!sec) return '—';
   const m = Math.floor(sec / 60), s = sec % 60;
@@ -263,24 +255,31 @@ function formatDur(sec) {
 function relTime(iso) {
   const diff = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
   if (diff < 60)    return "à l'instant";
-  if (diff < 3600)  return `il y a ${Math.round(diff/60)}min`;
-  if (diff < 86400) return `il y a ${Math.round(diff/3600)}h`;
-  return `il y a ${Math.round(diff/86400)}j`;
+  if (diff < 3600)  return `il y a ${Math.round(diff / 60)}min`;
+  if (diff < 86400) return `il y a ${Math.round(diff / 3600)}h`;
+  return `il y a ${Math.round(diff / 86400)}j`;
 }
 
-/* ─── Line chart ─── */
+/* ─── Line chart — données agrégées par jour ─── */
 function renderLineChart() {
   const canvas = document.getElementById('chart-line');
-  const ctx = canvas.getContext('2d');
+  const ctx    = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  const days = last7Days();
-  const counts = days.map(d => {
-    return st.responses.filter(r => r.created_at && r.created_at.slice(0,10) === d).length;
-  });
-  const labels = days.map(d => {
-    const dt = new Date(d); return dt.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
-  });
+  let labels, counts;
+
+  const daily = st.stats?.daily_responses;
+  if (daily && daily.length > 0) {
+    labels = daily.map(d => {
+      const dt = new Date(d.date + 'T00:00:00');
+      return dt.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
+    });
+    counts = daily.map(d => d.count);
+  } else {
+    const days = last7Days();
+    labels = days.map(d => new Date(d).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' }));
+    counts = days.map(() => 0);
+  }
 
   if (st.charts.line) st.charts.line.destroy();
   st.charts.line = new Chart(canvas, {
@@ -303,7 +302,8 @@ function renderLineChart() {
 function last7Days() {
   const days = [];
   for (let i = 6; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
+    const d = new Date();
+    d.setDate(d.getDate() - i);
     days.push(d.toISOString().slice(0, 10));
   }
   return days;
@@ -311,7 +311,7 @@ function last7Days() {
 
 /* ─── Bar chart ─── */
 function renderBarChart() {
-  const s = st.stats;
+  const s    = st.stats;
   const card = document.getElementById('st-bar-card');
   if (!s || !s.question_completion) {
     card.style.display = 'none';
@@ -322,9 +322,9 @@ function renderBarChart() {
   const canvas = document.getElementById('chart-bar');
   if (st.charts.bar) st.charts.bar.destroy();
 
-  const labels  = s.question_completion.map((_, i) => `Q${i+1}`);
-  const values  = s.question_completion.map(q => Math.round((q.answered / Math.max(q.total, 1)) * 100));
-  const colors  = values.map(v => v >= 75 ? '#005F54' : '#E67E22');
+  const labels = s.question_completion.map((_, i) => `Q${i + 1}`);
+  const values = s.question_completion.map(q => Math.round((q.answered / Math.max(q.total, 1)) * 100));
+  const colors = values.map(v => v >= 75 ? '#005F54' : '#E67E22');
 
   st.charts.bar = new Chart(canvas, {
     type: 'bar',
@@ -342,26 +342,23 @@ function renderBarChart() {
     },
   });
 
-  /* Dropout alert */
   const minPct = Math.min(...values);
   const minIdx = values.indexOf(minPct);
-  const alert = document.getElementById('st-dropout-alert');
+  const alert  = document.getElementById('st-dropout-alert');
   if (minPct < 75) {
     alert.style.display = 'block';
-    alert.textContent = `⚠ Point de chute à Q${minIdx+1} (${minPct}%). Reformule ou rends cette question facultative.`;
+    alert.textContent = `⚠ Point de chute à Q${minIdx + 1} (${minPct}%). Reformule ou rends cette question facultative.`;
   } else {
     alert.style.display = 'none';
   }
 }
 
-/* ─── Donuts ─── */
+/* ─── Donuts — répartition agrégée, aucune identité individuelle ─── */
 function renderDonuts() {
-  /* University donut */
-  const uniMap = {};
-  st.responses.forEach(r => {
-    const key = r.respondent_university || (r.respondent_email ? r.respondent_email.split('@')[1] : 'Autre');
-    uniMap[key] = (uniMap[key] || 0) + 1;
-  });
+  const s = st.stats || {};
+
+  /* Par université */
+  const uniMap    = s.by_university || {};
   const uniLabels = Object.keys(uniMap);
   const uniData   = uniLabels.map(k => uniMap[k]);
   const uniColors = ['#005F54', '#C9A84C', '#2563EB', '#DC2626', '#E2DED6'];
@@ -377,9 +374,8 @@ function renderDonuts() {
     renderLegend('legend-uni', uniLabels, uniColors, uniData);
   }
 
-  /* Level donut */
-  const lvlMap = {};
-  st.responses.forEach(r => { const k = r.respondent_level || 'Autre'; lvlMap[k] = (lvlMap[k] || 0) + 1; });
+  /* Par niveau */
+  const lvlMap    = s.by_level || {};
   const lvlLabels = Object.keys(lvlMap);
   const lvlData   = lvlLabels.map(k => lvlMap[k]);
   const lvlColors = ['#005F54', '#9FE1CB', '#C9A84C', '#E2DED6'];
@@ -397,45 +393,45 @@ function renderDonuts() {
 }
 
 function renderLegend(id, labels, colors, data) {
-  const total = data.reduce((a,b) => a+b, 0);
+  const total = data.reduce((a, b) => a + b, 0);
   document.getElementById(id).innerHTML = labels.map((l, i) => `
     <div class="st-legend-item">
       <div class="st-legend-dot" style="background:${colors[i] || '#E2DED6'}"></div>
-      ${escHtml(l)} (${total > 0 ? Math.round(data[i]/total*100) : 0}%)
+      ${escHtml(l)} (${total > 0 ? Math.round(data[i] / total * 100) : 0}%)
     </div>`).join('');
 }
 
-/* ─── Table ─── */
-function renderTable() {
-  const tbody = document.getElementById('st-tbody');
-  const visible = st.showAll ? st.responses : st.responses.slice(0, PREVIEW_COUNT);
+/* ─── Profil des répondants — métriques agrégées anonymes ─── */
+function renderRespondentProfile() {
+  const s        = st.stats || {};
+  const total    = s.total_responses ?? 0;
+  const verified = s.verified        ?? 0;
+  const pub      = s.public          ?? 0;
+  const suspects = s.suspect_count   ?? 0;
 
-  tbody.innerHTML = visible.map(r => {
-    const pill = r.is_suspect  ? '<span class="st-pill st-pill-suspect">Suspect</span>'
-               : r.respondent_type === 'public' ? '<span class="st-pill st-pill-public">Public</span>'
-               : '<span class="st-pill st-pill-ok">✓ Vérifié</span>';
-    const dur  = r.duration_seconds ? `<span class="st-dur">${formatDur(r.duration_seconds)}</span>` : '<span class="st-dur">—</span>';
-    const name = r.respondent_email ? r.respondent_email.split('@')[0].replace('.', ' ') : 'Anonyme';
-    const uni  = r.respondent_university || (r.respondent_email ? '@' + r.respondent_email.split('@')[1] : '—');
-    const level = r.respondent_level || '—';
+  const pctVerif = total > 0 ? Math.round(verified / total * 100) : 0;
+  const pctPub   = total > 0 ? Math.round(pub / total * 100) : 0;
 
-    return `<tr><td>${escHtml(name)}</td><td>${escHtml(uni)}</td><td>${escHtml(level)}</td><td>${dur}</td><td>${pill}</td></tr>`;
-  }).join('');
+  const metrics = document.getElementById('st-respondent-metrics');
+  if (!metrics) return;
 
-  const btn = document.getElementById('st-see-all-btn');
-  if (st.responses.length > PREVIEW_COUNT) {
-    btn.style.display = 'block';
-    btn.textContent = st.showAll
-      ? '↑ Réduire'
-      : `Voir les ${st.responses.length} répondants →`;
-  } else {
-    btn.style.display = 'none';
-  }
-}
-
-function toggleAllRespond() {
-  st.showAll = !st.showAll;
-  renderTable();
+  metrics.innerHTML = `
+    <div style="background:#E8F5F3;border-radius:10px;padding:12px;text-align:center">
+      <div style="font-family:var(--font-display);font-size:1.5rem;color:var(--color-primary);font-weight:700">${verified}</div>
+      <div style="font-size:11px;color:#085041;font-weight:600;margin-top:2px">Étudiants vérifiés</div>
+      <div style="font-size:10px;color:var(--color-text-muted);margin-top:2px">${pctVerif}% du total</div>
+    </div>
+    <div style="background:#FDF8EC;border-radius:10px;padding:12px;text-align:center">
+      <div style="font-family:var(--font-display);font-size:1.5rem;color:var(--color-accent,#C9A84C);font-weight:700">${pub}</div>
+      <div style="font-size:11px;color:#633806;font-weight:600;margin-top:2px">Public général</div>
+      <div style="font-size:10px;color:var(--color-text-muted);margin-top:2px">${pctPub}% du total</div>
+    </div>
+    <div style="background:${suspects > 0 ? '#FEF3F2' : '#F7F6F2'};border-radius:10px;padding:12px;text-align:center">
+      <div style="font-family:var(--font-display);font-size:1.5rem;color:${suspects > 0 ? '#C0392B' : 'var(--color-text-muted)'};font-weight:700">${suspects}</div>
+      <div style="font-size:11px;color:${suspects > 0 ? '#7B2F2F' : 'var(--color-text-muted)'};font-weight:600;margin-top:2px">Réponses suspectes</div>
+      <div style="font-size:10px;color:var(--color-text-muted);margin-top:2px">Durée &lt; 60s — 0 pts attribués</div>
+    </div>
+  `;
 }
 
 /* ─── Export section ─── */
@@ -451,7 +447,7 @@ async function exportExcel() {
 
   const btn1 = document.getElementById('st-topbar-export');
   const btn2 = document.getElementById('st-export-main-btn');
-  [btn1, btn2].forEach(b => { if(b) { b.classList.add('done'); b.textContent = '✓ Téléchargement en cours...'; } });
+  [btn1, btn2].forEach(b => { if (b) { b.classList.add('done'); b.textContent = '✓ Téléchargement en cours...'; } });
 
   try {
     const resp = await fetch(`/api/forms/${st.formId}/export`, { credentials: 'include' });
@@ -478,24 +474,21 @@ async function exportExcel() {
   }, 3000);
 }
 
-/* ─── Methodological paragraph ─── */
+/* ─── Paragraphe méthodologique ─── */
 function renderMethodParagraph() {
-  const total    = st.responses.length;
-  if (total === 0) {
+  const s = st.stats;
+  if (!s || (s.total_responses ?? 0) === 0) {
     document.getElementById('st-method-box').style.display = 'none';
     return;
   }
 
-  const complete  = st.responses.filter(r => r.is_complete).length;
-  const taux      = total > 0 ? Math.round(complete / total * 100) : 0;
-  const verified  = st.responses.filter(r => r.respondent_type === 'verified').length;
-  const pctV      = total > 0 ? Math.round(verified / total * 100) : 0;
+  const total    = s.total_responses;
+  const complete = s.complete_count ?? total;
+  const taux     = total > 0 ? Math.round(complete / total * 100) : 0;
+  const verified = s.verified ?? 0;
+  const pctV     = total > 0 ? Math.round(verified / total * 100) : 0;
 
-  const dates    = st.responses.map(r => new Date(r.created_at)).filter(Boolean).sort((a,b) => a-b);
-  const dateDebut = dates[0] ? dates[0].toLocaleDateString('fr-FR') : '?';
-  const dateFin   = dates[dates.length-1] ? dates[dates.length-1].toLocaleDateString('fr-FR') : '?';
-
-  const text = `Les données ont été collectées via SciConnect entre le ${dateDebut} et le ${dateFin}. Sur ${total} participant${total>1?'s':''}, ${complete} ont fourni des réponses complètes (${taux}%). ${verified} répondant${verified>1?'s':''} (${pctV}%) ont été vérifiés via email académique institutionnel.`;
+  const text = `Les données ont été collectées via SciConnect. Sur ${total} participant${total > 1 ? 's' : ''}, ${complete} ont fourni des réponses complètes (${taux}%). ${verified} répondant${verified > 1 ? 's' : ''} (${pctV}%) ont été vérifiés via email académique institutionnel.`;
 
   document.getElementById('st-method-text').textContent = text;
   document.getElementById('st-method-box').style.display = 'block';
@@ -531,5 +524,5 @@ function showError(msg) {
 /* ─── Utility ─── */
 function escHtml(str) {
   if (!str) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }

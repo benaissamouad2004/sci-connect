@@ -97,7 +97,9 @@ def get_benchmark(form_id):
 
 
 # ROUTE: GET /api/forms/:id/stats
-# OBJECTIF: Retourner les statistiques d'un questionnaire pour le dashboard stats
+# OBJECTIF: Retourner les statistiques agrégées anonymisées d'un questionnaire
+# Aucune donnée personnelle identifiable n'est retournée — données agrégées uniquement
+# EDITABLE: ajouter ou retirer des métriques agrégées selon les besoins
 @export_bp.route('/api/forms/<string:form_id>/stats', methods=['GET'])
 def get_stats(form_id):
     user_id = session.get('user_id')
@@ -116,6 +118,8 @@ def get_stats(form_id):
     verified  = sum(1 for r in responses if r.respondent_type == 'verified')
     public    = sum(1 for r in responses if r.respondent_type == 'public')
     validated = sum(1 for r in responses if r.validated_by_emitter)
+    complete  = sum(1 for r in responses if r.is_complete)
+    suspects  = sum(1 for r in responses if r.is_suspect or False)
     avg_completion = (
         sum(r.completion_percentage or 0 for r in responses) / total
         if total > 0 else 0
@@ -123,12 +127,75 @@ def get_stats(form_id):
 
     pct_of_goal = round((total / q.target_count) * 100, 1) if q.target_count > 0 else 0
 
+    # Durée moyenne (agrégée — pas de données individuelles)
+    durations = [r.duration_seconds for r in responses if r.duration_seconds and r.duration_seconds > 0]
+    avg_duration = round(sum(durations) / len(durations)) if durations else 0
+
+    # Dernière réponse (timestamp seulement, pas d'identité)
+    last_response_at = None
+    dated = [r for r in responses if r.created_at]
+    if dated:
+        last_response_at = max(r.created_at for r in dated).isoformat()
+
+    # Réponses par jour — 7 derniers jours (comptages uniquement)
+    from datetime import datetime, timedelta
+    daily = {}
+    for i in range(7):
+        day = (datetime.utcnow() - timedelta(days=i)).strftime('%Y-%m-%d')
+        daily[day] = 0
+    for r in responses:
+        if r.created_at:
+            day = r.created_at.strftime('%Y-%m-%d')
+            if day in daily:
+                daily[day] += 1
+    daily_list = [{'date': k, 'count': v} for k, v in sorted(daily.items())]
+
+    # Répartition par université et niveau (agrégée, pas d'emails)
+    from collections import Counter
+    from backend.models import User as UserModel
+
+    respondent_ids = [r.respondent_id for r in responses if r.respondent_id]
+    by_university  = {}
+    by_level       = {}
+
+    if respondent_ids:
+        respondents = UserModel.query.filter(UserModel.id.in_(respondent_ids)).all()
+
+        # Charger les noms lisibles depuis schools.json
+        uni_names   = {}
+        schools_path = os.path.join(ADMIN_DIR, 'schools.json')
+        if os.path.exists(schools_path):
+            try:
+                with open(schools_path, 'r', encoding='utf-8') as f:
+                    schools_local = json.load(f)
+                for uni in schools_local.get('universities', []):
+                    uni_names[uni['id']] = uni['name']
+            except Exception:
+                pass
+
+        uni_counts   = Counter(uni_names.get(u.university_id, u.university_id or '—') for u in respondents)
+        level_counts = Counter(u.level or '—' for u in respondents)
+        by_university = dict(uni_counts.most_common())
+        by_level      = dict(level_counts.most_common())
+
+    # Inclure les répondants publics dans la répartition
+    public_count = sum(1 for r in responses if not r.respondent_id)
+    if public_count > 0:
+        by_university['Public général'] = by_university.get('Public général', 0) + public_count
+
     return jsonify({
-        'questionnaire':   q.to_dict(),
-        'total_responses': total,
-        'verified':        verified,
-        'public':          public,
-        'validated':       validated,
-        'avg_completion':  round(avg_completion, 1),
-        'pct_of_goal':     pct_of_goal,
+        'questionnaire':    q.to_dict(),
+        'total_responses':  total,
+        'complete_count':   complete,
+        'verified':         verified,
+        'public':           public,
+        'validated':        validated,
+        'suspect_count':    suspects,
+        'avg_completion':   round(avg_completion, 1),
+        'pct_of_goal':      pct_of_goal,
+        'avg_duration_sec': avg_duration,
+        'last_response_at': last_response_at,
+        'by_university':    by_university,
+        'by_level':         by_level,
+        'daily_responses':  daily_list,
     })

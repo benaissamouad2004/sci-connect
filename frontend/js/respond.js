@@ -1,19 +1,14 @@
 /* ═══════════════════════════════════════════════════════════
-   SCICONNECT — respond.js V6 — STRICT VALIDATION
-   
-   The confirm button activates ONLY when:
-   1. The Google Form was ACTUALLY SUBMITTED (iframe navigated
-      to the "Your response has been recorded" page)
-   2. Minimum time elapsed (60 seconds)
-   
-   NO FALLBACK — user MUST submit the Google Form.
-   If they don't submit, the button stays permanently locked.
-   
-   How detection works:
-   - iframe load #1 = Google Form page loaded
-   - iframe load #2+ = Form submitted → confirmation page shown
-   - We wait 3 seconds after last load to confirm it's final
-     (handles multi-section forms where "Next" triggers loads)
+   SCICONNECT — respond.js V7 — CHECKBOX VALIDATION
+
+   La détection de soumission via événements iframe (load events)
+   est IMPOSSIBLE à fiabiliser pour les formulaires multi-sections :
+   le bouton "Suivant" déclenche le même événement que la soumission
+   finale (restriction cross-origin — on ne peut pas lire le contenu).
+
+   Solution : confirmation explicite par case à cocher après 60s.
+   L'utilisateur atteste avoir soumis le formulaire en entier.
+   Le backend valide la durée minimale (>=30s).
    ═══════════════════════════════════════════════════════════ */
 
 var DOMAIN_COLORS = {
@@ -28,20 +23,19 @@ var DOMAIN_COLORS = {
   'Autre':                       '#6B7280',
 };
 
+/* EDITABLE: durée minimale en secondes avant que la case à cocher apparaisse */
 var MIN_TIME_SECONDS = 60;
 
 var rsp = {
-  formId:              null,
-  form:                null,
-  user:                null,
-  startTime:           null,
-  timerInterval:       null,
-  confirmed:           false,
-  btnReady:            false,
-  iframeLoadCount:     0,
-  formSubmitted:       false,
-  timeReady:           false,
-  submitCheckTimeout:  null,
+  formId:        null,
+  form:          null,
+  user:          null,
+  startTime:     null,
+  timerInterval: null,
+  confirmed:     false,
+  btnReady:      false,
+  timeReady:     false,
+  checkboxReady: false,
 };
 
 /* ─── Boot ─── */
@@ -71,11 +65,11 @@ function loadForm() {
       return r.json();
     })
     .then(function(form) {
-      rsp.form = form;
+      rsp.form      = form;
       rsp.startTime = Date.now();
 
       document.getElementById('rsp-loading').style.display = 'none';
-      document.getElementById('rsp-layout').style.display = 'grid';
+      document.getElementById('rsp-layout').style.display  = 'grid';
 
       renderTitleCard();
       embedGoogleForm();
@@ -96,7 +90,7 @@ function renderTitleCard() {
 
   var desc = document.getElementById('rsp-desc');
   if (f.description) { desc.textContent = f.description; }
-  else { desc.style.display = 'none'; }
+  else               { desc.style.display = 'none'; }
 
   var color = DOMAIN_COLORS[f.domain] || 'var(--color-primary)';
   document.getElementById('rsp-title-stripe').style.background = color;
@@ -112,17 +106,12 @@ function renderTitleCard() {
   document.getElementById('rsp-pts-text').textContent = '+10 pts';
 }
 
-/* ═══════════════════════════════════════════════════════
-   EMBED + STRICT SUBMISSION DETECTION
-   
-   When the user submits a Google Form, the iframe navigates
-   from the form page to the confirmation page. This triggers
-   a new 'load' event. 
-   
-   For multi-section forms, "Next" also triggers loads.
-   We use a 3-second debounce: after each load #2+, we wait
-   3 seconds. If no more loads happen, it's the final submit.
-   ═══════════════════════════════════════════════════════ */
+/* ─── Embed Google Form ───
+   Note : On n'écoute plus les événements de chargement de l'iframe.
+   La détection cross-origin est impossible — un bouton "Suivant" et
+   une vraie soumission déclenchent le même événement.
+   La validation passe par la case à cocher explicite (voir ci-dessous).
+*/
 function embedGoogleForm() {
   var url = rsp.form.google_forms_url;
   if (!url) { showError("Ce questionnaire n'a pas de lien Google Forms."); return; }
@@ -133,52 +122,55 @@ function embedGoogleForm() {
   }
 
   var iframe = document.getElementById('rsp-iframe');
-
-  iframe.addEventListener('load', function() {
-    rsp.iframeLoadCount++;
-
-    if (rsp.iframeLoadCount === 1) {
-      /* Form page loaded */
-      updateStep(1, 'completed');
-      updateStep(2, 'active');
-      return;
-    }
-
-    /* Load #2+ : could be "Next" in multi-section OR final submit
-       Use a 3-second debounce to detect the FINAL navigation */
-    if (rsp.submitCheckTimeout) {
-      clearTimeout(rsp.submitCheckTimeout);
-    }
-
-    rsp.submitCheckTimeout = setTimeout(function() {
-      /* No more loads for 3 seconds = this was the FINAL page (confirmation) */
-      rsp.formSubmitted = true;
-      onFormSubmitted();
-    }, 3000);
-  });
-
   iframe.src = embedUrl;
+
+  /* Marquer l'étape 1 comme terminée, étape 2 active */
+  updateStep(1, 'completed');
+  updateStep(2, 'active');
 }
 
-/* ─── Called when Google Form submission is confirmed ─── */
-function onFormSubmitted() {
-  updateStep(2, 'completed');
+/* ─── Case à cocher — déclenchée quand l'utilisateur coche ─── */
+function onCheckboxChange() {
+  var cb = document.getElementById('rsp-checkbox');
+  if (!cb) return;
 
-  var statusEl = document.getElementById('rsp-submission-status');
-  if (statusEl) statusEl.style.display = 'flex';
+  rsp.checkboxReady = cb.checked;
+
+  if (rsp.checkboxReady) {
+    updateStep(2, 'completed');
+  } else {
+    updateStep(2, 'active');
+    /* Redésactiver le bouton si décochage */
+    if (rsp.btnReady && !rsp.confirmed) {
+      rsp.btnReady = false;
+      var confirmBtn   = document.getElementById('rsp-confirm-btn');
+      var confirmLabel = document.getElementById('rsp-confirm-label');
+      var confirmIcon  = document.getElementById('rsp-confirm-icon');
+      confirmBtn.disabled = true;
+      confirmBtn.classList.remove('ready');
+      confirmIcon.textContent = '⏳';
+      confirmLabel.textContent = 'Coche la case ci-dessus pour confirmer';
+      var mobileConfirm = document.getElementById('rsp-mobile-confirm');
+      if (mobileConfirm) {
+        mobileConfirm.disabled = true;
+        mobileConfirm.classList.remove('ready');
+        document.getElementById('rsp-mobile-label').textContent = '⏳ Coche la case...';
+      }
+    }
+  }
 
   checkCanConfirm();
 }
 
-/* ─── Check if ALL conditions are met ─── */
+/* ─── Vérifier si toutes les conditions sont réunies ─── */
 function checkCanConfirm() {
   if (rsp.confirmed || rsp.btnReady) return;
 
-  /* STRICT: Both conditions MUST be true */
-  if (!rsp.formSubmitted) return;
-  if (!rsp.timeReady) return;
+  /* Les DEUX conditions doivent être vraies */
+  if (!rsp.timeReady)     return;  /* 60 secondes écoulées */
+  if (!rsp.checkboxReady) return;  /* Case cochée par l'utilisateur */
 
-  /* ALL CONDITIONS MET */
+  /* Toutes conditions remplies → activer le bouton */
   rsp.btnReady = true;
   updateStep(3, 'active');
 
@@ -190,10 +182,10 @@ function checkCanConfirm() {
 
   confirmBtn.disabled = false;
   confirmBtn.classList.add('ready');
-  confirmIcon.textContent = '\u2713';
-  confirmLabel.textContent = "Valider ma reponse";
-  confirmHint.textContent = 'Formulaire soumis — clique pour confirmer';
-  timerLabelEl.textContent = '\u2713 Pret a valider';
+  confirmIcon.textContent  = '✓';
+  confirmLabel.textContent = 'Valider ma reponse';
+  confirmHint.textContent  = 'Soumission confirmee — clique pour valider';
+  timerLabelEl.textContent = '✓ Pret a valider';
   timerLabelEl.style.color = 'var(--color-primary)';
 
   var mobileConfirm = document.getElementById('rsp-mobile-confirm');
@@ -201,7 +193,7 @@ function checkCanConfirm() {
   if (mobileConfirm) {
     mobileConfirm.disabled = false;
     mobileConfirm.classList.add('ready');
-    mobileLabel.textContent = "\u2713 Valider ma reponse";
+    mobileLabel.textContent = '✓ Valider ma reponse';
   }
 
   document.getElementById('rsp-warning').style.display = 'none';
@@ -209,13 +201,13 @@ function checkCanConfirm() {
 
 /* ─── Step indicator ─── */
 function updateStep(num, state) {
-  var step = document.getElementById('rsp-step-' + num);
+  var step  = document.getElementById('rsp-step-' + num);
   var check = document.getElementById('rsp-check-' + num);
   if (!step) return;
   step.classList.remove('active', 'completed', 'done');
   if (state === 'completed') {
     step.classList.add('completed');
-    if (check) check.textContent = '\u2713';
+    if (check) check.textContent = '✓';
   } else if (state === 'active') {
     step.classList.add('active');
   }
@@ -231,10 +223,10 @@ function startTimer() {
   var mobileLabel   = document.getElementById('rsp-mobile-label');
 
   rsp.timerInterval = setInterval(function() {
-    var elapsed = Math.floor((Date.now() - rsp.startTime) / 1000);
-    var mins = Math.floor(elapsed / 60);
-    var secs = elapsed % 60;
-    var timeStr = mins + ':' + String(secs).padStart(2, '0');
+    var elapsed  = Math.floor((Date.now() - rsp.startTime) / 1000);
+    var mins     = Math.floor(elapsed / 60);
+    var secs     = elapsed % 60;
+    var timeStr  = mins + ':' + String(secs).padStart(2, '0');
 
     timerEl.textContent = timeStr;
     if (mobileTimer) mobileTimer.textContent = timeStr;
@@ -242,31 +234,29 @@ function startTimer() {
     var progress = Math.min(100, Math.round((elapsed / MIN_TIME_SECONDS) * 100));
     progressBar.style.width = progress + '%';
 
-    /* Time condition */
-    if (elapsed >= MIN_TIME_SECONDS && !rsp.timeReady) {
-      rsp.timeReady = true;
-      checkCanConfirm();
-    }
-
-    /* Update button text — ALWAYS show what's missing */
-    if (!rsp.confirmed && !rsp.btnReady) {
-      if (!rsp.formSubmitted && elapsed < MIN_TIME_SECONDS) {
-        /* Both missing */
-        var remaining = MIN_TIME_SECONDS - elapsed;
-        confirmLabel.textContent = 'Remplis et soumets le formulaire (' + remaining + 's)';
-        if (mobileLabel) mobileLabel.textContent = '\u23f3 Remplis le formulaire';
-      } else if (!rsp.formSubmitted && elapsed >= MIN_TIME_SECONDS) {
-        /* Time OK but form NOT submitted */
-        confirmLabel.textContent = '\u26a0 Soumets le formulaire Google Forms !';
-        if (mobileLabel) mobileLabel.textContent = '\u26a0 Soumets le formulaire';
-        timerLabelEl.textContent = 'Temps OK — soumets le formulaire';
-        timerLabelEl.style.color = '#D97706';
-      } else if (rsp.formSubmitted && elapsed < MIN_TIME_SECONDS) {
-        /* Form submitted but time not met */
-        var remaining2 = MIN_TIME_SECONDS - elapsed;
-        confirmLabel.textContent = '\u2713 Soumis ! Encore ' + remaining2 + 's...';
-        if (mobileLabel) mobileLabel.textContent = '\u2713 Soumis ! ' + remaining2 + 's';
+    if (elapsed < MIN_TIME_SECONDS) {
+      /* Compte à rebours */
+      var remaining = MIN_TIME_SECONDS - elapsed;
+      if (!rsp.confirmed && !rsp.btnReady) {
+        confirmLabel.textContent = 'Remplis le formulaire... (' + remaining + 's)';
+        if (mobileLabel) mobileLabel.textContent = '⏳ ' + remaining + 's restantes';
       }
+    } else if (!rsp.timeReady) {
+      /* 60s écoulées — afficher la case à cocher */
+      rsp.timeReady = true;
+
+      var checkSection = document.getElementById('rsp-check-section');
+      if (checkSection) checkSection.style.display = 'block';
+
+      timerLabelEl.textContent = 'Coche la case pour valider';
+      timerLabelEl.style.color = 'var(--color-accent, #C9A84C)';
+
+      if (!rsp.confirmed && !rsp.btnReady) {
+        confirmLabel.textContent = 'Coche la case ci-dessus';
+        if (mobileLabel) mobileLabel.textContent = '✓ Coche la case';
+      }
+
+      checkCanConfirm();
     }
   }, 1000);
 }
@@ -289,14 +279,17 @@ function checkAlreadyResponded() {
 function confirmResponse() {
   if (rsp.confirmed) return;
 
-  /* STRICT double-check */
-  if (!rsp.formSubmitted) {
-    showWarning("Tu dois d'abord remplir et soumettre le formulaire Google Forms !");
-    return;
-  }
+  /* Vérification finale — durée minimale */
   var elapsed = Math.floor((Date.now() - rsp.startTime) / 1000);
   if (elapsed < MIN_TIME_SECONDS) {
-    showWarning('Patiente encore quelques secondes...');
+    showWarning('Patiente encore ' + (MIN_TIME_SECONDS - elapsed) + ' secondes...');
+    return;
+  }
+
+  /* Vérification finale — case cochée */
+  var cb = document.getElementById('rsp-checkbox');
+  if (!cb || !cb.checked) {
+    showWarning('Coche la case pour confirmer que tu as soumis le formulaire Google Forms.');
     return;
   }
 
@@ -308,17 +301,17 @@ function confirmResponse() {
   confirmBtn.disabled = true;
   confirmBtn.classList.remove('ready');
   confirmBtn.classList.add('loading');
-  document.getElementById('rsp-confirm-icon').textContent = '\u23f3';
+  document.getElementById('rsp-confirm-icon').textContent  = '⏳';
   document.getElementById('rsp-confirm-label').textContent = 'Envoi en cours...';
 
   var mobileConfirm = document.getElementById('rsp-mobile-confirm');
   if (mobileConfirm) {
     mobileConfirm.disabled = true;
     mobileConfirm.classList.remove('ready');
-    document.getElementById('rsp-mobile-label').textContent = '\u23f3 Envoi...';
+    document.getElementById('rsp-mobile-label').textContent = '⏳ Envoi...';
   }
 
-  var endTime = Date.now();
+  var endTime  = Date.now();
   var duration = Math.floor((endTime - rsp.startTime) / 1000);
 
   fetch('/api/responses', {
@@ -340,7 +333,7 @@ function confirmResponse() {
         showFailScreen("Tu as deja repondu. Les points ne sont comptes qu'une seule fois.");
         return null;
       }
-      if (errData.error) { showFailScreen(errData.error); return null; }
+      if (errData.error) { showFailScreen(errData.message || errData.error); return null; }
       return null;
     });
   })
@@ -359,7 +352,7 @@ function confirmResponse() {
 
 /* ─── Warning ─── */
 function showWarning(msg) {
-  var warning = document.getElementById('rsp-warning');
+  var warning  = document.getElementById('rsp-warning');
   var warnText = document.getElementById('rsp-warning-text');
   if (warnText) warnText.textContent = msg;
   warning.style.display = 'flex';
@@ -370,14 +363,14 @@ function showWarning(msg) {
 
 /* ─── Success ─── */
 function showSuccess(result) {
-  document.getElementById('rsp-layout').style.display = 'none';
-  document.getElementById('rsp-mobile-bar').style.display = 'none';
+  document.getElementById('rsp-layout').style.display         = 'none';
+  document.getElementById('rsp-mobile-bar').style.display     = 'none';
   document.getElementById('rsp-success-overlay').style.display = 'flex';
 
   var ptsEarned = (result && result.points_earned) || 10;
-  var totalPts  = (result && result.total_points) || ((rsp.user && rsp.user.points) || 0) + ptsEarned;
+  var totalPts  = (result && result.total_points)  || ((rsp.user && rsp.user.points) || 0) + ptsEarned;
 
-  document.getElementById('rsp-success-pts').textContent = '+' + ptsEarned + ' pts gagnes !';
+  document.getElementById('rsp-success-pts').textContent       = '+' + ptsEarned + ' pts gagnes !';
   document.getElementById('rsp-success-total-val').textContent = totalPts;
 
   if (window.SciConnectAnimations) {
@@ -391,41 +384,49 @@ function showSuccess(result) {
   }
 
   var MIN_DEPOT = 20;
-  var pct = Math.min(100, Math.round((totalPts / MIN_DEPOT) * 100));
-  var unlocked = totalPts >= MIN_DEPOT;
+  var pct       = Math.min(100, Math.round((totalPts / MIN_DEPOT) * 100));
+  var unlocked  = totalPts >= MIN_DEPOT;
 
   setTimeout(function() { document.getElementById('rsp-unlock-fill').style.width = pct + '%'; }, 300);
-  document.getElementById('rsp-unlock-status').textContent = unlocked ? '\u2713 Depot disponible !' : totalPts + ' / ' + MIN_DEPOT + ' pts';
+  document.getElementById('rsp-unlock-status').textContent = unlocked ? '✓ Depot disponible !' : totalPts + ' / ' + MIN_DEPOT + ' pts';
   document.getElementById('rsp-unlock-status').style.color = unlocked ? 'var(--color-primary)' : '';
-  document.getElementById('rsp-unlock-note').textContent = unlocked ? 'Tu peux maintenant deposer ton questionnaire !' : 'Encore ' + (MIN_DEPOT - totalPts) + ' pts pour deverrouiller le depot.';
+  document.getElementById('rsp-unlock-note').textContent   = unlocked
+    ? 'Tu peux maintenant deposer ton questionnaire !'
+    : 'Encore ' + (MIN_DEPOT - totalPts) + ' pts pour deverrouiller le depot.';
 
   if (!unlocked) {
     var depositBtn = document.getElementById('rsp-deposit-btn');
-    depositBtn.style.opacity = '0.5';
+    depositBtn.style.opacity       = '0.5';
     depositBtn.style.pointerEvents = 'none';
   }
 }
 
 /* ─── Fail ─── */
 function showFailScreen(message) {
-  document.getElementById('rsp-layout').style.display = 'none';
-  document.getElementById('rsp-mobile-bar').style.display = 'none';
-  document.getElementById('rsp-fail-overlay').style.display = 'flex';
-  document.getElementById('rsp-fail-text').textContent = message;
+  document.getElementById('rsp-layout').style.display        = 'none';
+  document.getElementById('rsp-mobile-bar').style.display    = 'none';
+  document.getElementById('rsp-fail-overlay').style.display  = 'flex';
+  document.getElementById('rsp-fail-text').textContent       = message;
 }
 
 /* ─── Retry ─── */
 function retryResponse() {
-  rsp.confirmed = false;
-  rsp.btnReady = false;
-  rsp.timeReady = false;
-  rsp.formSubmitted = false;
-  rsp.iframeLoadCount = 0;
-  rsp.submitCheckTimeout = null;
-  rsp.startTime = Date.now();
+  rsp.confirmed     = false;
+  rsp.btnReady      = false;
+  rsp.timeReady     = false;
+  rsp.checkboxReady = false;
+  rsp.startTime     = Date.now();
+
+  /* Décocher la case */
+  var cb = document.getElementById('rsp-checkbox');
+  if (cb) cb.checked = false;
+
+  /* Cacher la case à cocher */
+  var checkSection = document.getElementById('rsp-check-section');
+  if (checkSection) checkSection.style.display = 'none';
 
   document.getElementById('rsp-fail-overlay').style.display = 'none';
-  document.getElementById('rsp-layout').style.display = 'grid';
+  document.getElementById('rsp-layout').style.display       = 'grid';
 
   updateStep(1, 'completed');
   updateStep(2, 'active');
@@ -434,22 +435,19 @@ function retryResponse() {
   var confirmBtn = document.getElementById('rsp-confirm-btn');
   confirmBtn.disabled = true;
   confirmBtn.classList.remove('ready', 'loading');
-  document.getElementById('rsp-confirm-icon').textContent = '\u23f3';
+  document.getElementById('rsp-confirm-icon').textContent  = '⏳';
   document.getElementById('rsp-confirm-label').textContent = 'Remplis et soumets le formulaire';
-  document.getElementById('rsp-confirm-hint').textContent = 'Le bouton s\'active apres soumission du formulaire';
-  document.getElementById('rsp-timer-label').textContent = 'min. 60s requis';
-  document.getElementById('rsp-timer-label').style.color = '';
-  document.getElementById('rsp-warning').style.display = 'none';
-  document.getElementById('rsp-progress-bar').style.width = '0%';
-
-  var statusEl = document.getElementById('rsp-submission-status');
-  if (statusEl) statusEl.style.display = 'none';
+  document.getElementById('rsp-confirm-hint').textContent  = 'Coche la case ci-dessus apres avoir soumis le formulaire';
+  document.getElementById('rsp-timer-label').textContent   = 'min. 60s requis';
+  document.getElementById('rsp-timer-label').style.color   = '';
+  document.getElementById('rsp-warning').style.display     = 'none';
+  document.getElementById('rsp-progress-bar').style.width  = '0%';
 
   var mobileConfirm = document.getElementById('rsp-mobile-confirm');
   if (mobileConfirm) {
     mobileConfirm.disabled = true;
     mobileConfirm.classList.remove('ready');
-    document.getElementById('rsp-mobile-label').textContent = '\u23f3 Remplis le formulaire...';
+    document.getElementById('rsp-mobile-label').textContent = '⏳ Remplis le formulaire...';
   }
 
   embedGoogleForm();
@@ -460,7 +458,7 @@ function retryResponse() {
 /* ─── Error ─── */
 function showError(msg) {
   document.getElementById('rsp-loading').style.display = 'none';
-  document.getElementById('rsp-error').style.display = 'flex';
+  document.getElementById('rsp-error').style.display   = 'flex';
   document.getElementById('rsp-error-msg').textContent = msg;
 }
 

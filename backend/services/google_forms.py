@@ -1,5 +1,14 @@
 # SERVICE: Google Forms API — cache obligatoire 30 secondes
 # Ne jamais appeler sans ce cache — risque de quota dépassé
+#
+# CONFIGURATION REQUISE pour la vérification réelle :
+#   1. Activer "Google Forms API" dans Google Cloud Console
+#   2. Créer un compte de service → télécharger le JSON
+#   3. Dans .env : GOOGLE_SERVICE_ACCOUNT_JSON='{"type":"service_account",...}'
+#   4. Chaque formulaire Google Forms doit avoir :
+#      - "Collecter les adresses e-mail" activé (Paramètres → Réponses)
+#      - Le compte de service doit être "Lecteur" du formulaire (optionnel si le
+#        propriétaire du form est le même compte Google que le compte de service)
 import time
 import os
 import json
@@ -22,6 +31,27 @@ def _get_cache_duration():
         return s.get('features', {}).get('live_counter_refresh_seconds', CACHE_DURATION)
     except Exception:
         return CACHE_DURATION
+
+
+def get_credentials():
+    """
+    Retourne les credentials Google depuis GOOGLE_SERVICE_ACCOUNT_JSON.
+    Retourne None si la variable d'environnement n'est pas configurée.
+    Configure GOOGLE_SERVICE_ACCOUNT_JSON dans .env avec le contenu JSON
+    du compte de service Google Cloud (sur une seule ligne).
+    """
+    sa_json = os.getenv('GOOGLE_SERVICE_ACCOUNT_JSON', '').strip()
+    if not sa_json:
+        return None
+    try:
+        from google.oauth2 import service_account
+        sa_info = json.loads(sa_json)
+        return service_account.Credentials.from_service_account_info(
+            sa_info,
+            scopes=['https://www.googleapis.com/auth/forms.responses.readonly']
+        )
+    except Exception:
+        return None
 
 
 def get_form_responses(form_id, credentials):
@@ -53,18 +83,34 @@ def get_form_responses(form_id, credentials):
 
 def verify_response(form_id, user_email, credentials):
     """
-    Vérifie si l'email a répondu au formulaire et si la réponse est complète.
-    Retourne : {'verified': bool, 'complete': bool, 'response_id': str|None}
+    Vérifie si l'email a répondu au formulaire via l'API Google Forms.
+
+    Retourne un dict avec :
+      verified  = True   → réponse trouvée pour cet email
+      verified  = False  → aucune réponse pour cet email (form non soumis)
+      verified  = None   → le formulaire ne collecte pas les emails (indéterminé)
+      complete  = bool   → au moins une réponse enregistrée
+      response_id = str  → identifiant de la réponse Google Forms
     """
     responses = get_form_responses(form_id, credentials)
+
+    # Détecter si le formulaire collecte les emails
+    has_email_collection = any(r.get('respondentEmail') for r in responses)
+
+    if not has_email_collection and len(responses) > 0:
+        # Le formulaire existe mais ne collecte pas les emails → on ne peut pas vérifier
+        return {'verified': None, 'complete': True, 'response_id': None,
+                'reason': 'email_collection_disabled'}
+
     for response in responses:
-        if response.get('respondentEmail') == user_email:
+        if response.get('respondentEmail', '').lower() == (user_email or '').lower():
             answers = response.get('answers', {})
             return {
                 'verified':    True,
                 'complete':    len(answers) > 0,
                 'response_id': response.get('responseId')
             }
+
     return {'verified': False, 'complete': False, 'response_id': None}
 
 

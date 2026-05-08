@@ -117,10 +117,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </div>
         </div>
 
-        <!-- Form submitted status -->
-        <div class="rsp-submission-status" id="rsp-submission-status" style="display:none">
-          <span>✅</span>
-          <span>Formulaire soumis avec succès !</span>
+        <!-- Confirmation checkbox (visible après 60s) -->
+        <div id="rsp-check-section" style="display:none;margin-bottom:10px">
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:12px 14px;background:#E8F5F3;border:1.5px solid #9FE1CB;border-radius:10px;font-size:13px;color:#085041;line-height:1.4">
+            <input type="checkbox" id="rsp-checkbox" onchange="onCheckboxChange()" style="margin-top:2px;width:16px;height:16px;accent-color:var(--color-primary);cursor:pointer;flex-shrink:0">
+            <span>J'ai répondu à <strong>toutes les questions</strong> et soumis le formulaire jusqu'à la dernière page — j'ai vu le message <strong>"Votre réponse a été enregistrée"</strong></span>
+          </label>
         </div>
 
         <!-- Warning -->
@@ -135,7 +137,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <span id="rsp-confirm-label">Remplis et soumets le formulaire</span>
         </button>
 
-        <p class="rsp-confirm-hint" id="rsp-confirm-hint">Le bouton s'active après soumission du formulaire</p>
+        <p class="rsp-confirm-hint" id="rsp-confirm-hint">Coche la case ci-dessus après avoir soumis le formulaire</p>
 
       </div>
     </aside>
