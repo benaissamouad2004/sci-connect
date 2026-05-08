@@ -53,7 +53,8 @@ def _alternating_rows(ws, start_row=2):
 
 def _autofit(ws):
     from openpyxl.cell.cell import MergedCell
-    for col in ws.columns:
+    from openpyxl.utils import get_column_letter
+    for col_idx, col in enumerate(ws.columns, 1):
         max_len = 0
         for cell in col:
             if isinstance(cell, MergedCell):
@@ -64,7 +65,7 @@ def _autofit(ws):
             except:
                 pass
         if max_len > 0:
-            ws.column_dimensions[col[0].column_letter].width = min(max_len + 2, 50)
+            ws.column_dimensions[get_column_letter(col_idx)].width = min(max_len + 2, 50)
 
 
 def generate_excel(questionnaire, responses, schools_data=None):

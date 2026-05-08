@@ -35,8 +35,13 @@ def export_excel(form_id):
         with open(schools_path, 'r', encoding='utf-8') as f:
             schools_data = json.load(f)
 
-    from backend.services.export import generate_excel
-    output = generate_excel(q, responses, schools_data)
+    try:
+        from backend.services.export import generate_excel
+        output = generate_excel(q, responses, schools_data)
+    except Exception as e:
+        import traceback, logging
+        logging.error('[EXPORT] Erreur génération Excel : %s\n%s', e, traceback.format_exc())
+        return jsonify({'error': 'Export échoué', 'detail': str(e)}), 500
 
     safe_title = ''.join(c for c in q.title if c.isalnum() or c in ' _-')[:40].strip()
     filename   = f"SciConnect_{safe_title}.xlsx"
