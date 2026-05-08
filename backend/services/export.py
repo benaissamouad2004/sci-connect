@@ -52,9 +52,19 @@ def _alternating_rows(ws, start_row=2):
             cell.alignment = Alignment(vertical='center')
 
 def _autofit(ws):
+    from openpyxl.cell.cell import MergedCell
     for col in ws.columns:
-        max_len = max((len(str(cell.value or '')) for cell in col), default=8) + 4
-        ws.column_dimensions[col[0].column_letter].width = min(max_len, 50)
+        max_len = 0
+        for cell in col:
+            if isinstance(cell, MergedCell):
+                continue
+            try:
+                if cell.value:
+                    max_len = max(max_len, len(str(cell.value)))
+            except:
+                pass
+        if max_len > 0:
+            ws.column_dimensions[col[0].column_letter].width = min(max_len + 2, 50)
 
 
 def generate_excel(questionnaire, responses, schools_data=None):
