@@ -124,6 +124,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <button class="sidebar-close" id="close-sidebar" aria-label="Fermer">✕</button>
       </div>
 
+      <!-- Visiteur non connecté -->
+      <div class="guest-sidebar-prompt" id="guest-sidebar-prompt" hidden>
+        <div class="guest-sidebar-icon">👋</div>
+        <p class="guest-sidebar-text">Connectez-vous pour accéder à votre profil, vos points et votre streak.</p>
+        <a href="login.html" class="btn-primary btn-sm guest-sidebar-cta">Se connecter</a>
+        <a href="register.html" class="guest-sidebar-register">Créer un compte</a>
+      </div>
+
       <!-- Carte identité -->
       <div class="identity-card" id="sb-identity">
         <div class="identity-avatar-wrap">
@@ -222,6 +230,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <span class="topbar-badge" id="notif-badge" hidden>0</span>
           </button>
 
+          <a href="login.html" class="guest-login-btn" id="guest-login-btn" hidden>Se connecter →</a>
           <button class="topbar-profile-pill" id="profile-btn">
             <div class="topbar-avatar" id="topbar-avatar">?</div>
             <span id="topbar-name">...</span>
@@ -297,6 +306,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       <!-- FEED CONTENT -->
       <div class="feed-content" id="feed-content">
+
+        <!-- Bannière mode visiteur -->
+        <div class="guest-banner" id="guest-banner" hidden>
+          <span class="guest-banner-icon">👁</span>
+          <span class="guest-banner-text">Vous explorez en tant que visiteur — <a href="login.html">connectez-vous</a> pour déposer un questionnaire ou voir vos statistiques.</span>
+        </div>
 
         <!-- Banner recommandation (redesigned) -->
         <div class="rec-banner" id="rec-banner" hidden>

@@ -14,13 +14,14 @@ const DOMAIN_COLORS = {
 };
 
 let currentUser  = null;
+let isGuest      = false;
 let activeFilter = '';
 let savedForms   = new Set(JSON.parse(sessionStorage.getItem('sc_saved') || '[]'));
 let subscribedTo = new Set(JSON.parse(sessionStorage.getItem('sc_subs') || '[]'));
 
 document.addEventListener('DOMContentLoaded', async () => {
   const ok = await initDashboard();
-  if (!ok) return; // User not authenticated — redirect happened
+  if (!ok) return;
   startActiveCounter();
   bindSidebarToggle();
   bindTopbarActions();
@@ -33,10 +34,11 @@ async function initDashboard() {
     const res  = await fetch('/api/auth/me', { credentials: 'include' });
     const data = await res.json();
     if (!data.authenticated) {
-      // Clear cached user data and redirect to login
       localStorage.removeItem('sc_user_cache');
-      window.location.replace('login.html');
-      return false;
+      isGuest = true;
+      renderGuestUI();
+      await loadFeed();
+      return true;
     }
 
     currentUser = data.user;
@@ -66,8 +68,55 @@ async function initDashboard() {
         return true;
       } catch(_) {}
     }
-    window.location.replace('login.html');
-    return false;
+    isGuest = true;
+    renderGuestUI();
+    await loadFeed();
+    return true;
+  }
+}
+
+/* ── Mode visiteur non connecté ── */
+function renderGuestUI() {
+  const greeting = document.getElementById('topbar-greeting');
+  if (greeting) greeting.textContent = 'Bonjour, visiteur 👋';
+
+  const profilePill = document.getElementById('profile-btn');
+  if (profilePill) profilePill.hidden = true;
+  const guestBtn = document.getElementById('guest-login-btn');
+  if (guestBtn) guestBtn.hidden = false;
+
+  const identity = document.getElementById('sb-identity');
+  if (identity) identity.hidden = true;
+  const ptsWidget = document.getElementById('sb-points-widget');
+  if (ptsWidget) ptsWidget.hidden = true;
+  const streakWidget = document.getElementById('sb-streak-widget');
+  if (streakWidget) streakWidget.hidden = true;
+  const sidebarNav = document.querySelector('.sidebar-nav');
+  if (sidebarNav) sidebarNav.hidden = true;
+  const sidebarPrompt = document.getElementById('guest-sidebar-prompt');
+  if (sidebarPrompt) sidebarPrompt.hidden = false;
+
+  document.querySelectorAll('.rail-btn[data-page="deposer"], .rail-btn[data-page="mes-qst"]')
+    .forEach(btn => {
+      btn.classList.add('rail-btn-locked');
+      btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); window.location.href = 'login.html'; }, true);
+    });
+
+  const guestBanner = document.getElementById('guest-banner');
+  if (guestBanner) guestBanner.hidden = false;
+
+  const pointsBanner = document.getElementById('points-banner');
+  if (pointsBanner) {
+    pointsBanner.hidden = false;
+    pointsBanner.className = 'points-banner locked';
+    const icon = document.getElementById('pb-icon');
+    const msg  = document.getElementById('pb-msg');
+    const tracker = document.getElementById('pb-tracker');
+    const btn  = document.getElementById('pb-btn');
+    if (icon) icon.textContent = '🔒';
+    if (msg)  msg.innerHTML = 'Connectez-vous pour gagner des points et déposer vos questionnaires';
+    if (tracker) tracker.innerHTML = '';
+    if (btn)  { btn.href = 'login.html'; btn.textContent = 'Se connecter →'; }
   }
 }
 
@@ -424,7 +473,7 @@ function buildCard(form, user) {
     <div class="card-footer">
       <a href="/respond.html?id=${form.id}"
          class="btn-respond${already ? ' already-done' : ''}">
-        ${already ? '✓ Déjà répondu' : 'Répondre · +10pts'}
+        ${already ? '✓ Déjà répondu' : (isGuest ? 'Répondre' : 'Répondre · +10pts')}
       </a>
       ${isOwn ? `<button class="btn-delete" data-id="${form.id}" title="Supprimer ce questionnaire">🗑</button>` : ''}
       <button class="btn-save${isSaved ? ' saved' : ''}" data-id="${form.id}" title="Sauvegarder">
@@ -516,11 +565,13 @@ function bindTopbarActions() {
   });
   profileBtn.addEventListener('click', e => {
     e.stopPropagation();
+    if (isGuest) { window.location.href = 'login.html'; return; }
     profilePanel.hidden = !profilePanel.hidden;
     notifPanel.hidden = true;
   });
   document.getElementById('rail-profile-btn')?.addEventListener('click', e => {
     e.stopPropagation();
+    if (isGuest) { window.location.href = 'login.html'; return; }
     profilePanel.hidden = !profilePanel.hidden;
     notifPanel.hidden = true;
   });
