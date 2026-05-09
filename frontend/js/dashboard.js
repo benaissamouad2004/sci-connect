@@ -211,18 +211,18 @@ async function loadUserFormsCount() {
 
 /* ── Popup connexion quotidienne ── */
 function showDailyPopup(pointsEarned, streak, streakBonus, totalPts) {
-  const overlay = document.getElementById('daily-overlay');
-  overlay.hidden = false;
-  document.getElementById('daily-pts').textContent = `+${pointsEarned} pts gagnés aujourd'hui !`;
-  document.getElementById('daily-total-pts').textContent = totalPts;
-  if (streakBonus && streak > 0) {
-    const streakEl = document.getElementById('daily-streak');
-    streakEl.hidden = false;
-    document.getElementById('streak-num').textContent = streak;
+  if (!window.SciConnectAnimations) return;
+
+  if (streakBonus && streak >= 7) {
+    /* Animation streak plein-écran (7, 14, 21… jours) puis animation points */
+    window.SciConnectAnimations.showStreakAnimation(streak, 25);
+    setTimeout(() => {
+      window.SciConnectAnimations.showPointsAnimation(pointsEarned, totalPts, true);
+    }, 4500);
+  } else {
+    /* Animation points quotidiens (+5 pts) */
+    window.SciConnectAnimations.showPointsAnimation(pointsEarned, totalPts, false);
   }
-  const close = () => { overlay.hidden = true; };
-  document.getElementById('daily-close').addEventListener('click', close);
-  setTimeout(close, 4000);
 }
 
 /* ── Banner état points ── */

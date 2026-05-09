@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SciConnect - Présentation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ===========================================
+         THEME: SciConnect editorial academic system
+         =========================================== */
+      :root {
+        --ink: #f3efe4;
+        --muted: #b6ad9d;
+        --paper: #091411;
+        --surface: #111d19;
+        --surface-2: #172823;
+        --teal: #65d6c3;
+        --teal-deep: #05100d;
+        --teal-soft: #183832;
+        --gold: #e3c26b;
+        --gold-soft: #46391b;
+        --clay: #e27858;
+        --line: rgba(243, 239, 228, 0.16);
+        --shadow: 0 clamp(1rem, 4vw, 3rem) clamp(2rem, 7vw, 5rem) rgba(0, 0, 0, 0.38);
+        --font-display: "Fraunces", Georgia, serif;
+        --font-body: "DM Sans", sans-serif;
+        --title-size: clamp(2.4rem, 7vw, 6.2rem);
+        --h2-size: clamp(1.8rem, 4vw, 4rem);
+        --h3-size: clamp(1rem, 2.2vw, 1.55rem);
+        --body-size: clamp(0.82rem, 1.45vw, 1.12rem);
+        --small-size: clamp(0.62rem, 0.92vw, 0.82rem);
+        --slide-padding: clamp(1rem, 4vw, 4rem);
+        --content-gap: clamp(0.7rem, 2vw, 2rem);
+        --element-gap: clamp(0.45rem, 1.1vw, 1rem);
+        --ease: cubic-bezier(0.32, 0.72, 0, 1);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      /* ===========================================
+         VIEWPORT FITTING: mandatory base styles
+         =========================================== */
+      html,
+      body {
+        height: 100%;
+        overflow-x: hidden;
+      }
+
+      html {
+        scroll-snap-type: y mandatory;
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background:
+          radial-gradient(circle at 18% 12%, rgba(101, 214, 195, 0.14), transparent 28%),
+          radial-gradient(circle at 82% 88%, rgba(227, 194, 107, 0.13), transparent 28%),
+          linear-gradient(135deg, #07110f 0%, #0d1916 55%, #091411 100%);
+        color: var(--ink);
+        font-family: var(--font-body);
+      }
+
+      .slide {
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
+        scroll-snap-align: start;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        isolation: isolate;
+      }
+
+      .slide-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        max-height: 100%;
+        overflow: hidden;
+        padding: var(--slide-padding);
+      }
+
+      .card,
+      .container,
+      .content-box {
+        max-width: min(90vw, 1000px);
+        max-height: min(80vh, 700px);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+        gap: clamp(0.5rem, 1.5vw, 1rem);
+      }
+
+      img,
+      .image-container {
+        max-width: 100%;
+        max-height: min(50vh, 400px);
+        object-fit: contain;
+      }
+
+      @media (max-height: 700px) {
+        :root {
+          --slide-padding: clamp(0.75rem, 3vw, 2rem);
+          --content-gap: clamp(0.4rem, 1.5vw, 1rem);
+          --title-size: clamp(1.9rem, 6vw, 4.4rem);
+          --h2-size: clamp(1.35rem, 3.2vw, 2.6rem);
+        }
+      }
+
+      @media (max-height: 600px) {
+        :root {
+          --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem);
+          --content-gap: clamp(0.3rem, 1vw, 0.75rem);
+          --title-size: clamp(1.6rem, 5vw, 3.5rem);
+          --body-size: clamp(0.7rem, 1.2vw, 0.95rem);
+        }
+
+        .nav-dots,
+        .keyboard-hint,
+        .decorative {
+          display: none;
+        }
+      }
+
+      @media (max-height: 500px) {
+        :root {
+          --slide-padding: clamp(0.4rem, 2vw, 1rem);
+          --title-size: clamp(1.25rem, 4.5vw, 2.4rem);
+          --h2-size: clamp(1rem, 3vw, 1.5rem);
+          --body-size: clamp(0.65rem, 1vw, 0.85rem);
+        }
+      }
+
+      @media (max-width: 600px) {
+        :root {
+          --title-size: clamp(1.8rem, 10vw, 3.3rem);
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.2s !important;
+        }
+
+        html {
+          scroll-behavior: auto;
+        }
+      }
+
+      /* ===========================================
+         GLOBAL SLIDE LANGUAGE
+         =========================================== */
+      .slide::before {
+        content: "";
+        position: absolute;
+        inset: clamp(0.8rem, 2vw, 1.6rem);
+        border: clamp(0.04rem, 0.08vw, 0.08rem) solid var(--line);
+        box-shadow: inset 0 0 0 clamp(0.08rem, 0.12vw, 0.12rem) rgba(101, 214, 195, 0.03);
+        pointer-events: none;
+        z-index: -1;
+      }
+
+      .slide::after {
+        content: "";
+        position: absolute;
+        width: clamp(12rem, 28vw, 24rem);
+        height: clamp(12rem, 28vw, 24rem);
+        right: calc(-1 * clamp(4rem, 8vw, 8rem));
+        bottom: calc(-1 * clamp(5rem, 10vw, 9rem));
+        background: radial-gradient(circle, rgba(101, 214, 195, 0.2), transparent 66%);
+        z-index: -2;
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-display);
+        letter-spacing: 0;
+      }
+
+      h1 {
+        font-size: var(--title-size);
+        line-height: 0.9;
+        max-width: min(88vw, 1050px);
+      }
+
+      h2 {
+        font-size: var(--h2-size);
+        line-height: 0.95;
+        max-width: min(88vw, 900px);
+      }
+
+      h3 {
+        font-size: var(--h3-size);
+        line-height: 1.1;
+      }
+
+      p,
+      li {
+        font-size: var(--body-size);
+        line-height: 1.45;
+      }
+
+      .kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: clamp(0.45rem, 1vw, 0.75rem);
+        width: fit-content;
+        color: var(--teal);
+        font-size: var(--small-size);
+        font-weight: 900;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin-bottom: clamp(0.7rem, 1.6vw, 1.2rem);
+      }
+
+      .kicker::before {
+        content: "";
+        width: clamp(0.48rem, 0.9vw, 0.72rem);
+        height: clamp(0.48rem, 0.9vw, 0.72rem);
+        background: var(--gold);
+        border-radius: 999px;
+      }
+
+      .eyebrow {
+        font-size: var(--small-size);
+        color: var(--muted);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+      }
+
+      .lead {
+        color: var(--muted);
+        max-width: min(78vw, 720px);
+        margin-top: clamp(0.9rem, 1.8vw, 1.4rem);
+      }
+
+      .reveal {
+        opacity: 0;
+        transform: translateY(clamp(1rem, 2vw, 1.8rem));
+        transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+      }
+
+      .visible .reveal {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .reveal:nth-child(2) {
+        transition-delay: 0.1s;
+      }
+
+      .reveal:nth-child(3) {
+        transition-delay: 0.2s;
+      }
+
+      .reveal:nth-child(4) {
+        transition-delay: 0.3s;
+      }
+
+      .accent {
+        color: var(--teal);
+      }
+
+      .gold {
+        color: var(--gold);
+      }
+
+      /* ===========================================
+         NAVIGATION
+         =========================================== */
+      .progress-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 0%;
+        height: clamp(0.18rem, 0.35vw, 0.28rem);
+        background: linear-gradient(90deg, var(--teal), var(--gold));
+        z-index: 1000;
+        transition: width 0.2s ease;
+      }
+
+      .nav-dots {
+        position: fixed;
+        right: clamp(0.6rem, 1.6vw, 1.4rem);
+        top: 50%;
+        transform: translateY(-50%);
+        display: grid;
+        gap: clamp(0.35rem, 0.7vw, 0.55rem);
+        z-index: 1000;
+      }
+
+      .nav-dot {
+        width: clamp(0.42rem, 0.8vw, 0.62rem);
+        height: clamp(0.42rem, 0.8vw, 0.62rem);
+        border-radius: 999px;
+        border: 0;
+        background: rgba(0, 95, 84, 0.22);
+        cursor: pointer;
+      }
+
+      .nav-dot.active {
+        background: var(--teal);
+        transform: scale(1.35);
+      }
+
+      .keyboard-hint {
+        position: fixed;
+        left: clamp(1rem, 2.4vw, 2rem);
+        bottom: clamp(0.8rem, 1.7vw, 1.3rem);
+        font-size: var(--small-size);
+        color: rgba(243, 239, 228, 0.42);
+        z-index: 1000;
+      }
+
+      /* ===========================================
+         SPECIAL LAYOUTS
+         =========================================== */
+      .cover-grid {
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: clamp(1rem, 4vw, 4rem);
+        align-items: center;
+        min-height: 100%;
+      }
+
+      .title-slide h1 {
+        font-size: clamp(2rem, 5.2vw, 4.9rem);
+      }
+
+      .title-slide .lead {
+        margin-top: clamp(0.6rem, 1.1vw, 0.95rem);
+      }
+
+      .title-slide .stat-rail {
+        margin-top: clamp(0.65rem, 1.3vw, 1rem);
+      }
+
+      .cover-mark {
+        position: relative;
+        min-height: min(52vh, 440px);
+        border-radius: clamp(1rem, 2vw, 1.6rem);
+        background:
+          linear-gradient(145deg, rgba(101, 214, 195, 0.18), transparent 45%),
+          linear-gradient(180deg, #0b221d 0%, #06110f 100%);
+        color: var(--surface);
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        padding: clamp(1rem, 3vw, 2rem);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .cover-mark img {
+        width: 100%;
+        max-height: min(30vh, 260px);
+        object-fit: contain;
+        filter: contrast(1.1);
+      }
+
+      .cover-mark::after {
+        content: "SCICONNECT";
+        position: absolute;
+        right: calc(-1 * clamp(1rem, 3vw, 2rem));
+        bottom: clamp(0.5rem, 1vw, 1rem);
+        color: rgba(255, 255, 255, 0.08);
+        font-size: clamp(2.5rem, 8vw, 7rem);
+        font-weight: 900;
+        letter-spacing: 0.06em;
+      }
+
+      .team-list {
+        display: grid;
+        gap: clamp(0.24rem, 0.5vw, 0.4rem);
+        font-size: var(--small-size);
+        color: rgba(255, 255, 255, 0.74);
+        position: relative;
+        z-index: 1;
+      }
+
+      .brand-lockup {
+        display: inline-flex;
+        align-items: center;
+        gap: clamp(0.55rem, 1.2vw, 0.9rem);
+        margin-bottom: clamp(0.9rem, 1.8vw, 1.3rem);
+      }
+
+      .brand-logo {
+        width: clamp(2.6rem, 5vw, 4rem);
+        height: clamp(2.6rem, 5vw, 4rem);
+        display: grid;
+        place-items: center;
+        border-radius: 24%;
+        background:
+          linear-gradient(135deg, rgba(101, 214, 195, 0.18), rgba(227, 194, 107, 0.16)),
+          #081411;
+        border: clamp(0.06rem, 0.1vw, 0.09rem) solid rgba(101, 214, 195, 0.42);
+        color: var(--gold);
+        font-family: var(--font-display);
+        font-size: clamp(1rem, 2vw, 1.55rem);
+        font-weight: 900;
+        box-shadow: 0 0 clamp(1.1rem, 3vw, 2.8rem) rgba(101, 214, 195, 0.2);
+      }
+
+      .brand-wordmark {
+        display: grid;
+        gap: clamp(0.05rem, 0.25vw, 0.16rem);
+      }
+
+      .brand-wordmark strong {
+        font-family: var(--font-display);
+        font-size: clamp(1.1rem, 2.2vw, 1.8rem);
+        line-height: 0.95;
+      }
+
+      .brand-wordmark span {
+        color: var(--muted);
+        font-size: var(--small-size);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .tech-strip {
+        display: flex;
+        flex-wrap: wrap;
+        gap: clamp(0.4rem, 0.8vw, 0.65rem);
+        margin-top: clamp(0.9rem, 1.6vw, 1.25rem);
+      }
+
+      .tech-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: clamp(0.3rem, 0.7vw, 0.5rem);
+        border: clamp(0.04rem, 0.08vw, 0.08rem) solid rgba(101, 214, 195, 0.28);
+        background: rgba(101, 214, 195, 0.08);
+        color: var(--ink);
+        padding: clamp(0.36rem, 0.8vw, 0.55rem) clamp(0.55rem, 1vw, 0.8rem);
+        border-radius: 999px;
+        font-size: var(--small-size);
+        font-weight: 800;
+      }
+
+      .tech-pill::before {
+        content: "";
+        width: clamp(0.34rem, 0.7vw, 0.48rem);
+        height: clamp(0.34rem, 0.7vw, 0.48rem);
+        border-radius: 999px;
+        background: var(--gold);
+      }
+
+      .stat-rail {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: clamp(0.5rem, 1vw, 0.8rem);
+        margin-top: clamp(1rem, 2.5vw, 2rem);
+      }
+
+      .stat {
+        border-top: clamp(0.06rem, 0.1vw, 0.08rem) solid var(--line);
+        padding-top: clamp(0.5rem, 1vw, 0.8rem);
+      }
+
+      .stat strong {
+        display: block;
+        color: var(--teal);
+        font-family: var(--font-display);
+        font-size: clamp(1.45rem, 3vw, 2.8rem);
+        line-height: 0.9;
+      }
+
+      .stat span {
+        color: var(--muted);
+        font-size: var(--small-size);
+        line-height: 1.2;
+      }
+
+      .quote-panel {
+        display: grid;
+        grid-template-columns: 0.72fr 1.28fr;
+        gap: clamp(1rem, 4vw, 4rem);
+        align-items: center;
+      }
+
+      .big-number {
+        font-family: var(--font-display);
+        font-size: clamp(8rem, 23vw, 18rem);
+        color: var(--gold);
+        line-height: 0.75;
+      }
+
+      .problem-list {
+        display: grid;
+        gap: clamp(0.6rem, 1.2vw, 1rem);
+        margin-top: clamp(1rem, 2vw, 1.6rem);
+      }
+
+      .problem-item {
+        display: grid;
+        grid-template-columns: clamp(2.2rem, 4vw, 3.5rem) 1fr;
+        gap: clamp(0.6rem, 1.3vw, 1rem);
+        align-items: start;
+        padding: clamp(0.7rem, 1.5vw, 1rem) 0;
+        border-top: clamp(0.04rem, 0.08vw, 0.08rem) solid var(--line);
+      }
+
+      .problem-item b {
+        color: var(--teal);
+        font-size: clamp(1.15rem, 2vw, 1.6rem);
+        font-family: var(--font-display);
+      }
+
+      .solution-loop {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: clamp(0.65rem, 1.4vw, 1rem);
+        margin-top: clamp(1rem, 2vw, 1.6rem);
+      }
+
+      .loop-step {
+        background: var(--surface);
+        border: clamp(0.04rem, 0.08vw, 0.08rem) solid var(--line);
+        padding: clamp(0.8rem, 1.8vw, 1.3rem);
+        min-height: clamp(7rem, 22vh, 12rem);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .loop-step em {
+        color: var(--gold);
+        font-style: normal;
+        font-size: var(--small-size);
+        font-weight: 900;
+      }
+
+      .loop-step span {
+        color: var(--muted);
+        font-size: var(--small-size);
+        line-height: 1.3;
+      }
+
+      .feature-mosaic {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: clamp(0.8rem, 1.8vw, 1.4rem);
+        margin-top: clamp(1rem, 2vw, 1.6rem);
+      }
+
+      .feature-main,
+      .feature-side {
+        background: var(--teal-deep);
+        color: var(--surface);
+        padding: clamp(1rem, 2.4vw, 2rem);
+        min-height: clamp(13rem, 42vh, 22rem);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .feature-side {
+        background: var(--surface);
+        color: var(--ink);
+        border: clamp(0.04rem, 0.08vw, 0.08rem) solid var(--line);
+        gap: clamp(0.5rem, 1vw, 0.9rem);
+      }
+
+      .feature-side .mini {
+        border-bottom: clamp(0.04rem, 0.08vw, 0.08rem) solid var(--line);
+        padding-bottom: clamp(0.45rem, 1vw, 0.8rem);
+      }
+
+      .feature-side .mini:last-child {
+        border-bottom: 0;
+        padding-bottom: 0;
+      }
+
+      .feature-side p,
+      .feature-main p {
+        font-size: var(--small-size);
+      }
+
+      .pestel-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: clamp(0.55rem, 1.2vw, 0.9rem);
+        margin-top: clamp(0.9rem, 2vw, 1.5rem);
+      }
+
+      .pestel-card {
+        background: var(--surface);
+        border-left: clamp(0.22rem, 0.45vw, 0.34rem) solid var(--teal);
+        padding: clamp(0.75rem, 1.5vw, 1rem);
+        box-shadow: 0 clamp(0.35rem, 1vw, 0.8rem) clamp(1rem, 2vw, 1.6rem) rgba(0, 0, 0, 0.04);
+      }
+
+      .pestel-card:nth-child(even) {
+        border-left-color: var(--gold);
+      }
+
+      .pestel-card p {
+        font-size: var(--small-size);
+        color: var(--muted);
+        margin-top: clamp(0.25rem, 0.6vw, 0.45rem);
+      }
+
+      .diagram-wall {
+        display: grid;
+        grid-template-columns: 0.62fr 1.38fr;
+        gap: clamp(1rem, 2.5vw, 2rem);
+        align-items: center;
+      }
+
+      .diagram-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: clamp(0.45rem, 1vw, 0.8rem);
+        max-height: min(70vh, 560px);
+      }
+
+      .diagram-tile {
+        background: var(--surface);
+        border: clamp(0.04rem, 0.08vw, 0.08rem) solid var(--line);
+        padding: clamp(0.35rem, 0.8vw, 0.55rem);
+        min-height: 0;
+      }
+
+      .diagram-tile img {
+        width: 100%;
+        height: clamp(7.5rem, 24vh, 14rem);
+        max-height: none;
+        object-fit: contain;
+        filter: saturate(0.94) contrast(1.05);
+      }
+
+      .diagram-tile span {
+        display: block;
+        margin-top: clamp(0.25rem, 0.5vw, 0.4rem);
+        color: var(--muted);
+        font-size: var(--small-size);
+        font-weight: 700;
+      }
+
+      .diagram-menu {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: clamp(0.65rem, 1.4vw, 1rem);
+        margin-top: clamp(1rem, 2vw, 1.6rem);
+      }
+
+      .diagram-card {
+        min-height: clamp(8.6rem, 23vh, 12.5rem);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        color: var(--ink);
+        text-decoration: none;
+        border: clamp(0.04rem, 0.08vw, 0.08rem) solid rgba(101, 214, 195, 0.24);
+        background:
+          linear-gradient(150deg, rgba(101, 214, 195, 0.13), rgba(227, 194, 107, 0.04)),
+          var(--surface);
+        padding: clamp(0.85rem, 1.8vw, 1.25rem);
+        transition: transform 0.22s var(--ease), border-color 0.22s var(--ease), background 0.22s var(--ease);
+      }
+
+      .diagram-card:hover,
+      .diagram-card:focus-visible {
+        transform: translateY(calc(-1 * clamp(0.2rem, 0.45vw, 0.4rem)));
+        border-color: var(--teal);
+        background:
+          linear-gradient(150deg, rgba(101, 214, 195, 0.2), rgba(227, 194, 107, 0.08)),
+          var(--surface-2);
+        outline: none;
+      }
+
+      .diagram-card b {
+        color: var(--gold);
+        font-family: var(--font-display);
+        font-size: clamp(2.3rem, 6vw, 4.4rem);
+        line-height: 0.85;
+      }
+
+      .diagram-card span {
+        color: var(--muted);
+        font-size: var(--small-size);
+        line-height: 1.3;
+      }
+
+      .diagram-detail-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: clamp(0.6rem, 1.3vw, 1rem);
+        margin-top: clamp(0.9rem, 1.8vw, 1.4rem);
+        max-height: min(66vh, 500px);
+      }
+
+      .diagram-detail-grid.sequence {
+        grid-template-columns: repeat(5, 1fr);
+      }
+
+      .diagram-detail-grid.states {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .diagram-large {
+        background: #f8f6f0;
+        border: clamp(0.04rem, 0.08vw, 0.08rem) solid rgba(255, 255, 255, 0.18);
+        padding: clamp(0.45rem, 1vw, 0.7rem);
+        min-width: 0;
+        min-height: 0;
+        box-shadow: var(--shadow);
+      }
+
+      .diagram-large img {
+        display: block;
+        width: 100%;
+        height: clamp(18rem, 52vh, 30rem);
+        max-height: none;
+        object-fit: contain;
+      }
+
+      .diagram-large span {
+        display: block;
+        color: #21312d;
+        font-size: var(--small-size);
+        font-weight: 900;
+        margin-top: clamp(0.25rem, 0.6vw, 0.45rem);
+      }
+
+      .back-link {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        color: var(--gold);
+        text-decoration: none;
+        font-size: var(--small-size);
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: clamp(0.5rem, 1vw, 0.8rem);
+      }
+
+      .roadmap {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: clamp(0.5rem, 1.2vw, 0.9rem);
+        margin-top: clamp(1rem, 2vw, 1.6rem);
+      }
+
+      .phase {
+        border-top: clamp(0.16rem, 0.35vw, 0.28rem) solid var(--gold);
+        padding-top: clamp(0.6rem, 1.2vw, 0.9rem);
+      }
+
+      .phase:nth-child(2),
+      .phase:nth-child(4) {
+        border-top-color: var(--teal);
+      }
+
+      .phase p {
+        font-size: var(--small-size);
+        color: var(--muted);
+        margin-top: clamp(0.35rem, 0.8vw, 0.6rem);
+      }
+
+      .closing {
+        background: var(--teal-deep);
+        color: var(--surface);
+      }
+
+      .closing::before {
+        border-color: rgba(255, 255, 255, 0.15);
+      }
+
+      .closing::after {
+        background: radial-gradient(circle, rgba(201, 168, 76, 0.28), transparent 65%);
+      }
+
+      .closing .lead {
+        color: rgba(255, 255, 255, 0.72);
+      }
+
+      .closing-line {
+        max-width: min(86vw, 980px);
+        font-family: var(--font-display);
+        font-size: clamp(2rem, 5vw, 4.5rem);
+        line-height: 1;
+      }
+
+      .footer-meta {
+        position: absolute;
+        right: clamp(1.1rem, 2.5vw, 2rem);
+        bottom: clamp(1rem, 2vw, 1.6rem);
+        color: rgba(24, 24, 22, 0.45);
+        font-size: var(--small-size);
+        font-weight: 700;
+      }
+
+      .closing .footer-meta {
+        color: rgba(255, 255, 255, 0.48);
+      }
+
+      /* ===========================================
+         RESPONSIVE COMPOSITION
+         =========================================== */
+      @media (max-width: 820px) {
+        .cover-grid,
+        .quote-panel,
+        .feature-mosaic,
+        .diagram-wall {
+          grid-template-columns: 1fr;
+        }
+
+        .cover-mark {
+          min-height: min(26vh, 230px);
+        }
+
+        .cover-mark img {
+          max-height: min(13vh, 120px);
+        }
+
+        .stat-rail,
+        .solution-loop,
+        .diagram-menu,
+        .roadmap {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .pestel-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      @media (max-width: 560px) {
+        .stat-rail,
+        .solution-loop,
+        .roadmap,
+        .pestel-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .title-slide .cover-mark {
+          display: none;
+        }
+
+        .title-slide .tech-strip {
+          gap: clamp(0.25rem, 0.7vw, 0.38rem);
+        }
+
+        .title-slide .stat-rail {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .diagram-menu {
+          grid-template-columns: repeat(2, 1fr);
+          gap: clamp(0.35rem, 0.9vw, 0.55rem);
+        }
+
+        .diagram-card {
+          min-height: clamp(7.2rem, 19vh, 9.2rem);
+          padding: clamp(0.55rem, 1.4vw, 0.75rem);
+        }
+
+        .diagram-card b {
+          font-size: clamp(1.8rem, 9vw, 2.8rem);
+        }
+
+        .diagram-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: clamp(0.3rem, 0.9vw, 0.45rem);
+          max-height: min(48vh, 410px);
+        }
+
+        .diagram-tile {
+          padding: clamp(0.22rem, 0.7vw, 0.36rem);
+        }
+
+        .diagram-tile img {
+          height: clamp(4.6rem, 15vh, 7rem);
+        }
+
+        .diagram-tile span {
+          margin-top: clamp(0.12rem, 0.4vw, 0.22rem);
+        }
+
+        .diagram-detail-grid,
+        .diagram-detail-grid.sequence,
+        .diagram-detail-grid.states {
+          grid-template-columns: repeat(2, 1fr);
+          gap: clamp(0.35rem, 0.9vw, 0.55rem);
+          max-height: min(60vh, 500px);
+        }
+
+        .diagram-large {
+          padding: clamp(0.24rem, 0.7vw, 0.4rem);
+        }
+
+        .diagram-large img {
+          height: clamp(7.2rem, 20vh, 10rem);
+        }
+
+        .loop-step {
+          min-height: auto;
+          gap: clamp(0.5rem, 1.4vw, 0.8rem);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="progress-bar" aria-hidden="true"></div>
+    <nav class="nav-dots" aria-label="Navigation des slides"></nav>
+    <div class="keyboard-hint">↑ ↓ / espace pour naviguer</div>
+
+    <main>
+      <section class="slide title-slide">
+        <div class="slide-content cover-grid">
+          <div>
+            <div class="brand-lockup reveal">
+              <div class="brand-logo" aria-hidden="true">SC</div>
+              <div class="brand-wordmark">
+                <strong>SciConnect</strong>
+                <span>Research exchange network</span>
+              </div>
+            </div>
+            <div class="kicker reveal">Plateforme académique marocaine</div>
+            <h1 class="reveal">SciConnect transforme les questionnaires en réseau d'entraide.</h1>
+            <p class="lead reveal">
+              Une plateforme où chaque réponse donnée accélère une recherche, et où chaque étudiant gagne en visibilité, fiabilité et temps.
+            </p>
+            <div class="tech-strip reveal" aria-label="Technologies et modules clés">
+              <span class="tech-pill">Google Forms</span>
+              <span class="tech-pill">OAuth 2.0</span>
+              <span class="tech-pill">Flask</span>
+              <span class="tech-pill">Excel analytics</span>
+            </div>
+            <div class="stat-rail reveal">
+              <div class="stat"><strong>2</strong><span>réponses avant de publier</span></div>
+              <div class="stat"><strong>30s</strong><span>cache API Google Forms</span></div>
+              <div class="stat"><strong>UCA</strong><span>+ Hassan II comme premiers réseaux</span></div>
+              <div class="stat"><strong>Excel</strong><span>export exploitable pour mémoire</span></div>
+            </div>
+          </div>
+          <aside class="cover-mark reveal">
+            <img src="assets/page-01-img-01.jpg" alt="Logo SciConnect extrait de la présentation source" />
+            <div class="team-list">
+              <span>Réalisé par l'équipe 13-2</span>
+              <span>Bouaddi Mohamed Amine · Ait Ben Aissa Mouad</span>
+              <span>Bouaouda Lahbib · Bouaanane Yassine</span>
+              <span>Encadré par M. Najib Belkhyat</span>
+            </div>
+          </aside>
+        </div>
+        <div class="footer-meta">01 / 16</div>
+      </section>
+
+      <section class="slide">
+        <div class="slide-content quote-panel">
+          <div class="big-number reveal">01</div>
+          <div>
+            <div class="kicker reveal">Le point de départ</div>
+            <h2 class="reveal">Le problème n'est pas le formulaire. C'est le silence autour du formulaire.</h2>
+            <p class="lead reveal">
+              Un étudiant prépare son mémoire, partage son Google Forms au hasard, attend des réponses, puis découvre que la majorité ne vient pas du bon profil. Au même moment, d'autres étudiants vivent exactement le même blocage.
+            </p>
+          </div>
+        </div>
+        <div class="footer-meta">02 / 16</div>
+      </section>
+
+      <section class="slide">
+        <div class="slide-content">
+          <div class="kicker reveal">Problématique</div>
+          <h2 class="reveal">La collecte académique reste lente, dispersée et difficile à fiabiliser.</h2>
+          <div class="problem-list reveal">
+            <div class="problem-item">
+              <b>01</b>
+              <p><strong>Diffusion aléatoire.</strong> Les questionnaires circulent sur des groupes, stories et messages privés sans ciblage clair.</p>
+            </div>
+            <div class="problem-item">
+              <b>02</b>
+              <p><strong>Réponses peu pertinentes.</strong> Les participants ne correspondent pas toujours à l'école, au niveau ou au domaine attendu.</p>
+            </div>
+            <div class="problem-item">
+              <b>03</b>
+              <p><strong>Temps perdu.</strong> Les étudiants passent plus de temps à chercher des répondants qu'à analyser leurs données.</p>
+            </div>
+          </div>
+        </div>
+        <div class="footer-meta">03 / 16</div>
+      </section>
+
+      <section class="slide">
+        <div class="slide-content">
+          <div class="kicker reveal">Solution</div>
+          <h2 class="reveal">SciConnect centralise la demande et crée une règle d'échange simple : aider avant de publier.</h2>
+          <div class="solution-loop reveal">
+            <article class="loop-step">
+              <em>Étape 1</em>
+              <h3>Connexion vérifiée</h3>
+              <span>Profil étudiant via Google OAuth et informations académiques.</span>
+            </article>
+            <article class="loop-step">
+              <em>Étape 2</em>
+              <h3>Répondre</h3>
+              <span>L'étudiant contribue à deux questionnaires pertinents.</span>
+            </article>
+            <article class="loop-step">
+              <em>Étape 3</em>
+              <h3>Publier</h3>
+              <span>Le dépôt devient disponible pour son propre formulaire.</span>
+            </article>
+            <article class="loop-step">
+              <em>Étape 4</em>
+              <h3>Mesurer</h3>
+              <span>Statistiques, validation et export Excel pour l'analyse.</span>
+            </article>
+          </div>
+        </div>
+        <div class="footer-meta">04 / 16</div>
+      </section>
+
+      <section class="slide">
+        <div class="slide-content feature-mosaic">
+          <article class="feature-main reveal">
+            <div>
+              <div class="eyebrow">Fonctionnalité clé</div>
+              <h2>Un feed académique qui remplace le partage au hasard.</h2>
+            </div>
+            <p>
+              Chaque questionnaire devient visible auprès des étudiants les plus susceptibles d'y répondre : université, école, niveau et domaine d'étude.
+            </p>
+          </article>
+          <aside class="feature-side reveal">
+            <div class="mini">
+              <h3>Authentification</h3>
+              <p>Connexion sécurisée et profil personnel pour suivre l'activité.</p>
+            </div>
+            <div class="mini">
+              <h3>Dépôt de formulaire</h3>
+              <p>Publication du lien Google Forms après contribution.</p>
+            </div>
+            <div class="mini">
+              <h3>Réponse en ligne</h3>
+              <p>Accès simple aux questionnaires disponibles.</p>
+            </div>
+          </aside>
+        </div>
+        <div class="footer-meta">05 / 16</div>
+      </section>
+
+      <section class="slide">
+        <div class="slide-content">
+          <div class="kicker reveal">Différenciation</div>
+          <h2 class="reveal">La motivation n'est pas ajoutée après coup : elle est le moteur du système.</h2>
+          <div class="stat-rail reveal">
+            <div class="stat"><strong>Points</strong><span>récompensent les contributions utiles</span></div>
+            <div class="stat"><strong>Badges</strong><span>valorisent les étudiants actifs</span></div>
+            <div class="stat"><strong>Classement</strong><span>installe une dynamique communautaire</span></div>
+            <div class="stat"><strong>Verrou</strong><span>garantit l'équilibre réponse / dépôt</span></div>
+          </div>
+          <p class="lead reveal">
+            L'économie de SciConnect est collaborative et non monétaire : la monnaie d'échange, c'est l'aide académique.
+          </p>
+        </div>
+        <div class="footer-meta">06 / 16</div>
+      </section>
+
+      <section class="slide">
+        <div class="slide-content">
+          <div class="kicker reveal">Données et résultats</div>
+          <h2 class="reveal">La valeur finale n'est pas seulement plus de réponses, mais des réponses exploitables.</h2>
+          <div class="solution-loop reveal">
+            <article class="loop-step">
+              <em>01</em>
+              <h3>Stockage organisé</h3>
+              <span>Les réponses sont liées au questionnaire, au profil et au statut.</span>
+            </article>
+            <article class="loop-step">
+              <em>02</em>
+              <h3>Analyse synthétique</h3>
+              <span>Complétion, profils, évolution et points de chute.</span>
+            </article>
+            <article class="loop-step">
+              <em>03</em>
+              <h3>Validation Google Forms</h3>
+              <span>Vérification des réponses via API avec cache anti-quota.</span>
+            </article>
+            <article class="loop-step">
+              <em>04</em>
+              <h3>Export Excel</h3>
+              <span>Données prêtes à être intégrées dans un mémoire ou rapport.</span>
+            </article>
+          </div>
+        </div>
+        <div class="footer-meta">07 / 16</div>
+      </section>
+
+      <section class="slide">
+        <div class="slide-content">
+          <div class="kicker reveal">Analyse PESTEL</div>
+          <h2 class="reveal">Le contexte marocain rend l'idée à la fois utile, réaliste et défendable.</h2>
+          <div class="pestel-grid reveal">
+            <article class="pestel-card"><h3>Politique</h3><p>Soutien indirect à l'enseignement supérieur et à la recherche scientifique.</p></article>
+            <article class="pestel-card"><h3>Économique</h3><p>Échange par points et badges, sans rémunération financière.</p></article>
+            <article class="pestel-card"><h3>Socioculturel</h3><p>Renforce l'entraide entre étudiants et établissements.</p></article>
+            <article class="pestel-card"><h3>Technologique</h3><p>Flask, HTML/CSS/JS, Google OAuth et Google Forms API.</p></article>
+            <article class="pestel-card"><h3>Environnemental</h3><p>Réduit l'impression papier et la collecte physique sur campus.</p></article>
+            <article class="pestel-card"><h3>Légal</h3><p>Confidentialité, données personnelles et tokens jamais stockés en localStorage.</p></article>
+          </div>
+        </div>
+        <div class="footer-meta">08 / 16</div>
+      </section>
+
+      <section class="slide" id="diagrammes">
+        <div class="slide-content">
+          <div class="kicker reveal">Hub UML interactif</div>
+          <h2 class="reveal">Clique sur un type de diagramme pour voir toute sa famille.</h2>
+          <p class="lead reveal">
+            Les diagrammes ne sont plus résumés en miniature : chaque catégorie a maintenant sa propre slide avec tous les visuels extraits du PDF.
+          </p>
+          <nav class="diagram-menu reveal" aria-label="Types de diagrammes UML">
+            <a class="diagram-card" href="#use-case">
+              <b>03</b>
+              <h3>Use case</h3>
+              <span>Acteurs, actions et accès principaux.</span>
+            </a>
+            <a class="diagram-card" href="#classes">
+              <b>01</b>
+              <h3>Classes</h3>
+              <span>Structure des entités et relations du système.</span>
+            </a>
+            <a class="diagram-card" href="#sequences">
+              <b>05</b>
+              <h3>Séquences</h3>
+              <span>Scénarios dynamiques de connexion, dépôt et réponse.</span>
+            </a>
+            <a class="diagram-card" href="#etats">
+              <b>03</b>
+              <h3>États</h3>
+              <span>Transitions de cycle de vie côté utilisateur et formulaire.</span>
+            </a>
+          </nav>
+        </div>
+        <div class="footer-meta">09 / 16</div>
+      </section>
+
+      <section class="slide" id="use-case">
+        <div class="slide-content">
+          <a class="back-link reveal" href="#diagrammes">← Retour au hub UML</a>
+          <div class="kicker reveal">Diagrammes use case</div>
+          <h2 class="reveal">Les rôles et interactions clés sont visibles en un seul parcours.</h2>
+          <div class="diagram-detail-grid reveal">
+            <figure class="diagram-large">
+              <img src="assets/page-15-img-01.png" alt="Diagramme use case principal SciConnect" />
+              <span>Use case principal</span>
+            </figure>
+            <figure class="diagram-large">
+              <img src="assets/page-15-img-02.png" alt="Diagramme use case secondaire SciConnect" />
+              <span>Vue fonctionnelle</span>
+            </figure>
+            <figure class="diagram-large">
+              <img src="assets/page-15-img-03.png" alt="Diagramme use case détaillé SciConnect" />
+              <span>Interactions détaillées</span>
+            </figure>
+          </div>
+        </div>
+        <div class="footer-meta">10 / 16</div>
+      </section>
+
+      <section class="slide" id="classes">
+        <div class="slide-content">
+          <a class="back-link reveal" href="#diagrammes">← Retour au hub UML</a>
+          <div class="kicker reveal">Diagramme des classes</div>
+          <h2 class="reveal">Le modèle central relie étudiants, questionnaires, réponses et statistiques.</h2>
+          <div class="diagram-detail-grid reveal">
+            <figure class="diagram-large">
+              <img src="assets/page-16-img-01.png" alt="Diagramme des classes SciConnect" />
+              <span>Structure des classes</span>
+            </figure>
+          </div>
+        </div>
+        <div class="footer-meta">11 / 16</div>
+      </section>
+
+      <section class="slide" id="sequences">
+        <div class="slide-content">
+          <a class="back-link reveal" href="#diagrammes">← Retour au hub UML</a>
+          <div class="kicker reveal">Diagrammes de séquence</div>
+          <h2 class="reveal">Les scénarios critiques montrent comment la plateforme agit en temps réel.</h2>
+          <div class="diagram-detail-grid sequence reveal">
+            <figure class="diagram-large">
+              <img src="assets/page-17-img-01.png" alt="Diagramme de séquence SciConnect 1" />
+              <span>Séquence 1</span>
+            </figure>
+            <figure class="diagram-large">
+              <img src="assets/page-17-img-02.png" alt="Diagramme de séquence SciConnect 2" />
+              <span>Séquence 2</span>
+            </figure>
+            <figure class="diagram-large">
+              <img src="assets/page-17-img-03.png" alt="Diagramme de séquence SciConnect 3" />
+              <span>Séquence 3</span>
+            </figure>
+            <figure class="diagram-large">
+              <img src="assets/page-18-img-01.png" alt="Diagramme de séquence SciConnect 4" />
+              <span>Séquence 4</span>
+            </figure>
+            <figure class="diagram-large">
+              <img src="assets/page-18-img-02.png" alt="Diagramme de séquence SciConnect 5" />
+              <span>Séquence 5</span>
+            </figure>
+          </div>
+        </div>
+        <div class="footer-meta">12 / 16</div>
+      </section>
+
+      <section class="slide" id="etats">
+        <div class="slide-content">
+          <a class="back-link reveal" href="#diagrammes">← Retour au hub UML</a>
+          <div class="kicker reveal">Diagrammes des états</div>
+          <h2 class="reveal">Les transitions expliquent comment les accès évoluent selon les contributions.</h2>
+          <div class="diagram-detail-grid states reveal">
+            <figure class="diagram-large">
+              <img src="assets/page-19-img-01.png" alt="Diagramme d'états SciConnect 1" />
+              <span>Cycle principal</span>
+            </figure>
+            <figure class="diagram-large">
+              <img src="assets/page-19-img-02.png" alt="Diagramme d'états SciConnect 2" />
+              <span>États utilisateur</span>
+            </figure>
+            <figure class="diagram-large">
+              <img src="assets/page-19-img-03.png" alt="Diagramme d'états SciConnect 3" />
+              <span>États formulaire</span>
+            </figure>
+          </div>
+        </div>
+        <div class="footer-meta">13 / 16</div>
+      </section>
+
+      <section class="slide">
+        <div class="slide-content">
+          <div class="kicker reveal">Architecture de confiance</div>
+          <h2 class="reveal">La crédibilité vient de trois choix techniques : identité, cache et traçabilité.</h2>
+          <div class="solution-loop reveal">
+            <article class="loop-step">
+              <em>Identité</em>
+              <h3>Google Identity Services</h3>
+              <span>Connexion OAuth moderne, session sécurisée côté serveur.</span>
+            </article>
+            <article class="loop-step">
+              <em>Quota</em>
+              <h3>Cache 30 secondes</h3>
+              <span>Google Forms API protégée contre les appels excessifs.</span>
+            </article>
+            <article class="loop-step">
+              <em>Données</em>
+              <h3>SQLite + SQLAlchemy</h3>
+              <span>Modèle clair pour users, questionnaires et responses.</span>
+            </article>
+            <article class="loop-step">
+              <em>Analyse</em>
+              <h3>Pandas + openpyxl</h3>
+              <span>Export Excel multi-feuilles pour résultats et qualité.</span>
+            </article>
+          </div>
+        </div>
+        <div class="footer-meta">14 / 16</div>
+      </section>
+
+      <section class="slide">
+        <div class="slide-content">
+          <div class="kicker reveal">Plan d'exécution</div>
+          <h2 class="reveal">Construire SciConnect par preuves successives, pas par promesses.</h2>
+          <div class="roadmap reveal">
+            <article class="phase">
+              <h3>1. Landing</h3>
+              <p>Clarifier la proposition de valeur et l'appel à l'action étudiant.</p>
+            </article>
+            <article class="phase">
+              <h3>2. Onboarding</h3>
+              <p>Google OAuth, profil académique et règles de contribution.</p>
+            </article>
+            <article class="phase">
+              <h3>3. Dashboard</h3>
+              <p>Feed ciblé, dépôt verrouillé et progression visible.</p>
+            </article>
+            <article class="phase">
+              <h3>4. Stats</h3>
+              <p>Validation Google Forms, analyse et export Excel final.</p>
+            </article>
+          </div>
+        </div>
+        <div class="footer-meta">15 / 16</div>
+      </section>
+
+      <section class="slide closing">
+        <div class="slide-content">
+          <div class="kicker reveal">Conclusion</div>
+          <p class="closing-line reveal">
+            Une question sans réponse reste une attente. Une réponse sans question reste un bruit.
+          </p>
+          <h2 class="reveal"><span class="gold">SciConnect</span> transforme ce silence en connaissance.</h2>
+          <p class="lead reveal">Par les étudiants, pour les étudiants.</p>
+        </div>
+        <div class="footer-meta">16 / 16</div>
+      </section>
+    </main>
+
+    <script>
+      /* ===========================================
+         SLIDE PRESENTATION CONTROLLER
+         =========================================== */
+      class SlidePresentation {
+        constructor() {
+          this.slides = Array.from(document.querySelectorAll(".slide"));
+          this.currentSlide = 0;
+          this.progressBar = document.querySelector(".progress-bar");
+          this.navDotsContainer = document.querySelector(".nav-dots");
+          this.lastWheelAt = 0;
+          this.setupIntersectionObserver();
+          this.setupKeyboardNav();
+          this.setupWheelNav();
+          this.setupTouchNav();
+          this.setupNavDots();
+          this.goToSlide(0, false);
+        }
+
+        setupIntersectionObserver() {
+          const observer = new IntersectionObserver(
+            (entries) => {
+              entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                  entry.target.classList.add("visible");
+                  this.currentSlide = this.slides.indexOf(entry.target);
+                  this.updateProgress();
+                  this.updateDots();
+                }
+              });
+            },
+            { threshold: 0.6 }
+          );
+
+          this.slides.forEach((slide) => observer.observe(slide));
+        }
+
+        setupKeyboardNav() {
+          document.addEventListener("keydown", (event) => {
+            const nextKeys = ["ArrowDown", "ArrowRight", " ", "PageDown"];
+            const previousKeys = ["ArrowUp", "ArrowLeft", "PageUp"];
+            if (nextKeys.includes(event.key)) {
+              event.preventDefault();
+              this.goToSlide(this.currentSlide + 1);
+            }
+            if (previousKeys.includes(event.key)) {
+              event.preventDefault();
+              this.goToSlide(this.currentSlide - 1);
+            }
+          });
+        }
+
+        setupWheelNav() {
+          document.addEventListener(
+            "wheel",
+            (event) => {
+              const now = Date.now();
+              if (now - this.lastWheelAt < 650) return;
+              if (Math.abs(event.deltaY) < 24) return;
+              this.lastWheelAt = now;
+              this.goToSlide(this.currentSlide + (event.deltaY > 0 ? 1 : -1));
+            },
+            { passive: true }
+          );
+        }
+
+        setupTouchNav() {
+          let startY = 0;
+          document.addEventListener("touchstart", (event) => {
+            startY = event.touches[0].clientY;
+          });
+          document.addEventListener("touchend", (event) => {
+            const endY = event.changedTouches[0].clientY;
+            const delta = startY - endY;
+            if (Math.abs(delta) > 45) {
+              this.goToSlide(this.currentSlide + (delta > 0 ? 1 : -1));
+            }
+          });
+        }
+
+        setupNavDots() {
+          this.navDotsContainer.innerHTML = "";
+          this.slides.forEach((_, index) => {
+            const dot = document.createElement("button");
+            dot.className = "nav-dot";
+            dot.type = "button";
+            dot.setAttribute("aria-label", `Aller au slide ${index + 1}`);
+            dot.addEventListener("click", () => this.goToSlide(index));
+            this.navDotsContainer.appendChild(dot);
+          });
+          this.updateDots();
+        }
+
+        goToSlide(index, smooth = true) {
+          const target = Math.max(0, Math.min(index, this.slides.length - 1));
+          this.currentSlide = target;
+          this.slides[target].scrollIntoView({ behavior: smooth ? "smooth" : "auto" });
+          this.updateProgress();
+          this.updateDots();
+        }
+
+        updateProgress() {
+          const progress = ((this.currentSlide + 1) / this.slides.length) * 100;
+          this.progressBar.style.width = `${progress}%`;
+        }
+
+        updateDots() {
+          const dots = Array.from(document.querySelectorAll(".nav-dot"));
+          dots.forEach((dot, index) => dot.classList.toggle("active", index === this.currentSlide));
+        }
+      }
+
+      new SlidePresentation();
+    </script>
+  </body>
+</html>

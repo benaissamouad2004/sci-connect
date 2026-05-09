@@ -455,7 +455,7 @@
 
   /* ─── Sidebar points update ─── */
   function updateSidebarPoints(newTotal) {
-    const bar = document.getElementById('pts-bar');
+    const bar   = document.getElementById('sb-pts-bar');
     const label = document.getElementById('sb-pts');
     if (bar) {
       const pct = Math.min((newTotal / 20) * 100, 100);
