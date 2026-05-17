@@ -707,11 +707,15 @@ function switchTab(tab) {
 
 /* ── Détection domaine email en temps réel ── */
 const ACADEMIC_DOMAINS = {
-  'uca.ac.ma':            { label: 'UCA Cadi Ayyad détectée', cls: 'uca' },
-  'encg-marrakech.ac.ma': { label: 'UCA Cadi Ayyad détectée', cls: 'uca' },
-  'univh2c.ma':           { label: 'Hassan II détectée',       cls: 'hassan' },
-  'um5.ac.ma':            { label: 'Mohammed V détectée',      cls: 'hassan' },
-  'ump.ac.ma':            { label: 'Mohammed Premier détectée', cls: 'hassan' },
+  'uca.ac.ma':            { label: 'UCA Cadi Ayyad détectée',        cls: 'uca' },
+  'encg-marrakech.ac.ma': { label: 'UCA Cadi Ayyad détectée',        cls: 'uca' },
+  // Hassan II Casablanca — domaines confirmés par les étudiants
+  'etu.univh2c.ma':       { label: 'Hassan II Casablanca détectée',  cls: 'hassan' },
+  'univh2c.ma':           { label: 'Hassan II Casablanca détectée',  cls: 'hassan' },
+  'etude.univcasa.ma':    { label: 'Hassan II Casablanca détectée',  cls: 'hassan' },
+  // Autres universités marocaines
+  'um5.ac.ma':            { label: 'Mohammed V détectée',            cls: 'hassan' },
+  'ump.ac.ma':            { label: 'Mohammed Premier détectée',      cls: 'hassan' },
 };
 
 let detectTimer;
