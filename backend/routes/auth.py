@@ -33,11 +33,16 @@ ADMIN_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path
 
 # Domaines email académiques acceptés (Maroc + international)
 ACADEMIC_DOMAINS = (
-    '.ac.ma',       # Domaine académique marocain générique
-    '.edu.ma',      # Éducation Maroc
-    'um6p.ma',      # Université Mohammed VI Polytechnique
-    'ines.ma',      # INES
-    'uae.ac.ma',    # Université Abdelmalek Essaâdi
+    '.ac.ma',           # Domaine académique marocain générique (couvre uca.ac.ma, encg-marrakech.ac.ma…)
+    '.edu.ma',          # Éducation Maroc
+    'um6p.ma',          # Université Mohammed VI Polytechnique
+    'ines.ma',          # INES
+    'uae.ac.ma',        # Université Abdelmalek Essaâdi
+    # Hassan II Casablanca — domaines confirmés par les étudiants
+    'etu.univh2c.ma',   # domaine étudiant confirmé
+    'univh2c.ma',       # domaine général université
+    'etude.univcasa.ma', # ancien domaine Aïn Chock
+    # EDITABLE: ajouter d'autres universités marocaines ici
 )
 
 
@@ -307,6 +312,11 @@ _email_codes = {}
 # EDITABLE: domaines académiques acceptés
 ACADEMIC_DOMAINS_LIST = [
     '.ac.ma', '.edu.ma', 'um6p.ma', 'ines.ma',
+    # Hassan II Casablanca — domaines confirmés par les étudiants
+    'etu.univh2c.ma',    # domaine étudiant confirmé
+    'univh2c.ma',        # domaine général université
+    'etude.univcasa.ma', # ancien domaine Aïn Chock
+    # EDITABLE: ajouter d'autres universités marocaines ici
 ]
 
 def _is_academic_email_v3(email: str) -> bool:
