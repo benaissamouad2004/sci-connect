@@ -1,0 +1,780 @@
+/* ═══════════════════════════════════════════════════════════════════
+   SCICONNECT — Fichier centralisé des boutons
+   Chaque bouton possède ses propres variables CSS.
+   Pour changer la couleur d'un bouton : modifie uniquement
+   la variable correspondante dans la section des variables ci-dessous.
+
+   IMPORTANT : Ce fichier doit être chargé APRÈS main.css dans chaque page.
+   Ajoute dans chaque <head> :
+     <link rel="stylesheet" href="css/buttons.css" />
+   ═══════════════════════════════════════════════════════════════════ */
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   VARIABLES — COULEURS DE CHAQUE BOUTON
+   Modifie ici pour changer la couleur d'un bouton précis.
+   Format : --btn-[page]-[nom]-bg   → couleur de fond
+            --btn-[page]-[nom]-text → couleur du texte
+            --btn-[page]-[nom]-border → couleur de bordure (si besoin)
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+
+  /* ───────────────────────────────────────────────
+     LANDING PAGE (index.html)
+     ─────────────────────────────────────────────── */
+
+  /* B1 — Navbar : "Continuer avec Google" */
+  --btn-landing-navbar-bg:            #005F54;
+  --btn-landing-navbar-bg-hover:      #004A41;
+  --btn-landing-navbar-text:          #FFFFFF;
+
+  /* B2 — Hero CTA principal : "Continuer zavec Google — c'est gratuit" */
+  --btn-landing-hero-primary-bg:      #005F54;
+  --btn-landing-hero-primary-bg-hover:#004A41;
+  --btn-landing-hero-primary-text:    #FFFFFF;
+
+  /* B3 — Hero CTA secondaire : "Explorer les questionnaires" */
+  --btn-landing-hero-secondary-bg:       transparent;
+  --btn-landing-hero-secondary-bg-hover: #FFFFFF;
+  --btn-landing-hero-secondary-text:     #181816;
+  --btn-landing-hero-secondary-border:   #E2DED6;
+
+  /* B4 — Section Accès (carte verte) : "Continuer avec Google" */
+  --btn-landing-access-primary-bg:       #FFFFFF;
+  --btn-landing-access-primary-bg-hover: #E8F5F3;
+  --btn-landing-access-primary-text:     #005F54;
+
+  /* B5 — Section Accès (carte publique) : "Explorer les questionnaires" */
+  --btn-landing-access-secondary-bg:       transparent;
+  --btn-landing-access-secondary-bg-hover: #FFFFFF;
+  --btn-landing-access-secondary-text:     #181816;
+  --btn-landing-access-secondary-border:   #E2DED6;
+
+  /* B6 — CTA Final : "Continuer avec Google — c'est gratuit" */
+  --btn-landing-cta-final-bg:       #FFFFFF;
+  --btn-landing-cta-final-bg-hover: #E8F5F3;
+  --btn-landing-cta-final-text:     #005F54;
+
+  /* B7, B8, B9 — FAQ accordéon (boutons questions) */
+  --btn-landing-faq-bg:        #FFFFFF;
+  --btn-landing-faq-bg-hover:  #F7F6F2;
+  --btn-landing-faq-text:      #181816;
+  --btn-landing-faq-text-open: #005F54;
+
+
+  /* ───────────────────────────────────────────────
+     PAGE LOGIN (login.html)
+     ─────────────────────────────────────────────── */
+
+  /* B10 — Onglet actif "🔵 Google" */
+  --btn-login-tab-active-bg:     #005F54;
+  --btn-login-tab-active-text:   #FFFFFF;
+
+  /* B11 — Onglet inactif "📧 Email académique" */
+  --btn-login-tab-inactive-bg:   #F7F6F2;
+  --btn-login-tab-inactive-text: #57564F;
+
+  /* B12 — "Continuer avec Google" (bouton Google multicolore) */
+  --btn-login-google-bg:         #FFFFFF;
+  --btn-login-google-bg-hover:   #F5F5F5;
+  --btn-login-google-text:       #3C4043;
+  --btn-login-google-border:     #DADCE0;
+
+  /* B13 — "Recevoir le code →" */
+  --btn-login-send-code-bg:       #005F54;
+  --btn-login-send-code-bg-hover: #004A41;
+  --btn-login-send-code-text:     #FFFFFF;
+
+  /* B14 — "Confirmer →" */
+  --btn-login-confirm-bg:         #005F54;
+  --btn-login-confirm-bg-hover:   #004A41;
+  --btn-login-confirm-text:       #FFFFFF;
+
+
+  /* ───────────────────────────────────────────────
+     PAGE ONBOARDING (onboarding.html)
+     ─────────────────────────────────────────────── */
+
+  /* B15 — "Suivant →" / "Rejoindre SciConnect →" */
+  --btn-onb-next-bg:         #005F54;
+  --btn-onb-next-bg-hover:   #004A41;
+  --btn-onb-next-text:       #FFFFFF;
+
+  /* B16 — "← Précédent" */
+  --btn-onb-back-bg:         transparent;
+  --btn-onb-back-bg-hover:   #F7F6F2;
+  --btn-onb-back-text:       #57564F;
+  --btn-onb-back-border:     #E2DED6;
+
+
+  /* ───────────────────────────────────────────────
+     DASHBOARD (dashboard.html)
+     ─────────────────────────────────────────────── */
+
+  /* B17 — Rail nav (boutons inactifs : Feed, Explorer, Notifs, Déposer, Mes QST, Classement) */
+  --btn-dash-rail-bg:         transparent;
+  --btn-dash-rail-bg-hover:   #E8F5F3;
+  --btn-dash-rail-text:       #57564F;
+  --btn-dash-rail-text-hover: #005F54;
+
+  /* B18 — Rail nav (bouton actif) */
+  --btn-dash-rail-active-bg:   #E8F5F3;
+  --btn-dash-rail-active-text: #005F54;
+
+  /* B19 — Rail avatar / bouton profil */
+  --btn-dash-rail-avatar-bg:       transparent;
+  --btn-dash-rail-avatar-bg-hover: #E8F5F3;
+
+  /* B20 — Sidebar : bouton fermer "✕" */
+  --btn-dash-sidebar-close-bg:       transparent;
+  --btn-dash-sidebar-close-bg-hover: #F7F6F2;
+  --btn-dash-sidebar-close-text:     #57564F;
+
+  /* B21 — Sidebar guest : "Se connecter" */
+  --btn-dash-guest-cta-bg:         #005F54;
+  --btn-dash-guest-cta-bg-hover:   #004A41;
+  --btn-dash-guest-cta-text:       #FFFFFF;
+
+  /* B22 — Topbar : bouton menu hamburger */
+  --btn-dash-topbar-toggle-bg:       transparent;
+  --btn-dash-topbar-toggle-bg-hover: #F0EDE6;
+  --btn-dash-topbar-toggle-text:     #57564F;
+
+  /* B23 — Topbar : cloche notifications */
+  --btn-dash-notif-icon-bg:       transparent;
+  --btn-dash-notif-icon-bg-hover: #F0EDE6;
+  --btn-dash-notif-icon-text:     #57564F;
+
+  /* B24 — Topbar guest : "Se connecter →" */
+  --btn-dash-guest-login-bg:         #005F54;
+  --btn-dash-guest-login-bg-hover:   #004A41;
+  --btn-dash-guest-login-text:       #FFFFFF;
+
+  /* B25 — Topbar : pill profil utilisateur */
+  --btn-dash-profile-pill-bg:         #F7F6F2;
+  --btn-dash-profile-pill-bg-hover:   #E8F5F3;
+  --btn-dash-profile-pill-text:       #181816;
+
+  /* B26 — Panel notifs : "Tout marquer comme lu" */
+  --btn-dash-mark-read-bg:         transparent;
+  --btn-dash-mark-read-bg-hover:   #E8F5F3;
+  --btn-dash-mark-read-text:       #005F54;
+
+  /* B27 — Panel profil : "Voir mon profil public" */
+  --btn-dash-pp-profile-bg:         #005F54;
+  --btn-dash-pp-profile-bg-hover:   #004A41;
+  --btn-dash-pp-profile-text:       #FFFFFF;
+
+  /* B28 — Panel profil : "Déposer" */
+  --btn-dash-pp-deposit-bg:         transparent;
+  --btn-dash-pp-deposit-bg-hover:   #F0EDE6;
+  --btn-dash-pp-deposit-text:       #181816;
+  --btn-dash-pp-deposit-border:     #E2DED6;
+
+  /* B29 — Panel profil : "Enregistrer" (bio) */
+  --btn-dash-pp-save-bg:         #005F54;
+  --btn-dash-pp-save-bg-hover:   #004A41;
+  --btn-dash-pp-save-text:       #FFFFFF;
+
+  /* B30 — Panel profil : "Déconnexion" */
+  --btn-dash-pp-logout-bg:         transparent;
+  --btn-dash-pp-logout-bg-hover:   #FEF3F2;
+  --btn-dash-pp-logout-text:       #C0392B;
+
+  /* B31 — Carte questionnaire : "Répondre →" */
+  --btn-dash-card-respond-bg:         #005F54;
+  --btn-dash-card-respond-bg-hover:   #004A41;
+  --btn-dash-card-respond-text:       #FFFFFF;
+
+  /* B32 — Barre progression : "Voir les questionnaires →" */
+  --btn-dash-pb-bg:         #E8F5F3;
+  --btn-dash-pb-bg-hover:   #005F54;
+  --btn-dash-pb-text:       #005F54;
+  --btn-dash-pb-text-hover: #FFFFFF;
+
+
+  /* ───────────────────────────────────────────────
+     PAGE DÉPÔT (deposit.html)
+     ─────────────────────────────────────────────── */
+
+  /* B33 — Topbar : "Déconnexion" */
+  --btn-dep-logout-bg:         transparent;
+  --btn-dep-logout-bg-hover:   #FEF3F2;
+  --btn-dep-logout-text:       #C0392B;
+  --btn-dep-logout-border:     #C0392B;
+
+  /* B34 — État verrouillé : "Voir les questionnaires →" */
+  --btn-dep-locked-bg:         #E8F5F3;
+  --btn-dep-locked-bg-hover:   #005F54;
+  --btn-dep-locked-text:       #005F54;
+  --btn-dep-locked-text-hover: #FFFFFF;
+  --btn-dep-locked-border:     #005F54;
+
+  /* B35 — Chips niveau (inactif) : L1, L2, L3, M1, M2, Doctorat, Ingénieur, Tous niveaux */
+  --btn-dep-chip-bg:           #F7F6F2;
+  --btn-dep-chip-bg-hover:     #E8F5F3;
+  --btn-dep-chip-text:         #57564F;
+  --btn-dep-chip-text-hover:   #005F54;
+  --btn-dep-chip-border:       #E2DED6;
+
+  /* B36 — Chips niveau (actif) */
+  --btn-dep-chip-active-bg:     #005F54;
+  --btn-dep-chip-active-text:   #FFFFFF;
+  --btn-dep-chip-active-border: #005F54;
+
+  /* B37 — "Publier mon questionnaire →" */
+  --btn-dep-publish-bg:         #005F54;
+  --btn-dep-publish-bg-hover:   #004A41;
+  --btn-dep-publish-text:       #FFFFFF;
+
+  /* B38 — Prévisualisation : "Répondre +10pts" */
+  --btn-dep-preview-bg:         #C9A84C;
+  --btn-dep-preview-bg-hover:   #B8942A;
+  --btn-dep-preview-text:       #FFFFFF;
+
+
+  /* ───────────────────────────────────────────────
+     PAGE RÉPONSE (respond.html)
+     ─────────────────────────────────────────────── */
+
+  /* B39 — Topbar : "← Retour" */
+  --btn-rsp-back-bg:         transparent;
+  --btn-rsp-back-bg-hover:   #F0EDE6;
+  --btn-rsp-back-text:       #57564F;
+
+  /* B40 — "Confirmer ma réponse" (desktop) */
+  --btn-rsp-confirm-bg:         #005F54;
+  --btn-rsp-confirm-bg-hover:   #004A41;
+  --btn-rsp-confirm-text:       #FFFFFF;
+
+  /* B41 — "Confirmer" (mobile, barre basse) */
+  --btn-rsp-mobile-confirm-bg:         #005F54;
+  --btn-rsp-mobile-confirm-bg-hover:   #004A41;
+  --btn-rsp-mobile-confirm-text:       #FFFFFF;
+
+  /* B42 — Succès : "Déposer mon questionnaire →" */
+  --btn-rsp-deposit-bg:         #005F54;
+  --btn-rsp-deposit-bg-hover:   #004A41;
+  --btn-rsp-deposit-text:       #FFFFFF;
+
+  /* B43 — Succès : "Répondre à un autre" */
+  --btn-rsp-another-bg:         transparent;
+  --btn-rsp-another-bg-hover:   #F7F6F2;
+  --btn-rsp-another-text:       #181816;
+  --btn-rsp-another-border:     #E2DED6;
+
+
+  /* ───────────────────────────────────────────────
+     PAGE PROFIL (profile.html)
+     ─────────────────────────────────────────────── */
+
+  /* B44 — "← Retour" */
+  --btn-prf-back-bg:         rgba(255,255,255,0.15);
+  --btn-prf-back-bg-hover:   rgba(255,255,255,0.30);
+  --btn-prf-back-text:       #FFFFFF;
+
+  /* B45 — "Partager profil" */
+  --btn-prf-share-bg:         rgba(255,255,255,0.15);
+  --btn-prf-share-bg-hover:   rgba(255,255,255,0.30);
+  --btn-prf-share-text:       #FFFFFF;
+
+  /* B46 — "Enregistrer" (bio) */
+  --btn-prf-save-bg:         #005F54;
+  --btn-prf-save-bg-hover:   #004A41;
+  --btn-prf-save-text:       #FFFFFF;
+
+
+  /* ───────────────────────────────────────────────
+     PAGE ADMIN (admin.html)
+     ─────────────────────────────────────────────── */
+
+  /* B47 — "Se connecter" (formulaire admin) */
+  --btn-admin-login-bg:         #005F54;
+  --btn-admin-login-bg-hover:   #004A41;
+  --btn-admin-login-text:       #FFFFFF;
+
+  /* B48 — "Déconnexion" (header admin) */
+  --btn-admin-logout-bg:         transparent;
+  --btn-admin-logout-bg-hover:   #FEF3F2;
+  --btn-admin-logout-text:       #C0392B;
+  --btn-admin-logout-border:     #C0392B;
+
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ██████████████████  LANDING PAGE  ██████████████████
+   Fichier : frontend/index.html
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── B1 : Navbar — "Continuer avec Google" ──────────────────────── */
+.navbar-btn.btn-primary {
+  background-color: var(--btn-landing-navbar-bg);
+  color: var(--btn-landing-navbar-text);
+}
+.navbar-btn.btn-primary:hover {
+  background-color: var(--btn-landing-navbar-bg-hover);
+  color: var(--btn-landing-navbar-text);
+}
+
+/* ── B2 : Hero CTA principal — "Continuer avec Google..." ───────── */
+.hero-cta .btn-primary {
+  background-color: var(--btn-landing-hero-primary-bg);
+  color: var(--btn-landing-hero-primary-text);
+}
+.hero-cta .btn-primary:hover {
+  background-color: var(--btn-landing-hero-primary-bg-hover);
+  color: var(--btn-landing-hero-primary-text);
+}
+
+/* ── B3 : Hero CTA secondaire — "Explorer les questionnaires" ───── */
+.hero-cta .btn-secondary {
+  background-color: var(--btn-landing-hero-secondary-bg);
+  color: var(--btn-landing-hero-secondary-text);
+  border-color: var(--btn-landing-hero-secondary-border);
+}
+.hero-cta .btn-secondary:hover {
+  background-color: var(--btn-landing-hero-secondary-bg-hover);
+  color: var(--btn-landing-hero-secondary-text);
+}
+
+/* ── B4 : Accès carte verte — "Continuer avec Google" ───────────── */
+.access-card.connected .btn-primary {
+  background-color: var(--btn-landing-access-primary-bg);
+  color: var(--btn-landing-access-primary-text);
+}
+.access-card.connected .btn-primary:hover {
+  background-color: var(--btn-landing-access-primary-bg-hover);
+  color: var(--btn-landing-access-primary-text);
+}
+
+/* ── B5 : Accès carte publique — "Explorer les questionnaires" ───── */
+.access-card.public .btn-secondary {
+  background-color: var(--btn-landing-access-secondary-bg);
+  color: var(--btn-landing-access-secondary-text);
+  border-color: var(--btn-landing-access-secondary-border);
+}
+.access-card.public .btn-secondary:hover {
+  background-color: var(--btn-landing-access-secondary-bg-hover);
+  color: var(--btn-landing-access-secondary-text);
+}
+
+/* ── B6 : CTA Final — "Continuer avec Google — c'est gratuit" ───── */
+.cta-btn {
+  background-color: var(--btn-landing-cta-final-bg) !important;
+  color: var(--btn-landing-cta-final-text) !important;
+}
+.cta-btn:hover {
+  background-color: var(--btn-landing-cta-final-bg-hover) !important;
+  color: var(--btn-landing-cta-final-text) !important;
+}
+
+/* ── B7/B8/B9 : FAQ accordéon — boutons questions ───────────────── */
+.faq-question {
+  background-color: var(--btn-landing-faq-bg);
+  color: var(--btn-landing-faq-text);
+}
+.faq-question:hover {
+  background-color: var(--btn-landing-faq-bg-hover);
+}
+.faq-question.open {
+  color: var(--btn-landing-faq-text-open);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ██████████████████  PAGE LOGIN  ██████████████████
+   Fichier : frontend/login.html
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── B10 : Onglet actif — "🔵 Google" ───────────────────────────── */
+.auth-tab.active {
+  background-color: var(--btn-login-tab-active-bg);
+  color: var(--btn-login-tab-active-text);
+}
+
+/* ── B11 : Onglet inactif — "📧 Email académique" ───────────────── */
+.auth-tab:not(.active) {
+  background-color: var(--btn-login-tab-inactive-bg);
+  color: var(--btn-login-tab-inactive-text);
+}
+
+/* ── B12 : Bouton Google — "Continuer avec Google" ──────────────── */
+.google-btn {
+  background-color: var(--btn-login-google-bg);
+  color: var(--btn-login-google-text);
+  border-color: var(--btn-login-google-border);
+}
+.google-btn:hover {
+  background-color: var(--btn-login-google-bg-hover);
+}
+
+/* ── B13 : "Recevoir le code →" ─────────────────────────────────── */
+.send-code-btn {
+  background-color: var(--btn-login-send-code-bg);
+  color: var(--btn-login-send-code-text);
+}
+.send-code-btn:hover:not(:disabled) {
+  background-color: var(--btn-login-send-code-bg-hover);
+}
+
+/* ── B14 : "Confirmer →" ────────────────────────────────────────── */
+.confirm-btn {
+  background-color: var(--btn-login-confirm-bg);
+  color: var(--btn-login-confirm-text);
+}
+.confirm-btn:hover:not(:disabled) {
+  background-color: var(--btn-login-confirm-bg-hover);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ██████████████████  PAGE ONBOARDING  ██████████████████
+   Fichier : frontend/onboarding.html
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── B15 : "Suivant →" / "Rejoindre SciConnect →" ───────────────── */
+.onb-btn-next {
+  background-color: var(--btn-onb-next-bg);
+  color: var(--btn-onb-next-text);
+}
+.onb-btn-next:hover {
+  background-color: var(--btn-onb-next-bg-hover);
+}
+
+/* ── B16 : "← Précédent" ────────────────────────────────────────── */
+.onb-btn-back {
+  background-color: var(--btn-onb-back-bg);
+  color: var(--btn-onb-back-text);
+  border-color: var(--btn-onb-back-border);
+}
+.onb-btn-back:hover {
+  background-color: var(--btn-onb-back-bg-hover);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ██████████████████  DASHBOARD  ██████████████████
+   Fichier : frontend/dashboard.html
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── B17 : Rail nav — boutons inactifs ───────────────────────────── */
+.rail-btn {
+  background-color: var(--btn-dash-rail-bg);
+  color: var(--btn-dash-rail-text);
+}
+.rail-btn:hover {
+  background-color: var(--btn-dash-rail-bg-hover);
+  color: var(--btn-dash-rail-text-hover);
+}
+
+/* ── B18 : Rail nav — bouton actif ──────────────────────────────── */
+.rail-btn.active {
+  background-color: var(--btn-dash-rail-active-bg);
+  color: var(--btn-dash-rail-active-text);
+}
+
+/* ── B19 : Rail — avatar/bouton profil ──────────────────────────── */
+.rail-avatar-btn {
+  background-color: var(--btn-dash-rail-avatar-bg);
+}
+.rail-avatar-btn:hover {
+  background-color: var(--btn-dash-rail-avatar-bg-hover);
+}
+
+/* ── B20 : Sidebar — bouton fermer "✕" ──────────────────────────── */
+.sidebar-close {
+  background-color: var(--btn-dash-sidebar-close-bg);
+  color: var(--btn-dash-sidebar-close-text);
+}
+.sidebar-close:hover {
+  background-color: var(--btn-dash-sidebar-close-bg-hover);
+}
+
+/* ── B21 : Sidebar guest — "Se connecter" ───────────────────────── */
+.guest-sidebar-cta {
+  background-color: var(--btn-dash-guest-cta-bg);
+  color: var(--btn-dash-guest-cta-text);
+}
+.guest-sidebar-cta:hover {
+  background-color: var(--btn-dash-guest-cta-bg-hover);
+  color: var(--btn-dash-guest-cta-text);
+}
+
+/* ── B22 : Topbar — menu hamburger ──────────────────────────────── */
+.topbar-toggle {
+  background-color: var(--btn-dash-topbar-toggle-bg);
+  color: var(--btn-dash-topbar-toggle-text);
+}
+.topbar-toggle:hover {
+  background-color: var(--btn-dash-topbar-toggle-bg-hover);
+}
+
+/* ── B23 : Topbar — cloche notifications ────────────────────────── */
+.topbar-icon-btn {
+  background-color: var(--btn-dash-notif-icon-bg);
+  color: var(--btn-dash-notif-icon-text);
+}
+.topbar-icon-btn:hover {
+  background-color: var(--btn-dash-notif-icon-bg-hover);
+}
+
+/* ── B24 : Topbar guest — "Se connecter →" ──────────────────────── */
+.guest-login-btn {
+  background-color: var(--btn-dash-guest-login-bg);
+  color: var(--btn-dash-guest-login-text);
+}
+.guest-login-btn:hover {
+  background-color: var(--btn-dash-guest-login-bg-hover);
+  color: var(--btn-dash-guest-login-text);
+}
+
+/* ── B25 : Topbar — pill profil utilisateur ─────────────────────── */
+.topbar-profile-pill {
+  background-color: var(--btn-dash-profile-pill-bg);
+  color: var(--btn-dash-profile-pill-text);
+}
+.topbar-profile-pill:hover {
+  background-color: var(--btn-dash-profile-pill-bg-hover);
+}
+
+/* ── B26 : Panel notifs — "Tout marquer comme lu" ───────────────── */
+.mark-all-read {
+  background-color: var(--btn-dash-mark-read-bg);
+  color: var(--btn-dash-mark-read-text);
+}
+.mark-all-read:hover {
+  background-color: var(--btn-dash-mark-read-bg-hover);
+}
+
+/* ── B27 : Panel profil — "Voir mon profil public" ──────────────── */
+.pp-actions .btn-primary {
+  background-color: var(--btn-dash-pp-profile-bg);
+  color: var(--btn-dash-pp-profile-text);
+}
+.pp-actions .btn-primary:hover {
+  background-color: var(--btn-dash-pp-profile-bg-hover);
+  color: var(--btn-dash-pp-profile-text);
+}
+
+/* ── B28 : Panel profil — "Déposer" ─────────────────────────────── */
+.btn-outline {
+  background-color: var(--btn-dash-pp-deposit-bg);
+  color: var(--btn-dash-pp-deposit-text);
+  border: 1.5px solid var(--btn-dash-pp-deposit-border);
+}
+.btn-outline:hover {
+  background-color: var(--btn-dash-pp-deposit-bg-hover);
+}
+
+/* ── B29 : Panel profil — "Enregistrer" (bio) ───────────────────── */
+.pp-bio-save {
+  background-color: var(--btn-dash-pp-save-bg);
+  color: var(--btn-dash-pp-save-text);
+}
+.pp-bio-save:hover {
+  background-color: var(--btn-dash-pp-save-bg-hover);
+}
+
+/* ── B30 : Panel profil — "Déconnexion" ─────────────────────────── */
+.pp-logout {
+  background-color: var(--btn-dash-pp-logout-bg);
+  color: var(--btn-dash-pp-logout-text);
+}
+.pp-logout:hover {
+  background-color: var(--btn-dash-pp-logout-bg-hover);
+}
+
+/* ── B31 : Carte questionnaire — "Répondre →" ───────────────────── */
+.rec-btn {
+  background-color: var(--btn-dash-card-respond-bg);
+  color: var(--btn-dash-card-respond-text);
+}
+.rec-btn:hover {
+  background-color: var(--btn-dash-card-respond-bg-hover);
+  color: var(--btn-dash-card-respond-text);
+}
+
+/* ── B32 : Barre progression — "Voir les questionnaires →" ──────── */
+.pb-btn {
+  background-color: var(--btn-dash-pb-bg);
+  color: var(--btn-dash-pb-text);
+}
+.pb-btn:hover {
+  background-color: var(--btn-dash-pb-bg-hover);
+  color: var(--btn-dash-pb-text-hover);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ██████████████████  PAGE DÉPÔT  ██████████████████
+   Fichier : frontend/deposit.html
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── B33 : Topbar — "Déconnexion" ───────────────────────────────── */
+.dep-topbar-logout {
+  background-color: var(--btn-dep-logout-bg);
+  color: var(--btn-dep-logout-text);
+  border-color: var(--btn-dep-logout-border);
+}
+.dep-topbar-logout:hover {
+  background-color: var(--btn-dep-logout-bg-hover);
+}
+
+/* ── B34 : État verrouillé — "Voir les questionnaires →" ─────────── */
+.dep-locked-btn {
+  background-color: var(--btn-dep-locked-bg);
+  color: var(--btn-dep-locked-text);
+  border-color: var(--btn-dep-locked-border);
+}
+.dep-locked-btn:hover {
+  background-color: var(--btn-dep-locked-bg-hover);
+  color: var(--btn-dep-locked-text-hover);
+}
+
+/* ── B35 : Chips niveau — inactif (L1, L2, L3, M1, M2, Doctorat…) ─ */
+.dep-chip {
+  background-color: var(--btn-dep-chip-bg);
+  color: var(--btn-dep-chip-text);
+  border-color: var(--btn-dep-chip-border);
+}
+.dep-chip:hover {
+  background-color: var(--btn-dep-chip-bg-hover);
+  color: var(--btn-dep-chip-text-hover);
+}
+
+/* ── B36 : Chips niveau — actif ─────────────────────────────────── */
+.dep-chip.dep-chip--active {
+  background-color: var(--btn-dep-chip-active-bg);
+  color: var(--btn-dep-chip-active-text);
+  border-color: var(--btn-dep-chip-active-border);
+}
+
+/* ── B37 : "Publier mon questionnaire →" ────────────────────────── */
+.dep-publish-btn {
+  background-color: var(--btn-dep-publish-bg);
+  color: var(--btn-dep-publish-text);
+}
+.dep-publish-btn:hover:not(:disabled) {
+  background-color: var(--btn-dep-publish-bg-hover);
+}
+
+/* ── B38 : Prévisualisation — "Répondre +10pts" ─────────────────── */
+.dep-preview-btn {
+  background-color: var(--btn-dep-preview-bg);
+  color: var(--btn-dep-preview-text);
+}
+.dep-preview-btn:hover {
+  background-color: var(--btn-dep-preview-bg-hover);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ██████████████████  PAGE RÉPONSE  ██████████████████
+   Fichier : frontend/respond.html
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── B39 : Topbar — "← Retour" ──────────────────────────────────── */
+.rsp-back-btn {
+  background-color: var(--btn-rsp-back-bg);
+  color: var(--btn-rsp-back-text);
+}
+.rsp-back-btn:hover {
+  background-color: var(--btn-rsp-back-bg-hover);
+}
+
+/* ── B40 : "Confirmer ma réponse" (desktop) ─────────────────────── */
+.rsp-confirm-btn {
+  background-color: var(--btn-rsp-confirm-bg);
+  color: var(--btn-rsp-confirm-text);
+}
+.rsp-confirm-btn:hover:not(:disabled) {
+  background-color: var(--btn-rsp-confirm-bg-hover);
+}
+
+/* ── B41 : "Confirmer" (mobile, barre basse) ────────────────────── */
+.rsp-mobile-confirm {
+  background-color: var(--btn-rsp-mobile-confirm-bg);
+  color: var(--btn-rsp-mobile-confirm-text);
+}
+.rsp-mobile-confirm:hover:not(:disabled) {
+  background-color: var(--btn-rsp-mobile-confirm-bg-hover);
+}
+
+/* ── B42 : Succès — "Déposer mon questionnaire →" ───────────────── */
+.rsp-btn-primary {
+  background-color: var(--btn-rsp-deposit-bg);
+  color: var(--btn-rsp-deposit-text);
+}
+.rsp-btn-primary:hover {
+  background-color: var(--btn-rsp-deposit-bg-hover);
+  color: var(--btn-rsp-deposit-text);
+}
+
+/* ── B43 : Succès — "Répondre à un autre" ───────────────────────── */
+.rsp-btn-outline {
+  background-color: var(--btn-rsp-another-bg);
+  color: var(--btn-rsp-another-text);
+  border-color: var(--btn-rsp-another-border);
+}
+.rsp-btn-outline:hover {
+  background-color: var(--btn-rsp-another-bg-hover);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ██████████████████  PAGE PROFIL  ██████████████████
+   Fichier : frontend/profile.html
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── B44 : "← Retour" ───────────────────────────────────────────── */
+.prf-back-btn {
+  background-color: var(--btn-prf-back-bg);
+  color: var(--btn-prf-back-text);
+}
+.prf-back-btn:hover {
+  background-color: var(--btn-prf-back-bg-hover);
+}
+
+/* ── B45 : "Partager profil" ────────────────────────────────────── */
+.prf-share-btn {
+  background-color: var(--btn-prf-share-bg);
+  color: var(--btn-prf-share-text);
+}
+.prf-share-btn:hover {
+  background-color: var(--btn-prf-share-bg-hover);
+}
+
+/* ── B46 : "Enregistrer" (bio) ──────────────────────────────────── */
+.prf-bio-save {
+  background-color: var(--btn-prf-save-bg);
+  color: var(--btn-prf-save-text);
+}
+.prf-bio-save:hover {
+  background-color: var(--btn-prf-save-bg-hover);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ██████████████████  PAGE ADMIN  ██████████████████
+   Fichier : frontend/admin.html
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── B47 : "Se connecter" (formulaire admin) ────────────────────── */
+.login-btn {
+  background-color: var(--btn-admin-login-bg);
+  color: var(--btn-admin-login-text);
+}
+.login-btn:hover {
+  background-color: var(--btn-admin-login-bg-hover);
+}
+
+/* ── B48 : "Déconnexion" (header admin) ─────────────────────────── */
+.logout-btn {
+  background-color: var(--btn-admin-logout-bg);
+  color: var(--btn-admin-logout-text);
+  border-color: var(--btn-admin-logout-border);
+}
+.logout-btn:hover {
+  background-color: var(--btn-admin-logout-bg-hover);
+}

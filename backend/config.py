@@ -46,7 +46,7 @@ class Config:
         MAIL_USERNAME = os.getenv('MAILTRAP_USERNAME')
         MAIL_PASSWORD = os.getenv('MAILTRAP_PASSWORD')
 
-    # ═══ SYSTÈME DE POINTS V3 ═══
+    # ═══ SYSTÈME DE POINTS ═══
     # EDITABLE: modifier les valeurs ici pour ajuster le système
     POINTS_REPONDRE_COURT   = 10   # questionnaire < 5 min
     POINTS_REPONDRE_LONG    = 15   # questionnaire > 5 min
